@@ -1,0 +1,14 @@
+{
+  "identities": [
+    {
+      "name": "thesispartner",
+      "credentials": [
+        {
+          "accessKey": "thesispartner",
+          "secretKey": "thesispartner-secret"
+        }
+      ],
+      "actions": ["Admin", "Read", "Write", "List", "Tagging"]
+    }
+  ]
+}

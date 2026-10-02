@@ -1,0 +1,12 @@
+node_modules
+**/dist
+.git
+coverage
+playwright-report
+test-results
+*.docx
+.env
+.env.*
+**/*.spec.ts
+**/*.spec.tsx
+apps/web/e2e

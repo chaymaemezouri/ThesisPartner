@@ -1,0 +1,496 @@
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+/// Stored lowercase by the application. Uniqueness applies to that normalized value.
+model User {
+  id              String    @id @default(uuid()) @db.Uuid
+  email           String    @unique @db.VarChar(320)
+  passwordHash    String    @map("password_hash")
+  emailVerifiedAt DateTime? @map("email_verified_at")
+  disabledAt      DateTime? @map("disabled_at")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  profile              Profile?
+  memberships          ThesisMembership[]
+  sessions             Session[]
+  authTokens           AuthToken[]
+  auditLogs            AuditLog[]
+  objectivesCreated    Objective[]        @relation("ObjectiveCreator")
+  objectivesAssigned   Objective[]        @relation("ObjectiveResponsible")
+  tasksCreated         Task[]             @relation("TaskCreator")
+  completionRequests   Objective[]        @relation("ObjectiveCompletionRequester")
+  objectiveValidations Objective[]        @relation("ObjectiveValidator")
+  deliverablesCreated        Deliverable[]        @relation("DeliverableCreator")
+  deliverablesReviewed       Deliverable[]        @relation("DeliverableReviewer")
+  deliverableVersionsCreated DeliverableVersion[] @relation("DeliverableVersionCreator")
+  storedFilesUploaded        StoredFile[]         @relation("StoredFileUploader")
+  meetingsCreated            Meeting[]            @relation("MeetingOrganizer")
+  remarksAuthored            Remark[]             @relation("RemarkAuthor")
+  remarkRepliesAuthored      RemarkReply[]        @relation("RemarkReplyAuthor")
+
+  @@map("users")
+}
+
+model Profile {
+  id               String   @id @default(uuid()) @db.Uuid
+  userId           String   @unique @map("user_id") @db.Uuid
+  givenName        String   @map("given_name") @db.VarChar(80)
+  familyName       String   @map("family_name") @db.VarChar(80)
+  displayName      String   @map("display_name") @db.VarChar(160)
+  institution      String?  @db.VarChar(200)
+  laboratory       String?  @db.VarChar(200)
+  academicTitle    String?  @map("academic_title") @db.VarChar(80)
+  doctoralSchool   String?  @map("doctoral_school") @db.VarChar(200)
+  specialty        String?  @db.VarChar(160)
+  city             String?  @db.VarChar(80)
+  country          String?  @db.VarChar(80)
+  orcid            String?  @db.VarChar(19)
+  avatarUrl        String?  @map("avatar_url") @db.VarChar(500)
+  cvUrl            String?  @map("cv_url") @db.VarChar(500)
+  googleScholarUrl String?  @map("google_scholar_url") @db.VarChar(500)
+  linkedinUrl      String?  @map("linkedin_url") @db.VarChar(500)
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("profiles")
+}
+
+enum ThesisStatus {
+  ACTIVE
+  SUSPENDED
+  COMPLETED
+  ABANDONED
+}
+
+model Thesis {
+  id                String       @id @default(uuid()) @db.Uuid
+  title             String       @db.VarChar(300)
+  status            ThesisStatus @default(ACTIVE)
+  discipline        String?      @db.VarChar(160)
+  institution       String?      @db.VarChar(200)
+  startedOn         DateTime?    @map("started_on") @db.Date
+  expectedDefenseOn DateTime?    @map("expected_defense_on") @db.Date
+  createdAt         DateTime     @default(now()) @map("created_at")
+  updatedAt         DateTime     @updatedAt @map("updated_at")
+
+  memberships  ThesisMembership[]
+  auditLogs    AuditLog[]
+  objectives   Objective[]
+  deliverables Deliverable[]
+  meetings     Meeting[]
+  remarks      Remark[]
+
+  @@index([status])
+  @@map("theses")
+}
+
+enum MembershipRole {
+  DOCTORAL_STUDENT
+  SUPERVISOR
+  ADMIN
+}
+
+model ThesisMembership {
+  id        String         @id @default(uuid()) @db.Uuid
+  thesisId  String         @map("thesis_id") @db.Uuid
+  userId    String         @map("user_id") @db.Uuid
+  role      MembershipRole
+  createdAt DateTime       @default(now()) @map("created_at")
+  updatedAt DateTime       @updatedAt @map("updated_at")
+
+  thesis Thesis @relation(fields: [thesisId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([thesisId, userId])
+  @@index([userId])
+  @@index([thesisId, role])
+  @@map("thesis_memberships")
+}
+
+model Session {
+  id             String    @id @default(uuid()) @db.Uuid
+  userId         String    @map("user_id") @db.Uuid
+  tokenHash      String    @unique @map("token_hash")
+  csrfSecretHash String    @map("csrf_secret_hash")
+  expiresAt      DateTime  @map("expires_at")
+  revokedAt      DateTime? @map("revoked_at")
+  userAgent      String?   @map("user_agent") @db.VarChar(512)
+  ipAddress      String?   @map("ip_address") @db.VarChar(64)
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("sessions")
+}
+
+enum AuthTokenPurpose {
+  EMAIL_VERIFICATION
+  PASSWORD_RESET
+}
+
+model AuthToken {
+  id        String           @id @default(uuid()) @db.Uuid
+  userId    String           @map("user_id") @db.Uuid
+  purpose   AuthTokenPurpose
+  tokenHash String           @unique @map("token_hash")
+  expiresAt DateTime         @map("expires_at")
+  usedAt    DateTime?        @map("used_at")
+  createdAt DateTime         @default(now()) @map("created_at")
+  updatedAt DateTime         @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, purpose])
+  @@map("auth_tokens")
+}
+
+/// Append-only. Rows are not updated, so there is no updatedAt column.
+model AuditLog {
+  id         String   @id @default(uuid()) @db.Uuid
+  actorId    String?  @map("actor_id") @db.Uuid
+  thesisId   String?  @map("thesis_id") @db.Uuid
+  action     String   @db.VarChar(120)
+  entityType String   @map("entity_type") @db.VarChar(80)
+  entityId   String?  @map("entity_id") @db.Uuid
+  metadata   Json?
+  requestId  String?  @map("request_id") @db.VarChar(64)
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  actor  User?   @relation(fields: [actorId], references: [id], onDelete: SetNull)
+  thesis Thesis? @relation(fields: [thesisId], references: [id], onDelete: SetNull)
+
+  @@index([thesisId, createdAt])
+  @@index([actorId, createdAt])
+  @@index([entityType, entityId])
+  @@map("audit_logs")
+}
+
+enum ObjectiveStatus {
+  PLANNED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum ObjectivePriority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+/// Work state of an objective. Completion approval lives on ObjectiveReviewStatus.
+enum ObjectiveReviewStatus {
+  NOT_REQUESTED
+  PENDING
+  CHANGES_REQUESTED
+  APPROVED
+}
+
+/// Who introduced the objective or task. A template copy is not a user edit.
+enum ContributionOrigin {
+  STANDARD_TEMPLATE
+  DOCTORAL_STUDENT
+  SUPERVISOR
+}
+
+/// Catalog row. Copying it creates a real Objective. Editing that copy never writes back here.
+model ObjectiveTemplate {
+  id          String         @id @default(uuid()) @db.Uuid
+  code        String         @unique @db.VarChar(40)
+  position    Int            @unique
+  title       String         @db.VarChar(200)
+  description String?        @db.VarChar(4000)
+  tasks       TaskTemplate[]
+
+  @@map("objective_templates")
+}
+
+model TaskTemplate {
+  id          String   @id @default(uuid()) @db.Uuid
+  templateId  String   @map("template_id") @db.Uuid
+  position    Int
+  title       String   @db.VarChar(200)
+  description String?  @db.VarChar(4000)
+  template    ObjectiveTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+
+  @@unique([templateId, position])
+  @@map("task_templates")
+}
+
+/// Belongs to a thesis, shared by every member of that thesis.
+/// ObjectiveStatus is the work state. ObjectiveReviewStatus is the validation workflow.
+/// manualProgress is used only while the objective has no active (non-cancelled) task.
+model Objective {
+  id                      String                @id @default(uuid()) @db.Uuid
+  thesisId                String                @map("thesis_id") @db.Uuid
+  title                   String                @db.VarChar(200)
+  description             String?               @db.VarChar(4000)
+  status                  ObjectiveStatus       @default(PLANNED)
+  priority                ObjectivePriority     @default(MEDIUM)
+  startDate               DateTime?             @map("start_date") @db.Date
+  dueDate                 DateTime?             @map("due_date") @db.Date
+  completedAt             DateTime?             @map("completed_at")
+  progress                Int                   @default(0)
+  manualProgress          Int                   @default(0) @map("manual_progress")
+  reviewStatus            ObjectiveReviewStatus @default(NOT_REQUESTED) @map("review_status")
+  completionRequestedAt   DateTime?             @map("completion_requested_at")
+  completionRequestedById String?               @map("completion_requested_by_id") @db.Uuid
+  validatedAt             DateTime?             @map("validated_at")
+  validatedById           String?               @map("validated_by_id") @db.Uuid
+  reviewMessage           String?               @map("review_message") @db.VarChar(500)
+  origin                  ContributionOrigin    @default(DOCTORAL_STUDENT)
+  templateCode            String?               @map("template_code") @db.VarChar(40)
+  createdById             String                @map("created_by_id") @db.Uuid
+  responsibleUserId       String?               @map("responsible_user_id") @db.Uuid
+  createdAt               DateTime              @default(now()) @map("created_at")
+  updatedAt               DateTime              @updatedAt @map("updated_at")
+
+  thesis                Thesis @relation(fields: [thesisId], references: [id], onDelete: Cascade)
+  createdBy             User   @relation("ObjectiveCreator", fields: [createdById], references: [id], onDelete: Restrict)
+  responsibleUser       User?  @relation("ObjectiveResponsible", fields: [responsibleUserId], references: [id], onDelete: SetNull)
+  completionRequestedBy User?  @relation("ObjectiveCompletionRequester", fields: [completionRequestedById], references: [id], onDelete: SetNull)
+  validatedBy           User?  @relation("ObjectiveValidator", fields: [validatedById], references: [id], onDelete: SetNull)
+  tasks        Task[]
+  deliverables Deliverable[]
+  remarks      Remark[]
+
+  @@unique([thesisId, templateCode])
+  @@index([thesisId, status])
+  @@index([thesisId, dueDate])
+  @@map("objectives")
+}
+
+enum TaskStatus {
+  TODO
+  IN_PROGRESS
+  DONE
+  CANCELLED
+}
+
+/// A task always belongs to one objective, and through it to one thesis.
+/// There is no assignee: the work belongs to the objective's responsible member.
+model Task {
+  id          String     @id @default(uuid()) @db.Uuid
+  objectiveId String     @map("objective_id") @db.Uuid
+  title       String     @db.VarChar(200)
+  description String?    @db.VarChar(4000)
+  status      TaskStatus @default(TODO)
+  dueDate     DateTime?  @map("due_date") @db.Date
+  position    Int
+  origin      ContributionOrigin @default(DOCTORAL_STUDENT)
+  createdById String     @map("created_by_id") @db.Uuid
+  completedAt DateTime?  @map("completed_at")
+  createdAt   DateTime   @default(now()) @map("created_at")
+  updatedAt   DateTime   @updatedAt @map("updated_at")
+
+  objective    Objective     @relation(fields: [objectiveId], references: [id], onDelete: Cascade)
+  createdBy    User          @relation("TaskCreator", fields: [createdById], references: [id], onDelete: Restrict)
+  deliverables Deliverable[]
+  remarks      Remark[]
+
+  @@index([objectiveId, position])
+  @@index([objectiveId, status])
+  @@index([dueDate])
+  @@map("tasks")
+}
+
+enum DeliverableType {
+  ARTICLE
+  THESIS_CHAPTER
+  REPORT
+  CODE
+  DATASET
+  PRESENTATION
+  POSTER
+  COMMUNICATION
+  OTHER
+}
+
+enum DeliverableStatus {
+  DRAFT
+  SUBMITTED
+  CHANGES_REQUESTED
+  VALIDATED
+  CANCELLED
+}
+
+/// Stable academic output of a thesis. Versions are append-only snapshots.
+/// objectiveId is optional: a poster or annual report may stand outside an objective.
+/// taskId optionally links a deliverable produced for a specific objective step.
+model Deliverable {
+  id            String             @id @default(uuid()) @db.Uuid
+  thesisId      String             @map("thesis_id") @db.Uuid
+  objectiveId   String?            @map("objective_id") @db.Uuid
+  taskId        String?            @unique @map("task_id") @db.Uuid
+  title         String             @db.VarChar(200)
+  description   String?            @db.VarChar(4000)
+  type          DeliverableType
+  status        DeliverableStatus  @default(DRAFT)
+  dueDate       DateTime?          @map("due_date") @db.Date
+  reviewMessage String?            @map("review_message") @db.VarChar(500)
+  submittedAt   DateTime?          @map("submitted_at")
+  reviewedAt    DateTime?          @map("reviewed_at")
+  reviewedById  String?            @map("reviewed_by_id") @db.Uuid
+  createdById   String             @map("created_by_id") @db.Uuid
+  createdAt     DateTime           @default(now()) @map("created_at")
+  updatedAt     DateTime           @updatedAt @map("updated_at")
+
+  thesis     Thesis               @relation(fields: [thesisId], references: [id], onDelete: Cascade)
+  objective  Objective?           @relation(fields: [objectiveId], references: [id], onDelete: SetNull)
+  task       Task?                @relation(fields: [taskId], references: [id], onDelete: SetNull)
+  createdBy  User                 @relation("DeliverableCreator", fields: [createdById], references: [id], onDelete: Restrict)
+  reviewedBy User?                @relation("DeliverableReviewer", fields: [reviewedById], references: [id], onDelete: SetNull)
+  versions   DeliverableVersion[]
+  remarks    Remark[]
+
+  @@index([thesisId, status])
+  @@index([thesisId, type])
+  @@index([objectiveId])
+  @@index([dueDate])
+  @@map("deliverables")
+}
+
+/// A scheduled working session between the supervisor and the doctoral student.
+model Meeting {
+  id           String   @id @default(uuid()) @db.Uuid
+  thesisId     String   @map("thesis_id") @db.Uuid
+  title        String   @db.VarChar(200)
+  scheduledOn  DateTime @map("scheduled_on") @db.Date
+  createdById  String   @map("created_by_id") @db.Uuid
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  thesis    Thesis @relation(fields: [thesisId], references: [id], onDelete: Cascade)
+  createdBy User   @relation("MeetingOrganizer", fields: [createdById], references: [id], onDelete: Restrict)
+
+  @@index([thesisId, scheduledOn])
+  @@map("meetings")
+}
+
+/// Append-only revision of one deliverable. A created row is not rewritten.
+/// Numbers restart at 1 for each deliverable. File storage is a later phase.
+model DeliverableVersion {
+  id            String   @id @default(uuid()) @db.Uuid
+  deliverableId String   @map("deliverable_id") @db.Uuid
+  versionNumber Int      @map("version_number")
+  title         String?  @db.VarChar(200)
+  changeSummary String?  @map("change_summary") @db.VarChar(1000)
+  createdById   String   @map("created_by_id") @db.Uuid
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  deliverable         Deliverable @relation(fields: [deliverableId], references: [id], onDelete: Cascade)
+  createdBy           User        @relation("DeliverableVersionCreator", fields: [createdById], references: [id], onDelete: Restrict)
+  file                StoredFile?
+  remarksTargeted     Remark[]    @relation("RemarkTargetVersion")
+  remarksCorrections  Remark[]    @relation("RemarkCorrectionVersion")
+
+  @@unique([deliverableId, versionNumber])
+  @@index([deliverableId, createdAt])
+  @@map("deliverable_versions")
+}
+
+enum RemarkStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+}
+
+enum RemarkPriority {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+/// Structured supervisor feedback on a thesis. Soft-closed only — never hard-deleted.
+model Remark {
+  id                   String         @id @default(uuid()) @db.Uuid
+  thesisId             String         @map("thesis_id") @db.Uuid
+  authorId             String         @map("author_id") @db.Uuid
+  title                String         @db.VarChar(200)
+  message              String         @db.VarChar(4000)
+  status               RemarkStatus   @default(OPEN)
+  priority             RemarkPriority @default(MEDIUM)
+  objectiveId          String?        @map("objective_id") @db.Uuid
+  taskId               String?        @map("task_id") @db.Uuid
+  deliverableId        String?        @map("deliverable_id") @db.Uuid
+  deliverableVersionId String?        @map("deliverable_version_id") @db.Uuid
+  correctionVersionId  String?        @map("correction_version_id") @db.Uuid
+  location             String?        @db.VarChar(300)
+  resolvedAt           DateTime?      @map("resolved_at")
+  closedAt             DateTime?      @map("closed_at")
+  createdAt            DateTime       @default(now()) @map("created_at")
+  updatedAt            DateTime       @updatedAt @map("updated_at")
+
+  thesis             Thesis             @relation(fields: [thesisId], references: [id], onDelete: Cascade)
+  author             User               @relation("RemarkAuthor", fields: [authorId], references: [id], onDelete: Restrict)
+  objective          Objective?         @relation(fields: [objectiveId], references: [id], onDelete: SetNull)
+  task               Task?              @relation(fields: [taskId], references: [id], onDelete: SetNull)
+  deliverable        Deliverable?       @relation(fields: [deliverableId], references: [id], onDelete: SetNull)
+  deliverableVersion DeliverableVersion? @relation("RemarkTargetVersion", fields: [deliverableVersionId], references: [id], onDelete: SetNull)
+  correctionVersion  DeliverableVersion? @relation("RemarkCorrectionVersion", fields: [correctionVersionId], references: [id], onDelete: SetNull)
+  replies            RemarkReply[]
+
+  @@index([thesisId, status])
+  @@index([thesisId, priority])
+  @@index([thesisId, updatedAt])
+  @@index([objectiveId])
+  @@index([deliverableId])
+  @@map("remarks")
+}
+
+model RemarkReply {
+  id        String   @id @default(uuid()) @db.Uuid
+  remarkId  String   @map("remark_id") @db.Uuid
+  authorId  String   @map("author_id") @db.Uuid
+  message   String   @db.VarChar(4000)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  remark Remark @relation(fields: [remarkId], references: [id], onDelete: Cascade)
+  author User   @relation("RemarkReplyAuthor", fields: [authorId], references: [id], onDelete: Restrict)
+
+  @@index([remarkId, createdAt])
+  @@map("remark_replies")
+}
+
+enum FileScanStatus {
+  PENDING
+  CLEAN
+  INFECTED
+  FAILED
+}
+
+/// One principal file for a version. The bytes live in private object storage, not in PostgreSQL.
+/// Existing versions may have no file. A version never receives a replacement file.
+model StoredFile {
+  id                   String         @id @default(uuid()) @db.Uuid
+  deliverableVersionId String         @unique @map("deliverable_version_id") @db.Uuid
+  storageKey           String         @unique @map("storage_key") @db.VarChar(500)
+  originalName         String         @map("original_name") @db.VarChar(180)
+  mimeType             String         @map("mime_type") @db.VarChar(160)
+  sizeBytes            BigInt         @map("size_bytes")
+  checksumSha256       String         @map("checksum_sha256") @db.Char(64)
+  scanStatus           FileScanStatus @map("scan_status")
+  storageProvider      String         @default("s3") @map("storage_provider") @db.VarChar(32)
+  uploadedById         String         @map("uploaded_by_id") @db.Uuid
+  createdAt            DateTime       @default(now()) @map("created_at")
+
+  version    DeliverableVersion @relation(fields: [deliverableVersionId], references: [id], onDelete: Cascade)
+  uploadedBy User               @relation("StoredFileUploader", fields: [uploadedById], references: [id], onDelete: Restrict)
+
+  @@map("stored_files")
+}
