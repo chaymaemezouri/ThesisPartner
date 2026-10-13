@@ -10,11 +10,8 @@ export function DoctoralObjectivesPage() {
   const t = useT();
   const dashboard = useDashboard();
   return (
-    <div className="relative min-w-0">
-      <header className={`mb-6 max-w-2xl ${dashboard.data?.thesis ? 'sm:pr-52' : ''}`}>
-        <h1 className="text-xl font-semibold tracking-tight text-ink">{t('objectives.title')}</h1>
-        <p className="mt-1 text-sm text-muted">{t('objectives.subtitle')}</p>
-      </header>
+    <div className="min-w-0">
+      <h1 className="sr-only">{t('objectives.title')}</h1>
       {dashboard.isLoading ? (
         <div aria-busy="true">
           <Skeleton className="h-24" />
@@ -41,7 +38,7 @@ export function DoctoralObjectivesPage() {
         <ObjectivesWorkspace
           thesisId={dashboard.data.thesis.id}
           canManage
-          pinAction
+          tabsAside
           detailPath={(objectiveId) => `/objectifs/${objectiveId}`}
         />
       ) : null}

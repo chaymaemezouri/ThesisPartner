@@ -10,7 +10,7 @@ import {
   toActivity,
   versionActivityMessage,
 } from './activity';
-import { assessProgress } from './progress';
+import { assessProgress, workProgressPercentage } from './progress';
 import { profileCompletion } from '../profile/completion';
 import { presentAcademicProfile, toAcademicProfile } from '../profile/profile.service';
 
@@ -124,16 +124,7 @@ export class DashboardService {
       : [];
     const now = new Date();
     const objectiveCounts = summarizeObjectives(objectiveRows, now);
-    const activeObjectives = objectiveRows.filter((item) => item.status !== 'CANCELLED');
-    const workProgress = {
-      percentage:
-        activeObjectives.length === 0
-          ? 0
-          : Math.round(
-              activeObjectives.reduce((sum, item) => sum + item.progress, 0) /
-                activeObjectives.length,
-            ),
-    };
+    const workProgress = { percentage: workProgressPercentage(objectiveRows) };
     const deliverableRows = thesis
       ? await this.prisma.deliverable.findMany({
           where: { thesisId: thesis.id },

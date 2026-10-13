@@ -11,7 +11,6 @@ import {
   useReplyRemark,
   useResolveRemark,
 } from '../hooks/use-remarks';
-import { RemarkPriorityBadge } from './RemarkPriorityBadge';
 import { RemarkStatusBadge } from './RemarkStatusBadge';
 
 export function RemarkDetailView({
@@ -59,206 +58,203 @@ export function RemarkDetailView({
   const canReopenAction =
     canCreate && (data.status === 'RESOLVED' || data.status === 'CLOSED');
   const versionOptions = versions.data?.versions ?? [];
+  const audience = canCreate ? 'supervisor' : 'student';
+
+  const created = new Date(data.createdAt).toLocaleDateString(dateLocale, { timeZone: 'UTC' });
 
   return (
-    <article className="min-w-0 max-w-3xl">
-      <nav className="mb-4 text-sm text-muted" aria-label={t('common.breadcrumb')}>
+    <article className="min-w-0">
+      <nav className="mb-2 text-[11px] text-muted" aria-label={t('common.breadcrumb')}>
         {crumbs.map((crumb, index) => (
           <span key={crumb.to}>
             {index > 0 ? <span aria-hidden="true"> / </span> : null}
-            <Link to={crumb.to} className="text-brand">
+            <Link to={crumb.to} className="text-brand hover:underline">
               {crumb.label}
             </Link>
           </span>
         ))}
         <span aria-hidden="true"> / </span>
-        <span>{data.title}</span>
+        <span className="text-ink">{data.title}</span>
       </nav>
-      <header className="mb-6 flex flex-wrap items-start justify-between gap-3">
-        <div className="min-w-0">
-          <h1 className="break-words font-serif text-2xl text-ink">{data.title}</h1>
-          <p className="mt-2 text-sm text-muted">
+
+      <section className="overflow-hidden rounded-md border border-line bg-surface">
+        <header className="border-b border-line px-4 py-3">
+          <div className="flex items-start justify-between gap-3">
+            <h1 className="min-w-0 break-words text-base font-semibold tracking-tight text-ink">
+              {data.title}
+            </h1>
+            <RemarkStatusBadge status={data.status} />
+          </div>
+          <p className="mt-1.5 text-[11px] text-muted">
             {data.author.givenName} {data.author.familyName}
+            <span aria-hidden="true"> · </span>
+            {data.target.label}
+            <span aria-hidden="true"> · </span>
+            <time dateTime={data.createdAt}>{created}</time>
+            {data.location?.trim() ? (
+              <>
+                <span aria-hidden="true"> · </span>
+                {data.location}
+              </>
+            ) : null}
           </p>
-        </div>
-        <div className="flex flex-col items-end gap-2">
-          <RemarkStatusBadge status={data.status} />
-          <RemarkPriorityBadge priority={data.priority} />
-        </div>
-      </header>
-      <dl className="grid gap-4 text-sm sm:grid-cols-2">
-        <Field
-          label={t('remarks.target')}
-          value={`${t(`remarks.targetKind.${data.target.kind}`)} · ${data.target.label}`}
-        />
-        <Field label={t('remarks.priority')} value={t(`remarks.priorityLabel.${data.priority}`)} />
-        <Field label={t('remarks.status')} value={t(`remarks.statusLabel.${data.status}`)} />
-        <Field
-          label={t('remarks.location')}
-          value={data.location?.trim() ? data.location : t('remarks.locationNone')}
-        />
-        <Field
-          label={t('remarks.createdOn')}
-          value={new Date(data.createdAt).toLocaleDateString(dateLocale, { timeZone: 'UTC' })}
-        />
-        <Field
-          label={t('remarks.lastActivity')}
-          value={new Date(data.lastActivityAt).toLocaleDateString(dateLocale, {
-            timeZone: 'UTC',
-          })}
-        />
-      </dl>
-      <section className="mt-8" aria-labelledby="remark-message">
-        <h2 id="remark-message" className="text-sm font-medium text-ink">
-          {t('remarks.remark')}
-        </h2>
-        <p className="mt-2 max-w-prose whitespace-pre-wrap break-words text-sm text-ink">
-          {data.message}
-        </p>
-      </section>
-      {data.correctionVersion ? (
-        <section
-          className="mt-6 rounded-md border border-line bg-surface px-3 py-3"
-          aria-label={t('remarks.correctionAria')}
-        >
-          <p className="text-sm font-medium text-ink">{t('remarks.correctionLinked')}</p>
-          <p className="mt-1 text-sm text-ink">
-            {data.correctionVersion.deliverableTitle} · V{data.correctionVersion.versionNumber}
+          <p className="mt-2 text-xs leading-snug text-muted">
+            {t(`remarks.next.${audience}.${data.status}`)}
           </p>
-        </section>
-      ) : null}
-      <section className="mt-8" aria-labelledby="remark-thread">
-        <h2 id="remark-thread" className="text-sm font-medium text-ink">
-          {t('remarks.exchanges')}
-        </h2>
-        {data.replies.length === 0 ? (
-          <p className="mt-2 text-sm text-muted">{t('remarks.noThread')}</p>
-        ) : (
-          <ol className="mt-3 flex flex-col gap-2" aria-label={t('remarks.conversationAria')}>
-            {data.replies.map((item) => (
-              <li key={item.id} className="rounded-md border border-line bg-surface px-3 py-3">
-                <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
-                  <p className="font-medium text-ink">
-                    {item.author.givenName} {item.author.familyName}
-                  </p>
-                  <time className="text-muted" dateTime={item.createdAt}>
-                    {new Date(item.createdAt).toLocaleDateString(dateLocale, { timeZone: 'UTC' })}
-                  </time>
-                </div>
-                <p className="mt-2 whitespace-pre-wrap break-words text-sm text-ink">
-                  {item.message}
-                </p>
-              </li>
-            ))}
-          </ol>
-        )}
-      </section>
-      {canReplyAction ? (
-        <section className="mt-8" aria-labelledby="remark-reply">
-          <h2 id="remark-reply" className="text-sm font-medium text-ink">
-            {t('remarks.reply')}
+        </header>
+
+        <div className="px-4 py-3.5" aria-labelledby="remark-message">
+          <h2 id="remark-message" className="sr-only">
+            {t('remarks.remark')}
           </h2>
+          <p className="whitespace-pre-wrap break-words text-sm leading-relaxed text-ink">
+            {data.message}
+          </p>
+          {data.correctionVersion ? (
+            <p className="mt-3 text-xs text-muted" aria-label={t('remarks.correctionAria')}>
+              {t('remarks.correctionLinked')}
+              <span aria-hidden="true"> · </span>
+              <span className="text-ink">
+                {data.correctionVersion.deliverableTitle} · V{data.correctionVersion.versionNumber}
+              </span>
+            </p>
+          ) : null}
+        </div>
+
+        <section className="border-t border-line px-4 py-3" aria-labelledby="remark-thread">
+          <h2 id="remark-thread" className="text-[11px] font-medium tracking-wide text-muted uppercase">
+            {t('remarks.exchanges')}
+          </h2>
+          {data.replies.length === 0 ? (
+            <p className="mt-1.5 text-xs text-muted">{t('remarks.noThread')}</p>
+          ) : (
+            <ol className="mt-2" aria-label={t('remarks.conversationAria')}>
+              {data.replies.map((item) => (
+                <li key={item.id} className="border-l border-line py-1.5 pl-3">
+                  <p className="text-[11px] text-muted">
+                    <span className="font-medium text-ink">
+                      {item.author.givenName} {item.author.familyName}
+                    </span>
+                    <span aria-hidden="true"> · </span>
+                    <time dateTime={item.createdAt}>
+                      {new Date(item.createdAt).toLocaleDateString(dateLocale, { timeZone: 'UTC' })}
+                    </time>
+                  </p>
+                  <p className="mt-0.5 whitespace-pre-wrap break-words text-sm leading-relaxed text-ink">
+                    {item.message}
+                  </p>
+                </li>
+              ))}
+            </ol>
+          )}
+        </section>
+
+        {canReplyAction ? (
           <form
-            className="mt-3 flex flex-col gap-3"
+            className="border-t border-line px-4 py-3"
+            aria-labelledby="remark-reply"
             onSubmit={async (event) => {
               event.preventDefault();
               await reply.mutateAsync({ message });
               setMessage('');
             }}
           >
+            <h2 id="remark-reply" className="sr-only">
+              {t('remarks.reply')}
+            </h2>
             <Textarea
               id="reply-message"
-              label={t('remarks.message')}
+              label={t('remarks.reply')}
               value={message}
+              rows={3}
               maxLength={4000}
               required
+              className="!min-h-16 text-sm"
               onChange={(event) => setMessage(event.target.value)}
             />
             {reply.error ? (
-              <p className="text-sm text-danger" role="alert">
+              <p className="mt-2 text-xs text-danger" role="alert">
                 {queryErrorMessage(reply.error, t)}
               </p>
             ) : null}
-            <Button type="submit" disabled={reply.isPending}>
-              {t('remarks.sendReply')}
-            </Button>
-          </form>
-        </section>
-      ) : null}
-      {canResolveAction ? (
-        <section
-          className="mt-8 rounded-md border border-line bg-surface px-3 py-3"
-          aria-label={t('remarks.correctionSectionAria')}
-        >
-          <p className="text-sm font-medium text-ink">{t('remarks.correctionDone')}</p>
-          <p className="mt-1 text-sm text-muted">{t('remarks.correctionHelp')}</p>
-          {data.deliverableId && versionOptions.length > 0 ? (
-            <div className="mt-3">
-              <Select
-                id="correction-version"
-                label={t('remarks.correctionVersion')}
-                value={correctionVersionId}
-                onChange={(event) => setCorrectionVersionId(event.target.value)}
-              >
-                <option value="">{t('common.none')}</option>
-                {versionOptions.map((version) => (
-                  <option key={version.id} value={version.id}>
-                    V{version.versionNumber}
-                    {version.changeSummary ? ` — ${version.changeSummary}` : ''}
-                  </option>
-                ))}
-              </Select>
+            <div className="mt-2">
+              <Button type="submit" className="h-8 px-3 text-xs" disabled={reply.isPending}>
+                {t('remarks.sendReply')}
+              </Button>
             </div>
-          ) : null}
-          {resolve.error ? (
-            <p className="mt-3 text-sm text-danger" role="alert">
-              {queryErrorMessage(resolve.error, t)}
-            </p>
-          ) : null}
-          <div className="mt-3">
+          </form>
+        ) : null}
+
+        {canResolveAction ? (
+          <section
+            className="flex flex-col gap-2 border-t border-line px-4 py-3 sm:flex-row sm:items-end sm:justify-between"
+            aria-label={t('remarks.correctionSectionAria')}
+          >
+            <div className="min-w-0 flex-1">
+              <p className="text-xs font-medium text-ink">{t('remarks.correctionDone')}</p>
+              <p className="mt-0.5 text-[11px] leading-snug text-muted">{t('remarks.correctionHelp')}</p>
+              {data.deliverableId && versionOptions.length > 0 ? (
+                <div className="mt-2 max-w-sm">
+                  <Select
+                    id="correction-version"
+                    label={t('remarks.correctionVersion')}
+                    value={correctionVersionId}
+                    onChange={(event) => setCorrectionVersionId(event.target.value)}
+                  >
+                    <option value="">{t('common.none')}</option>
+                    {versionOptions.map((version) => (
+                      <option key={version.id} value={version.id}>
+                        V{version.versionNumber}
+                        {version.changeSummary ? ` — ${version.changeSummary}` : ''}
+                      </option>
+                    ))}
+                  </Select>
+                </div>
+              ) : null}
+            </div>
             <Button
+              className="h-8 w-fit shrink-0 self-start px-3 text-xs"
               disabled={resolve.isPending}
-              onClick={() =>
-                resolve.mutate(correctionVersionId ? { correctionVersionId } : {})
-              }
+              onClick={() => resolve.mutate(correctionVersionId ? { correctionVersionId } : {})}
             >
               {t('remarks.correctionDone')}
             </Button>
-          </div>
-        </section>
-      ) : null}
-      {canCloseAction || canReopenAction ? (
-        <section className="mt-8 flex flex-wrap gap-2" aria-label={t('remarks.supervisorActionsAria')}>
-          {canCloseAction ? (
-            <Button disabled={close.isPending} onClick={() => close.mutate()}>
-              {t('remarks.close')}
-            </Button>
-          ) : null}
-          {canReopenAction ? (
-            <Button
-              variant="secondary"
-              disabled={reopen.isPending}
-              onClick={() => reopen.mutate()}
-            >
-              {t('remarks.reopen')}
-            </Button>
-          ) : null}
-          {close.error || reopen.error ? (
-            <p className="w-full text-sm text-danger" role="alert">
-              {queryErrorMessage(close.error ?? reopen.error, t)}
-            </p>
-          ) : null}
-        </section>
-      ) : null}
-    </article>
-  );
-}
+            {resolve.error ? (
+              <p className="w-full text-xs text-danger" role="alert">
+                {queryErrorMessage(resolve.error, t)}
+              </p>
+            ) : null}
+          </section>
+        ) : null}
 
-function Field({ label, value }: { label: string; value: string }) {
-  return (
-    <div>
-      <dt className="text-muted">{label}</dt>
-      <dd className="mt-1 break-words text-ink">{value}</dd>
-    </div>
+        {canCloseAction || canReopenAction ? (
+          <section
+            className="flex flex-wrap items-center gap-2 border-t border-line px-4 py-3"
+            aria-label={t('remarks.supervisorActionsAria')}
+          >
+            {canCloseAction ? (
+              <Button className="h-8 px-3 text-xs" disabled={close.isPending} onClick={() => close.mutate()}>
+                {t('remarks.close')}
+              </Button>
+            ) : null}
+            {canReopenAction ? (
+              <Button
+                variant="secondary"
+                className="h-8 px-3 text-xs"
+                disabled={reopen.isPending}
+                onClick={() => reopen.mutate()}
+              >
+                {t('remarks.reopen')}
+              </Button>
+            ) : null}
+            {close.error || reopen.error ? (
+              <p className="w-full text-xs text-danger" role="alert">
+                {queryErrorMessage(close.error ?? reopen.error, t)}
+              </p>
+            ) : null}
+          </section>
+        ) : null}
+      </section>
+    </article>
   );
 }

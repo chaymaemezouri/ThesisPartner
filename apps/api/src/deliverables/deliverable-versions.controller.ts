@@ -6,6 +6,7 @@ import {
   Param,
   ParseUUIDPipe,
   Post,
+  Query,
   Req,
   UseInterceptors,
 } from '@nestjs/common';
@@ -107,9 +108,16 @@ export class DeliverableVersionsController {
     @Param('thesisId', ParseUUIDPipe) thesisId: string,
     @Param('deliverableId', ParseUUIDPipe) deliverableId: string,
     @Param('versionId', ParseUUIDPipe) versionId: string,
+    @Query('inline') inline: string | undefined,
     @Req() request: Request,
   ) {
-    return this.files.download(actorId(request), thesisId, deliverableId, versionId);
+    return this.files.download(
+      actorId(request),
+      thesisId,
+      deliverableId,
+      versionId,
+      inline === '1',
+    );
   }
 }
 

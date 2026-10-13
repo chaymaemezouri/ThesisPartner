@@ -18,5 +18,6 @@ export type ObjectStorage = {
     downloadName: string;
     contentType: string;
     ttlSeconds: number;
+    inline?: boolean;
   }): Promise<{ url: string; expiresAt: Date }>;
 };

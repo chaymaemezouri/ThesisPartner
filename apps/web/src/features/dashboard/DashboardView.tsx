@@ -34,7 +34,6 @@ export function DashboardView() {
         <h1 className="text-xl font-semibold leading-tight tracking-tight text-ink">
           {t('dashboard.greeting', { name: data.profile.givenName })}
         </h1>
-        <p className="text-sm text-muted">{t('dashboard.greetingSubtitle')}</p>
       </header>
       <AcademicProfileHeader profile={data.profile} />
       <div className="grid min-h-0 flex-1 gap-4 lg:grid-cols-2 lg:items-stretch lg:gap-5">

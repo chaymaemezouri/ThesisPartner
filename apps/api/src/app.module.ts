@@ -17,7 +17,11 @@ import { DashboardModule } from './dashboard/dashboard.module';
 import { HealthModule } from './health/health.module';
 import { ObjectivesModule } from './objectives/objectives.module';
 import { DeliverablesModule } from './deliverables/deliverables.module';
+import { MeetingsModule } from './meetings/meetings.module';
+import { MessagesModule } from './messages/messages.module';
+import { PortfolioModule } from './portfolio/portfolio.module';
 import { RemarksModule } from './remarks/remarks.module';
+import { ResourcesModule } from './resources/resources.module';
 import { SupervisionModule } from './supervision/supervision.module';
 import { LoggerModule } from './infrastructure/logger/logger.module';
 import { PrismaModule } from './infrastructure/prisma/prisma.module';
@@ -43,6 +47,10 @@ import { ThesesModule } from './theses/theses.module';
     ObjectivesModule,
     DeliverablesModule,
     RemarksModule,
+    ResourcesModule,
+    MeetingsModule,
+    MessagesModule,
+    PortfolioModule,
     SupervisionModule,
     ThrottlerModule.forRootAsync({
       inject: [ENV],

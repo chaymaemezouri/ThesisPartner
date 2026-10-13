@@ -7,14 +7,22 @@ export type IconName =
   | 'deliverables'
   | 'remarks'
   | 'meetings'
+  | 'messages'
   | 'watch'
   | 'radar'
   | 'portfolio'
+  | 'library'
   | 'settings'
   | 'profile'
   | 'supervision'
   | 'menu'
-  | 'chevron';
+  | 'chevron'
+  | 'notice'
+  | 'plus'
+  | 'pencil'
+  | 'trash'
+  | 'close'
+  | 'back';
 
 export type NavItem = {
   to: string;
@@ -57,6 +65,18 @@ export const PRIMARY_NAV: NavItem[] = [
     icon: 'meetings',
   },
   {
+    to: '/ressources',
+    labelKey: 'nav.resources',
+    descriptionKey: 'nav.resourcesDesc',
+    icon: 'library',
+  },
+  {
+    to: '/messagerie',
+    labelKey: 'nav.messages',
+    descriptionKey: 'nav.messagesDesc',
+    icon: 'messages',
+  },
+  {
     to: '/veille',
     labelKey: 'nav.watch',
     descriptionKey: 'nav.watchDesc',
@@ -95,6 +115,30 @@ export const SUPERVISOR_NAV: NavItem[] = [
     labelKey: 'nav.myStudents',
     descriptionKey: 'nav.myStudentsDesc',
     icon: 'supervision',
+  },
+  {
+    to: '/reunions',
+    labelKey: 'nav.meetings',
+    descriptionKey: 'nav.meetingsDesc',
+    icon: 'meetings',
+  },
+  {
+    to: '/suivi',
+    labelKey: 'nav.followUp',
+    descriptionKey: 'nav.followUpDesc',
+    icon: 'radar',
+  },
+  {
+    to: '/ressources',
+    labelKey: 'nav.resources',
+    descriptionKey: 'nav.resourcesDesc',
+    icon: 'library',
+  },
+  {
+    to: '/messagerie',
+    labelKey: 'nav.messages',
+    descriptionKey: 'nav.messagesDesc',
+    icon: 'messages',
   },
 ];
 

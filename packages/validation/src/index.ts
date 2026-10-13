@@ -594,6 +594,10 @@ export const supervisedThesisSchema = z
     durationYears: z.number().int().min(0).max(20).nullable(),
     progressPercentage: z.number().int().min(0).max(100),
     deliverableCount: z.number().int().min(0),
+    pendingValidationCount: z.number().int().min(0),
+    pendingDeliverables: z
+      .array(z.object({ id: uuidSchema, title: boundedTextSchema(200) }).strict())
+      .max(20),
     supervisors: z.array(z.object({ displayName: boundedTextSchema(160) }).strict()).max(20),
     meetings: z
       .array(
@@ -622,6 +626,41 @@ export const supervisedThesisSchema = z
 export const supervisedThesisListSchema = z
   .object({
     theses: z.array(supervisedThesisSchema).max(50),
+  })
+  .strict();
+
+export const supervisedSpaceSchema = z
+  .object({
+    profile: academicProfileSchema,
+    thesis: dashboardThesisSchema,
+    progress: z
+      .object({
+        percentage: z.number().int().min(0).max(100),
+        status: progressStatusSchema,
+      })
+      .strict(),
+    objectives: z
+      .object({
+        total: z.number().int().min(0),
+        planned: z.number().int().min(0),
+        inProgress: z.number().int().min(0),
+        completed: z.number().int().min(0),
+        overdue: z.number().int().min(0),
+      })
+      .strict(),
+    deliverables: z
+      .object({
+        total: z.number().int().min(0),
+        draft: z.number().int().min(0),
+        submitted: z.number().int().min(0),
+        changesRequested: z.number().int().min(0),
+        validated: z.number().int().min(0),
+        overdue: z.number().int().min(0),
+      })
+      .strict(),
+    workProgress: z.object({ percentage: z.number().int().min(0).max(100) }).strict(),
+    upcomingDeadlines: dashboardSchema.shape.upcomingDeadlines,
+    recentActivity: dashboardSchema.shape.recentActivity,
   })
   .strict();
 
@@ -887,5 +926,412 @@ export const remarkSchema = remarkListItemSchema
 export const remarkListSchema = z
   .object({
     remarks: z.array(remarkListItemSchema).max(500),
+  })
+  .strict();
+
+export const meetingModeSchema = z.enum(['ONLINE', 'IN_PERSON']);
+export const meetingStatusSchema = z.enum(['REQUESTED', 'PLANNED', 'HELD', 'CANCELLED']);
+
+function refineMeetingPlace(
+  data: { mode: 'ONLINE' | 'IN_PERSON'; location?: string; meetingUrl?: string },
+  ctx: z.RefinementCtx,
+) {
+  if (data.mode === 'ONLINE') {
+    const url = data.meetingUrl?.trim() ?? '';
+    if (url && !z.string().url().safeParse(url).success) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['meetingUrl'], message: 'Lien invalide' });
+    }
+    if (data.location?.trim()) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['location'],
+        message: 'Pas de lieu pour une réunion en ligne',
+      });
+    }
+    return;
+  }
+  if (!data.location?.trim()) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['location'], message: 'Champ requis' });
+  }
+  if (data.meetingUrl?.trim()) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['meetingUrl'],
+      message: 'Pas de lien pour une réunion en présentiel',
+    });
+  }
+}
+
+export const createMeetingSchema = z
+  .object({
+    title: z.string().trim().min(1, 'Champ requis').max(200),
+    scheduledOn: daySchema,
+    mode: meetingModeSchema,
+    location: z.string().trim().max(300).optional(),
+    meetingUrl: z.string().trim().max(500).optional(),
+    agenda: z.string().trim().max(4000).optional(),
+  })
+  .strict()
+  .superRefine(refineMeetingPlace);
+
+export const requestMeetingSchema = z
+  .object({
+    title: z.string().trim().min(1, 'Champ requis').max(200),
+    agenda: z.string().trim().max(4000).optional(),
+  })
+  .strict();
+
+export const holdMeetingSchema = z
+  .object({
+    minutes: z.string().trim().min(1, 'Champ requis').max(4000),
+  })
+  .strict();
+
+export const cancelMeetingSchema = z
+  .object({
+    reason: z.string().trim().max(500).optional(),
+  })
+  .strict();
+
+export const meetingSchema = z
+  .object({
+    id: uuidSchema,
+    thesisId: uuidSchema,
+    title: boundedTextSchema(200),
+    scheduledOn: daySchema.nullable(),
+    mode: meetingModeSchema.nullable(),
+    status: meetingStatusSchema,
+    location: z.string().max(300).nullable(),
+    meetingUrl: z.string().max(500).nullable(),
+    agenda: z.string().max(4000).nullable(),
+    minutes: z.string().max(4000).nullable(),
+    cancelReason: z.string().max(500).nullable(),
+    createdAt: z.string().datetime(),
+    updatedAt: z.string().datetime(),
+  })
+  .strict();
+
+export const meetingListSchema = z
+  .object({
+    upcoming: z.array(meetingSchema).max(200),
+    history: z.array(meetingSchema).max(500),
+  })
+  .strict();
+
+export const publicationKindSchema = z.enum(['ARTICLE', 'CONFERENCE']);
+export const publicationStatusSchema = z.enum([
+  'IN_PREPARATION',
+  'SUBMITTED',
+  'ACCEPTED',
+  'PUBLISHED',
+]);
+
+export const publicationInputSchema = z
+  .object({
+    title: z.string().trim().min(1, 'Champ requis').max(300),
+    venue: z.string().trim().min(1, 'Champ requis').max(200),
+    year: z.number().int().min(1950).max(2100),
+    kind: publicationKindSchema,
+  })
+  .strict();
+
+export const portfolioProjectInputSchema = z
+  .object({
+    title: z.string().trim().min(1, 'Champ requis').max(200),
+    summary: z.string().trim().max(1000).optional(),
+  })
+  .strict();
+
+export const portfolioSkillInputSchema = z
+  .object({
+    label: z.string().trim().min(1, 'Champ requis').max(80),
+  })
+  .strict();
+
+export const publicationSchema = z
+  .object({
+    id: uuidSchema,
+    title: boundedTextSchema(300),
+    venue: boundedTextSchema(200),
+    year: z.number().int(),
+    kind: publicationKindSchema,
+    status: publicationStatusSchema.default('PUBLISHED'),
+  })
+  .strict();
+
+export const portfolioProjectSchema = z
+  .object({
+    id: uuidSchema,
+    title: boundedTextSchema(200),
+    summary: z.string().max(1000).nullable(),
+  })
+  .strict();
+
+export const portfolioSkillSchema = z
+  .object({
+    id: uuidSchema,
+    label: boundedTextSchema(80),
+  })
+  .strict();
+
+export const portfolioSchema = z
+  .object({
+    profile: z
+      .object({
+        displayName: boundedTextSchema(160),
+        specialty: z.string().max(160).nullable(),
+        academicTitle: z.string().max(80).nullable(),
+        avatarUrl: z.string().max(500).nullable(),
+      })
+      .strict(),
+    counts: z
+      .object({
+        publications: z.number().int().nonnegative(),
+        conferences: z.number().int().nonnegative(),
+        projects: z.number().int().nonnegative(),
+      })
+      .strict(),
+    publications: z.array(publicationSchema).max(200),
+    projects: z.array(portfolioProjectSchema).max(100),
+    skills: z.array(portfolioSkillSchema).max(80),
+  })
+  .strict();
+
+export const conversationKindSchema = z.enum(['DIRECT', 'GROUP']);
+
+export const createMessageGroupSchema = z
+  .object({
+    title: z.string().trim().min(1, 'Champ requis').max(120),
+    studentIds: z.array(z.string().uuid()).min(1).max(30),
+  })
+  .strict();
+
+export const createMessageSchema = z
+  .object({
+    body: z.string().trim().min(1, 'Champ requis').max(4000),
+  })
+  .strict();
+
+export const messageParticipantSchema = z
+  .object({
+    userId: z.string().uuid(),
+    displayName: z.string().max(160),
+  })
+  .strict();
+
+export const messagePreviewSchema = z
+  .object({
+    id: z.string().uuid(),
+    body: z.string().max(4000),
+    authorId: z.string().uuid(),
+    createdAt: z.string().datetime(),
+  })
+  .strict();
+
+export const conversationSummarySchema = z
+  .object({
+    id: z.string().uuid(),
+    kind: conversationKindSchema,
+    title: z.string().max(120).nullable(),
+    thesisId: z.string().uuid().nullable(),
+    thesisTitle: z.string().max(300).nullable(),
+    participants: z.array(messageParticipantSchema).max(40),
+    lastMessage: messagePreviewSchema.nullable(),
+    unread: z.boolean(),
+    updatedAt: z.string().datetime(),
+  })
+  .strict();
+
+export const messageStudentSchema = z
+  .object({
+    userId: z.string().uuid(),
+    displayName: z.string().max(160),
+  })
+  .strict();
+
+export const conversationListSchema = z
+  .object({
+    conversations: z.array(conversationSummarySchema).max(200),
+    students: z.array(messageStudentSchema).max(100),
+  })
+  .strict();
+
+export const conversationMessageSchema = z
+  .object({
+    id: z.string().uuid(),
+    authorId: z.string().uuid(),
+    authorName: z.string().max(160),
+    body: z.string().max(4000),
+    createdAt: z.string().datetime(),
+  })
+  .strict();
+
+export const conversationDetailSchema = z
+  .object({
+    id: z.string().uuid(),
+    kind: conversationKindSchema,
+    title: z.string().max(120).nullable(),
+    thesisId: z.string().uuid().nullable(),
+    thesisTitle: z.string().max(300).nullable(),
+    createdById: z.string().uuid(),
+    participants: z.array(messageParticipantSchema).max(40),
+    messages: z.array(conversationMessageSchema).max(500),
+  })
+  .strict();
+
+export const sharedResourceKindSchema = z.enum(['COURSE', 'ARTICLE', 'DOCUMENT']);
+
+export const sharedResourceInputSchema = z
+  .object({
+    title: z.string().trim().min(1, 'Champ requis').max(200),
+    kind: sharedResourceKindSchema,
+    source: z.union([z.string().trim().max(200), z.literal('')]).optional(),
+    summary: z.union([z.string().trim().max(2000), z.literal('')]).optional(),
+    url: z.union([httpUrlSchema, z.literal('')]).optional(),
+  })
+  .strict();
+
+export const sharedResourceSchema = z
+  .object({
+    id: uuidSchema,
+    title: z.string().max(200),
+    kind: sharedResourceKindSchema,
+    source: z.string().max(200).nullable(),
+    summary: z.string().max(2000).nullable(),
+    url: z.string().max(500).nullable(),
+    authorName: z.string().max(160),
+    createdAt: z.string().datetime(),
+  })
+  .strict();
+
+export const resourceLibrarySchema = z
+  .object({
+    canShare: z.boolean(),
+    resources: z.array(sharedResourceSchema).max(200),
+  })
+  .strict();
+
+const scoreSchema = z.number().int().min(1).max(5);
+
+export const evaluationInputSchema = z
+  .object({
+    evaluatedOn: daySchema,
+    quality: scoreSchema,
+    autonomy: scoreSchema,
+    methodology: scoreSchema,
+    advancement: scoreSchema,
+    comment: z.string().trim().max(2000).optional(),
+  })
+  .strict();
+
+export const publicationStatusInputSchema = z
+  .object({
+    status: publicationStatusSchema,
+  })
+  .strict();
+
+const deskStudent = boundedTextSchema(160);
+
+export const supervisorDeskSchema = z
+  .object({
+    notifications: z
+      .array(
+        z
+          .object({
+            id: z.string().max(80),
+            kind: z.enum(['DELIVERABLE', 'OVERDUE', 'MEETING', 'REMARK']),
+            thesisId: uuidSchema,
+            studentName: deskStudent,
+            title: boundedTextSchema(200),
+            date: daySchema.nullable(),
+          })
+          .strict(),
+      )
+      .max(80),
+    schedule: z
+      .array(
+        z
+          .object({
+            id: z.string().max(80),
+            kind: z.enum(['DEFENSE', 'OBJECTIVE', 'DELIVERABLE', 'MEETING']),
+            thesisId: uuidSchema,
+            studentName: deskStudent,
+            title: boundedTextSchema(300),
+            date: daySchema,
+          })
+          .strict(),
+      )
+      .max(300),
+    publications: z
+      .array(
+        z
+          .object({
+            id: uuidSchema,
+            thesisId: uuidSchema,
+            studentName: deskStudent,
+            title: boundedTextSchema(300),
+            venue: boundedTextSchema(200),
+            year: z.number().int(),
+            kind: publicationKindSchema,
+            status: publicationStatusSchema,
+          })
+          .strict(),
+      )
+      .max(200),
+    decisions: z
+      .array(
+        z
+          .object({
+            id: uuidSchema,
+            thesisId: uuidSchema,
+            studentName: deskStudent,
+            action: z.string().max(120),
+            createdAt: z.string().datetime(),
+          })
+          .strict(),
+      )
+      .max(100),
+    plans: z
+      .array(
+        z
+          .object({
+            thesisId: uuidSchema,
+            studentName: deskStudent,
+            progressPercentage: z.number().int().min(0).max(100),
+            phases: z
+              .array(
+                z
+                  .object({
+                    id: uuidSchema,
+                    title: boundedTextSchema(200),
+                    startDate: daySchema.nullable(),
+                    dueDate: daySchema.nullable(),
+                    status: z.enum(['PLANNED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED']),
+                    progress: z.number().int().min(0).max(100),
+                  })
+                  .strict(),
+              )
+              .max(40),
+          })
+          .strict(),
+      )
+      .max(50),
+    evaluations: z
+      .array(
+        z
+          .object({
+            id: uuidSchema,
+            thesisId: uuidSchema,
+            studentName: deskStudent,
+            evaluatedOn: daySchema,
+            quality: scoreSchema,
+            autonomy: scoreSchema,
+            methodology: scoreSchema,
+            advancement: scoreSchema,
+            comment: z.string().max(2000).nullable(),
+          })
+          .strict(),
+      )
+      .max(200),
   })
   .strict();

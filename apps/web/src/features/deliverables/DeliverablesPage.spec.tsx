@@ -288,12 +288,15 @@ describe('deliverables', () => {
     expect(items[1]).not.toHaveTextContent('Latest version');
     expect(items[0]).toHaveTextContent('chapitre-v2.pdf');
     expect(items[0]).toHaveTextContent('PDF');
-    expect(items[1]).toHaveTextContent('No file yet — attach one to this version if needed.');
+    expect(items[1]).toHaveTextContent('No file');
     expect(
       screen.getByRole('button', { name: 'Add a new version' }),
     ).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Add a file' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Download' })).toBeInTheDocument();
+    const documentPanel = screen.getByRole('region', { name: 'Document' });
+    expect(documentPanel).toHaveTextContent('chapitre-v2.pdf');
+    expect(documentPanel).toHaveTextContent('Version 2');
+    expect(screen.getAllByRole('button', { name: 'Download' })).toHaveLength(2);
     expect(screen.queryByRole('button', { name: 'Delete' })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Edit' })).toBeInTheDocument();
   });
@@ -318,10 +321,10 @@ describe('deliverables', () => {
       }),
     );
     renderAt(`/livrables/${deliverableId}`, <DoctoralDeliverableDetailPage />);
-    expect(await screen.findByText('No version has been created yet.')).toBeInTheDocument();
-    expect(
-      screen.getByText('A version is a recorded stage of your deliverable.'),
-    ).toBeInTheDocument();
+    expect(await screen.findByText('No version yet.')).toBeInTheDocument();
+    expect(screen.getByRole('region', { name: 'Document' })).toHaveTextContent(
+      'No file attached.',
+    );
     expect(screen.getByRole('button', { name: 'Create first version' })).toBeInTheDocument();
   });
 
@@ -369,8 +372,9 @@ describe('deliverables', () => {
     expect(
       screen.queryByRole('button', { name: 'Create first version' }),
     ).not.toBeInTheDocument();
-    expect(screen.getByText('chapitre-v2.pdf')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Download' })).toBeInTheDocument();
+    expect(screen.getAllByText('chapitre-v2.pdf')).toHaveLength(2);
+    expect(screen.getByRole('region', { name: 'Document' })).toHaveTextContent('chapitre-v2.pdf');
+    expect(screen.getAllByRole('button', { name: 'Download' })).toHaveLength(2);
     expect(screen.queryByRole('button', { name: 'Add a file' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Delete' })).not.toBeInTheDocument();
     expect(

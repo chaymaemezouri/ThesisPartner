@@ -1,0 +1,3 @@
+ALTER TABLE "meetings" ALTER COLUMN "scheduled_on" DROP NOT NULL;
+ALTER TABLE "meetings" ALTER COLUMN "mode" DROP NOT NULL;
+ALTER TABLE "meetings" ALTER COLUMN "mode" DROP DEFAULT;

@@ -11,10 +11,7 @@ export function DoctoralDeliverablesPage() {
   const dashboard = useDashboard();
   return (
     <div className="min-w-0">
-      <header className="mb-3 max-w-2xl sm:mb-5">
-        <h1 className="font-serif text-xl text-ink sm:text-2xl">{t('deliverables.title')}</h1>
-        <p className="mt-1 text-xs text-muted sm:mt-2 sm:text-sm">{t('deliverables.subtitle')}</p>
-      </header>
+      <h1 className="sr-only">{t('deliverables.title')}</h1>
       {dashboard.isLoading ? (
         <div aria-busy="true">
           <Skeleton className="h-24" />
@@ -41,6 +38,7 @@ export function DoctoralDeliverablesPage() {
         <DeliverablesWorkspace
           thesisId={dashboard.data.thesis.id}
           canCreate
+          tabsAside
           detailPath={(deliverableId) => `/livrables/${deliverableId}`}
         />
       ) : null}

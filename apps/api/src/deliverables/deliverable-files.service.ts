@@ -186,7 +186,13 @@ export class DeliverableFilesService {
     return toPublicFile(created);
   }
 
-  async download(actorId: string, thesisId: string, deliverableId: string, versionId: string) {
+  async download(
+    actorId: string,
+    thesisId: string,
+    deliverableId: string,
+    versionId: string,
+    inline = false,
+  ) {
     const loaded = await this.loadVersion(actorId, thesisId, deliverableId, versionId);
     if (!canDownloadFile(loaded.role))
       throw new AppException(404, 'NOT_FOUND', 'Resource not found');
@@ -213,6 +219,7 @@ export class DeliverableFilesService {
         downloadName: file.originalName,
         contentType: file.mimeType,
         ttlSeconds: this.env.SIGNED_URL_TTL_SECONDS,
+        inline,
       });
     } catch {
       throw new AppException(503, 'INTERNAL_ERROR', 'Le stockage est indisponible.');

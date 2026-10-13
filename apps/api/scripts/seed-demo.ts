@@ -329,7 +329,7 @@ async function seedDeliverablesAndRemarks(
     },
   ];
 
-  const created: { id: string }[] = [];
+  const created: { id: string; versionId: string; correctionVersionId?: string }[] = [];
   for (const item of deliverables) {
     const deliverable = await prisma.deliverable.create({
       data: {
@@ -347,7 +347,7 @@ async function seedDeliverablesAndRemarks(
         reviewMessage: item.reviewMessage ?? null,
       },
     });
-    await prisma.deliverableVersion.create({
+    const version = await prisma.deliverableVersion.create({
       data: {
         deliverableId: deliverable.id,
         versionNumber: 1,
@@ -355,41 +355,84 @@ async function seedDeliverablesAndRemarks(
         createdById: studentId,
       },
     });
-    created.push(deliverable);
+    const correction =
+      item.type === 'DATASET'
+        ? await prisma.deliverableVersion.create({
+            data: {
+              deliverableId: deliverable.id,
+              versionNumber: 2,
+              changeSummary: 'Schéma des labels et licence ajoutés',
+              createdById: studentId,
+            },
+          })
+        : null;
+    created.push({
+      id: deliverable.id,
+      versionId: version.id,
+      correctionVersionId: correction?.id,
+    });
   }
 
+  const compareTask = byCode.ETAT_ART
+    ? await prisma.task.findFirst({
+        where: { objectiveId: byCode.ETAT_ART, title: 'Comparer les approches' },
+        select: { id: true },
+      })
+    : null;
+
+  type SeedReply = { author: 'student' | 'supervisor'; message: string };
   type SeedRemark = {
     title: string;
     message: string;
     status: RemarkStatus;
     priority: RemarkPriority;
     objectiveId?: string;
+    taskId?: string;
     deliverableId?: string;
+    deliverableVersionId?: string;
+    correctionVersionId?: string;
     location?: string;
     resolvedAt?: Date;
     closedAt?: Date;
-    reply?: string;
+    replies?: SeedReply[];
   };
 
+  const chapter = created[0];
+  const slides = created[1];
+  const protocol = created[2];
+  const dataset = created[3];
+  const article = created[4];
+
   const remarks: SeedRemark[] = [
-    {
-      title: 'Clarifier la question de recherche',
-      message:
-        'La problématique est solide, mais la question principale doit être formulée de façon plus opérationnelle.',
-      status: 'RESOLVED',
-      priority: 'HIGH',
-      objectiveId: byCode.PROBLEMATIQUE,
-      resolvedAt: dateUTC(2025, 5, 10),
-      reply: 'Question reformulée et validée en réunion du 10 mai.',
-    },
     {
       title: 'Compléter la comparaison des baselines',
       message: 'Ajouter au moins deux baselines récentes (2023–2025) dans le chapitre 2.',
       status: 'OPEN',
-      priority: 'MEDIUM',
+      priority: 'HIGH',
       objectiveId: byCode.ETAT_ART,
-      deliverableId: created[0]?.id,
+      deliverableId: chapter?.id,
+      deliverableVersionId: chapter?.versionId,
       location: 'Section 2.3',
+    },
+    {
+      title: 'Documenter la licence du jeu de données',
+      message:
+        'Le README doit indiquer la licence, la source des traces et le schéma des labels avant toute réutilisation.',
+      status: 'OPEN',
+      priority: 'MEDIUM',
+      objectiveId: byCode.EXPERIMENTATION,
+      deliverableId: dataset?.id,
+      deliverableVersionId: dataset?.versionId,
+      location: 'README',
+    },
+    {
+      title: 'Cadrer le calendrier de rédaction',
+      message:
+        'Proposez un calendrier chapitre par chapitre jusqu’à la soutenance, avec une date de relecture pour chacun.',
+      status: 'OPEN',
+      priority: 'LOW',
+      objectiveId: byCode.REDACTION,
+      location: 'Plan de thèse',
     },
     {
       title: 'Ajuster le protocole de validation croisée',
@@ -397,17 +440,105 @@ async function seedDeliverablesAndRemarks(
       status: 'IN_PROGRESS',
       priority: 'HIGH',
       objectiveId: byCode.METHODOLOGIE,
-      deliverableId: created[2]?.id,
-      reply: 'Je prépare une figure et une note méthodologique.',
+      deliverableId: protocol?.id,
+      deliverableVersionId: protocol?.versionId,
+      location: 'Section 3.2',
+      replies: [
+        {
+          author: 'student',
+          message: 'Je prépare une figure du découpage temporel et une note méthodologique.',
+        },
+      ],
     },
     {
-      title: 'Bien joué pour la mi-parcours',
-      message: 'La présentation était claire. Poursuivre sur le protocole expérimental.',
+      title: 'Préciser la figure d’architecture',
+      message:
+        'La figure 1 du draft doit distinguer l’encodeur, le score d’anomalie et le seuil de décision.',
+      status: 'IN_PROGRESS',
+      priority: 'MEDIUM',
+      objectiveId: byCode.PUBLICATION,
+      taskId: compareTask?.id,
+      deliverableId: article?.id,
+      deliverableVersionId: article?.versionId,
+      location: 'Figure 1',
+      replies: [
+        {
+          author: 'student',
+          message: 'Nouvelle version de la figure envoyée dans le draft, avec la légende.',
+        },
+        {
+          author: 'supervisor',
+          message: 'La légende est claire. Ajoutez encore le jeu de données utilisé pour l’exemple.',
+        },
+      ],
+    },
+    {
+      title: 'Clarifier la question de recherche',
+      message:
+        'La problématique est solide, mais la question principale doit être formulée de façon plus opérationnelle.',
+      status: 'RESOLVED',
+      priority: 'HIGH',
+      objectiveId: byCode.PROBLEMATIQUE,
+      location: 'Introduction',
+      resolvedAt: dateUTC(2025, 5, 10),
+      replies: [
+        {
+          author: 'student',
+          message: 'Question reformulée autour de la détection précoce sur séries temporelles.',
+        },
+        {
+          author: 'supervisor',
+          message: 'Formulation acceptée en réunion du 10 mai. À reporter dans l’introduction.',
+        },
+      ],
+    },
+    {
+      title: 'Corriger le schéma des labels',
+      message: 'La version 1 ne distingue pas les anomalies rares des coupures planifiées.',
+      status: 'RESOLVED',
+      priority: 'MEDIUM',
+      objectiveId: byCode.EXPERIMENTATION,
+      deliverableId: dataset?.id,
+      deliverableVersionId: dataset?.versionId,
+      correctionVersionId: dataset?.correctionVersionId,
+      location: 'Schéma des labels',
+      resolvedAt: dateUTC(2026, 9, 18),
+      replies: [
+        {
+          author: 'student',
+          message: 'Version 2 déposée : labels séparés et licence indiquée dans le README.',
+        },
+      ],
+    },
+    {
+      title: 'Alléger les slides de mi-parcours',
+      message: 'La présentation était claire. Gardez une slide de méthode et une slide de résultats.',
       status: 'CLOSED',
       priority: 'LOW',
       objectiveId: byCode.ETAT_ART,
-      deliverableId: created[1]?.id,
+      deliverableId: slides?.id,
+      deliverableVersionId: slides?.versionId,
+      location: 'Slides 4–6',
       closedAt: dateUTC(2026, 9, 12),
+      replies: [
+        {
+          author: 'student',
+          message: 'Slides réduites à 12. La méthode et les premiers résultats tiennent chacun sur une slide.',
+        },
+        {
+          author: 'supervisor',
+          message: 'Version retenue pour le comité. Remarque fermée.',
+        },
+      ],
+    },
+    {
+      title: 'Bien joué pour la mi-parcours',
+      message: 'Le comité a suivi le propos. Poursuivre sur le protocole expérimental.',
+      status: 'CLOSED',
+      priority: 'LOW',
+      objectiveId: byCode.ETAT_ART,
+      deliverableId: slides?.id,
+      closedAt: dateUTC(2026, 9, 20),
     },
   ];
 
@@ -421,18 +552,21 @@ async function seedDeliverablesAndRemarks(
         status: item.status,
         priority: item.priority,
         objectiveId: item.objectiveId ?? null,
+        taskId: item.taskId ?? null,
         deliverableId: item.deliverableId ?? null,
+        deliverableVersionId: item.deliverableVersionId ?? null,
+        correctionVersionId: item.correctionVersionId ?? null,
         location: item.location ?? null,
         resolvedAt: item.resolvedAt ?? null,
         closedAt: item.closedAt ?? null,
       },
     });
-    if (item.reply) {
+    for (const reply of item.replies ?? []) {
       await prisma.remarkReply.create({
         data: {
           remarkId: remark.id,
-          authorId: studentId,
-          message: item.reply,
+          authorId: reply.author === 'student' ? studentId : supervisorId,
+          message: reply.message,
         },
       });
     }

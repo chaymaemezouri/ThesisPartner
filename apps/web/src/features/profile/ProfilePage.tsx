@@ -32,10 +32,7 @@ export function ProfilePage() {
 
   return (
     <div className="max-w-4xl">
-      <header className="mb-3">
-        <h1 className="font-serif text-2xl text-ink">{t('profile.title')}</h1>
-        <p className="mt-1 text-sm text-muted">{t('profile.subtitle')}</p>
-      </header>
+      <h1 className="sr-only">{t('profile.title')}</h1>
       <ProfileForm
         initial={profile.data}
         onSaved={async () => {

@@ -22,6 +22,15 @@ const BASE_SIGNALS: Array<keyof Omit<ProgressInput, 'hasThesis' | 'thesisStatus'
   'hasSupervisor',
 ];
 
+/** Same average the doctoral dashboard shows as thesis progress. Cancelled objectives are excluded. */
+export function workProgressPercentage(
+  objectives: readonly { status: string; progress: number }[],
+): number {
+  const active = objectives.filter((item) => item.status !== 'CANCELLED');
+  if (active.length === 0) return 0;
+  return Math.round(active.reduce((total, item) => total + item.progress, 0) / active.length);
+}
+
 export function assessProgress(
   input: ProgressInput,
   extra: readonly ExtraSignal[] = [],

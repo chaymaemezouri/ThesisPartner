@@ -1,10 +1,11 @@
-import { Link, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { Skeleton } from '@thesispartner/ui';
 import { useT } from '../../i18n/LocaleContext';
 import { useThesisMembers } from './hooks/use-objectives';
 import { ObjectiveDetailView } from './components/ObjectiveDetailView';
 import { ObjectivesWorkspace } from './components/ObjectivesWorkspace';
 import { QueryError } from './components/QueryError';
+import { StudentSpaceNav } from '../supervision/StudentSpaceNav';
 
 export function SupervisorObjectivesPage() {
   const t = useT();
@@ -13,18 +14,8 @@ export function SupervisorObjectivesPage() {
   const thesis = useThesisMembers(thesisId);
   return (
     <div className="min-w-0">
-      <header className="mb-6 max-w-2xl">
-        <p className="text-sm text-muted">
-          <Link to="/encadrement" className="text-brand">
-            {t('objectives.supervisor.students')}
-          </Link>
-        </p>
-        <h1 className="mt-2 text-xl font-semibold tracking-tight text-ink">
-          {t('objectives.supervisor.title')}
-        </h1>
-        <p className="mt-1 text-sm text-muted">{t('objectives.supervisor.subtitle')}</p>
-        {thesis.data ? <p className="mt-1 text-sm text-ink">{thesis.data.title}</p> : null}
-      </header>
+      <StudentSpaceNav thesisId={thesisId} />
+      <h1 className="sr-only">{t('objectives.supervisor.title')}</h1>
       {thesis.isLoading ? (
         <div aria-busy="true">
           <Skeleton className="h-16" />
@@ -35,6 +26,8 @@ export function SupervisorObjectivesPage() {
         <ObjectivesWorkspace
           thesisId={thesisId}
           canManage={thesis.data.role === 'SUPERVISOR'}
+          tabsAside
+          canRemark={thesis.data.role === 'SUPERVISOR'}
           detailPath={(objectiveId) => `/encadrement/${thesisId}/objectifs/${objectiveId}`}
         />
       ) : null}
@@ -60,6 +53,7 @@ export function SupervisorObjectiveDetailPage() {
       thesisId={thesisId}
       objectiveId={objectiveId}
       canManage={thesis.data.role === 'SUPERVISOR'}
+      canRemark={thesis.data.role === 'SUPERVISOR'}
       backTo={`/encadrement/${thesisId}`}
     />
   );

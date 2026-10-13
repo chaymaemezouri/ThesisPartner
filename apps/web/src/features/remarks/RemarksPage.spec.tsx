@@ -182,7 +182,9 @@ describe('remarks pages', () => {
     renderAt('/remarques', <DoctoralRemarksPage />);
     expect(await screen.findByRole('heading', { name: 'Remarks' })).toBeInTheDocument();
     expect(await screen.findByText('Preciser la methodologie')).toBeInTheDocument();
-    expect(screen.getByText(/Deliverable · Chapitre 2/)).toBeInTheDocument();
+    expect(screen.getByText(/Chapitre 2/)).toBeInTheDocument();
+    expect(screen.getByText(/Student’s turn/)).toBeInTheDocument();
+    expect(screen.queryByText('High')).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'New remark' })).not.toBeInTheDocument();
   });
 

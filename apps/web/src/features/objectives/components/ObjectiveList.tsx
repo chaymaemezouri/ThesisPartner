@@ -3,47 +3,63 @@ import { Icon } from '../../../components/Icon';
 import { useLocale, useT } from '../../../i18n/LocaleContext';
 import { formatShortDay } from '../../dashboard/labels';
 import type { Objective } from '../hooks/use-objectives';
+import { LinkedRemarkButton } from '../../remarks/components/LinkedRemarkButton';
 import { ObjectiveProgress } from './ObjectiveProgress';
 import { ObjectiveStatusBadge } from './ObjectiveStatusBadge';
 
 export function ObjectiveList({
   objectives,
   detailPath,
+  thesisId,
   canManage = false,
+  canRemark = false,
   onEdit,
   onDelete,
 }: {
   objectives: Objective[];
   detailPath: (objectiveId: string) => string;
+  thesisId: string;
   canManage?: boolean;
+  canRemark?: boolean;
   onEdit?: (objective: Objective) => void;
   onDelete?: (objective: Objective) => void;
 }) {
   const t = useT();
   return (
-    <div className="mt-4 overflow-hidden rounded-xl border border-line bg-surface">
+    <div className="mt-4 overflow-hidden rounded-md border border-line bg-surface shadow-card">
       <ul className="divide-y divide-line">
         {objectives.map((objective, index) => (
           <li key={objective.id} className="flex items-stretch">
             <ObjectiveRow objective={objective} index={index} to={detailPath(objective.id)} />
-            {canManage ? (
+            {canManage || canRemark ? (
               <div className="flex shrink-0 items-center gap-0.5 border-l border-line px-1.5">
-                <button
-                  type="button"
-                  aria-label={`${t('common.edit')} ${objective.title}`}
-                  className="grid h-7 w-7 place-items-center rounded-md text-warn hover:bg-warn-soft"
-                  onClick={() => onEdit?.(objective)}
-                >
-                  <PencilIcon />
-                </button>
-                <button
-                  type="button"
-                  aria-label={`${t('common.delete')} ${objective.title}`}
-                  className="grid h-7 w-7 place-items-center rounded-md text-danger hover:bg-danger-soft"
-                  onClick={() => onDelete?.(objective)}
-                >
-                  <TrashIcon />
-                </button>
+                {canRemark ? (
+                  <LinkedRemarkButton
+                    thesisId={thesisId}
+                    subject={objective.title}
+                    objectiveId={objective.id}
+                  />
+                ) : null}
+                {canManage ? (
+                  <>
+                    <button
+                      type="button"
+                      aria-label={`${t('common.edit')} ${objective.title}`}
+                      className="grid h-7 w-7 place-items-center rounded-md text-warn hover:bg-warn-soft"
+                      onClick={() => onEdit?.(objective)}
+                    >
+                      <PencilIcon />
+                    </button>
+                    <button
+                      type="button"
+                      aria-label={`${t('common.delete')} ${objective.title}`}
+                      className="grid h-7 w-7 place-items-center rounded-md text-danger hover:bg-danger-soft"
+                      onClick={() => onDelete?.(objective)}
+                    >
+                      <TrashIcon />
+                    </button>
+                  </>
+                ) : null}
               </div>
             ) : null}
           </li>
@@ -68,7 +84,7 @@ function ObjectiveRow({
   return (
     <Link
       to={to}
-      className="block min-w-0 flex-1 px-3 py-2.5 transition-colors duration-150 hover:bg-brand-soft"
+      className="block min-w-0 flex-1 px-3 py-2.5 transition-colors duration-150 hover:bg-brand-soft/70"
     >
       <div className="flex items-center gap-2.5">
         <span className="grid h-6 w-6 shrink-0 place-items-center rounded-md bg-brand-soft text-[11px] font-semibold tabular-nums text-brand">
@@ -85,10 +101,7 @@ function ObjectiveRow({
                 </span>
               ) : null}
             </div>
-            <time
-              className="shrink-0 text-xs text-muted"
-              dateTime={objective.dueDate ?? undefined}
-            >
+            <time className="shrink-0 text-xs text-muted" dateTime={objective.dueDate ?? undefined}>
               {objective.dueDate
                 ? formatShortDay(objective.dueDate, dateLocale)
                 : t('objectives.notDue')}

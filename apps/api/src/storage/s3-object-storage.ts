@@ -108,12 +108,13 @@ export class S3ObjectStorage implements ObjectStorage, OnModuleInit {
     downloadName: string;
     contentType: string;
     ttlSeconds: number;
+    inline?: boolean;
   }): Promise<{ url: string; expiresAt: Date }> {
     const command = new GetObjectCommand({
       Bucket: this.env.S3_BUCKET,
       Key: input.key,
       ResponseContentType: input.contentType,
-      ResponseContentDisposition: contentDisposition(input.downloadName),
+      ResponseContentDisposition: contentDisposition(input.downloadName, input.inline),
     });
     const url = await getSignedUrl(this.client, command, { expiresIn: input.ttlSeconds });
     return { url, expiresAt: signedUrlExpiry(new Date(), input.ttlSeconds) };

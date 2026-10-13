@@ -33,7 +33,7 @@ export function Dropdown({ label, menuLabel, children }: DropdownProps) {
       <button
         type="button"
         className={cn(
-          'inline-flex items-center gap-2 rounded-md border border-line bg-surface px-2 py-1.5 text-sm text-ink',
+          'inline-flex items-center gap-2 rounded-md border border-line bg-surface px-2 py-1.5 text-sm font-medium text-ink shadow-control transition-[background-color,border-color,box-shadow] duration-150 hover:border-brand/30 hover:bg-brand-soft/50',
         )}
         aria-expanded={open}
         aria-haspopup="menu"
@@ -47,7 +47,7 @@ export function Dropdown({ label, menuLabel, children }: DropdownProps) {
           id={menuId}
           role="menu"
           aria-label={menuLabel}
-          className="absolute right-0 z-20 mt-2 min-w-44 rounded-md border border-line bg-surface py-1 shadow-sm"
+          className="absolute right-0 z-20 mt-2 min-w-44 overflow-hidden rounded-md border border-line bg-surface py-1 shadow-card"
         >
           {children(() => setOpen(false))}
         </div>

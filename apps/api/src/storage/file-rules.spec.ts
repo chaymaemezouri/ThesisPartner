@@ -99,6 +99,7 @@ describe('file inspection', () => {
     expect(contentDisposition('rapport\r\n.pdf')).not.toContain('\r');
     expect(contentDisposition('rapport\r\n.pdf')).not.toContain('\n');
     expect(contentDisposition('chapitre.pdf')).toContain('attachment;');
+    expect(contentDisposition('chapitre.pdf', true)).toContain('inline;');
   });
 
   it('hashes the received bytes and sums sizes', () => {

@@ -1,4 +1,5 @@
-import { Button, Modal, Skeleton } from '@thesispartner/ui';
+import { Modal, Skeleton } from '@thesispartner/ui';
+import { IconAction } from '../../../components/IconAction';
 import { useState } from 'react';
 import { useLocale, useT } from '../../../i18n/LocaleContext';
 import { QueryError } from '../../objectives/components/QueryError';
@@ -75,9 +76,11 @@ export function DeliverableVersionHistory({
           </h2>
         </div>
         {canCreate && hasVersions ? (
-          <Button className="h-8 px-2.5 text-xs" onClick={() => setOpen(true)}>
-            {t('deliverables.addVersion')}
-          </Button>
+          <IconAction
+            label={t('deliverables.addVersion')}
+            icon="plus"
+            onClick={() => setOpen(true)}
+          />
         ) : null}
       </div>
 
@@ -105,9 +108,11 @@ export function DeliverableVersionHistory({
           <p className="mt-0.5 text-[11px] text-muted">{t('deliverables.versionHint')}</p>
           {canCreate ? (
             <div className="mt-2">
-              <Button className="h-8 px-2.5 text-xs" onClick={() => setOpen(true)}>
-                {t('deliverables.firstVersion')}
-              </Button>
+              <IconAction
+                label={t('deliverables.firstVersion')}
+                icon="plus"
+                onClick={() => setOpen(true)}
+              />
             </div>
           ) : null}
         </div>

@@ -51,13 +51,13 @@ export function Modal({
         {placement === 'center' ? (
           <div className="modal-dialog__handle" aria-hidden="true" />
         ) : null}
-        <div className="flex shrink-0 items-center justify-between gap-3 border-b border-line px-4 py-3">
-          <h2 id={titleId} className="min-w-0 truncate font-serif text-lg text-ink">
+        <div className="flex shrink-0 items-center justify-between gap-3 border-b border-line bg-canvas/55 px-4 py-3">
+          <h2 id={titleId} className="min-w-0 truncate text-base font-semibold text-ink">
             {title}
           </h2>
           <button
             type="button"
-            className="shrink-0 text-xs font-medium tracking-wide text-muted uppercase transition-colors hover:text-ink"
+            className="shrink-0 rounded-md px-2 py-1 text-xs font-semibold tracking-wide text-muted uppercase transition-colors hover:bg-surface hover:text-ink"
             onClick={onClose}
           >
             {closeLabel}

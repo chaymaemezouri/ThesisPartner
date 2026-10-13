@@ -1,9 +1,10 @@
-import { Link, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { Skeleton } from '@thesispartner/ui';
 import { useT } from '../../i18n/LocaleContext';
 import { useThesisMembers } from '../objectives/hooks/use-objectives';
 import { QueryError } from '../objectives/components/QueryError';
 import { RemarkDetailView } from './components/RemarkDetailView';
+import { StudentSpaceNav } from '../supervision/StudentSpaceNav';
 import { RemarksWorkspace } from './components/RemarksWorkspace';
 
 export function SupervisorRemarksPage() {
@@ -11,26 +12,10 @@ export function SupervisorRemarksPage() {
   const params = useParams();
   const thesisId = params.thesisId ?? '';
   const thesis = useThesisMembers(thesisId);
-  const student = thesis.data?.members.find((member) => member.role === 'DOCTORAL_STUDENT');
   return (
     <div className="min-w-0">
-      <header className="mb-6 max-w-2xl">
-        <p className="text-sm text-muted">
-          <Link to="/encadrement" className="text-brand">
-            {t('remarks.students')}
-          </Link>
-          <span aria-hidden="true"> · </span>
-          <Link to={`/encadrement/${thesisId}`} className="text-brand">
-            {t('remarks.dossier')}
-          </Link>
-        </p>
-        <h1 className="mt-2 font-serif text-2xl text-ink">{t('remarks.title')}</h1>
-        <p className="mt-2 text-sm text-muted">
-          {t('remarks.supervisorSubtitle', {
-            name: student?.displayName ?? t('remarks.thisStudent'),
-          })}
-        </p>
-      </header>
+      <StudentSpaceNav thesisId={thesisId} />
+      <h1 className="sr-only">{t('remarks.title')}</h1>
       {thesis.isLoading ? (
         <div aria-busy="true">
           <Skeleton className="h-24" />
@@ -41,6 +26,7 @@ export function SupervisorRemarksPage() {
         <RemarksWorkspace
           thesisId={thesisId}
           canCreate={thesis.data.role === 'SUPERVISOR'}
+          tabsAside
           detailPath={(remarkId) => `/encadrement/${thesisId}/remarques/${remarkId}`}
         />
       ) : null}

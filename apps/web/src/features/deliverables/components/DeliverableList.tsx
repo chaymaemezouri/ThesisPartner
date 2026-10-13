@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { LinkedRemarkButton } from '../../remarks/components/LinkedRemarkButton';
 import { useLocale, useT } from '../../../i18n/LocaleContext';
 import { formatDay } from '../../dashboard/labels';
 import type { DeliverableListItem } from '../hooks/use-deliverables';
@@ -6,9 +7,13 @@ import type { DeliverableListItem } from '../hooks/use-deliverables';
 export function DeliverableList({
   deliverables,
   detailPath,
+  thesisId,
+  canRemark = false,
 }: {
   deliverables: DeliverableListItem[];
   detailPath: (deliverableId: string) => string;
+  thesisId?: string;
+  canRemark?: boolean;
 }) {
   const t = useT();
   const { dateLocale } = useLocale();
@@ -29,10 +34,10 @@ export function DeliverableList({
           const due = item.dueDate ? formatDay(item.dueDate, dateLocale) : t('common.notProvided');
 
           return (
-            <li key={item.id}>
+            <li key={item.id} className="flex items-stretch">
               <Link
                 to={detailPath(item.id)}
-                className="flex items-start gap-3 px-3 py-2.5 transition-colors hover:bg-canvas/70"
+                className="flex min-w-0 flex-1 items-start gap-3 px-3 py-2.5 transition-colors hover:bg-canvas/70"
               >
                 <span className="min-w-0 flex-1">
                   <span className="flex items-start justify-between gap-2">
@@ -75,6 +80,15 @@ export function DeliverableList({
                   </time>
                 </span>
               </Link>
+              {canRemark && thesisId ? (
+                <div className="flex shrink-0 items-center border-l border-line px-1.5">
+                  <LinkedRemarkButton
+                    thesisId={thesisId}
+                    subject={item.title}
+                    deliverableId={item.id}
+                  />
+                </div>
+              ) : null}
             </li>
           );
         })}
