@@ -51,6 +51,8 @@ export const passwordSchema = z
 
 export const personNameSchema = z.string().trim().min(1, 'Champ requis').max(80);
 
+export const doctoralYearSchema = z.number().int().min(1).max(4);
+
 export const registerBodySchema = z
   .object({
     email: emailSchema,
@@ -58,6 +60,7 @@ export const registerBodySchema = z
     givenName: personNameSchema,
     familyName: personNameSchema,
     institution: z.string().trim().max(200).optional(),
+    doctoralYear: z.coerce.number().int().min(1).max(4).default(1),
   })
   .strict();
 
@@ -157,6 +160,7 @@ export const thesisDetailSchema = thesisSummarySchema
       .string()
       .regex(/^\d{4}-\d{2}-\d{2}$/)
       .nullable(),
+    doctoralYear: doctoralYearSchema.default(1),
     members: z.array(thesisMemberSchema).max(50),
   })
   .strict();
@@ -252,6 +256,7 @@ export const updateThesisSchema = z
     institution: clearable(200).optional(),
     startedOn: z.union([daySchema, z.literal('')]).optional(),
     expectedDefenseOn: z.union([daySchema, z.literal('')]).optional(),
+    doctoralYear: doctoralYearSchema.optional(),
   })
   .strict();
 
@@ -264,6 +269,7 @@ export const dashboardThesisSchema = z
     institution: nullableText(200),
     startedOn: daySchema.nullable(),
     expectedDefenseOn: daySchema.nullable(),
+    doctoralYear: doctoralYearSchema.default(1),
     supervisors: z.array(z.object({ displayName: boundedTextSchema(160) }).strict()).max(20),
   })
   .strict();
@@ -409,6 +415,7 @@ export const createObjectiveSchema = z
     dueDate: optionalDay,
     responsibleUserId: z.union([uuidSchema, z.null()]).optional(),
     progress: z.number().int().min(0).max(100).optional(),
+    doctoralYear: doctoralYearSchema.optional(),
   })
   .strict()
   .superRefine(datesInOrder);
@@ -423,6 +430,7 @@ export const updateObjectiveSchema = z
     dueDate: optionalDay,
     responsibleUserId: z.union([uuidSchema, z.null()]).optional(),
     progress: z.number().int().min(0).max(100).optional(),
+    doctoralYear: doctoralYearSchema.optional(),
   })
   .strict()
   .superRefine(datesInOrder);
@@ -433,6 +441,7 @@ export const objectiveListQuerySchema = z
     priority: objectivePrioritySchema.optional(),
     search: z.string().trim().max(200).optional(),
     overdue: z.enum(['true', 'false']).optional(),
+    year: z.coerce.number().int().min(1).max(4).optional(),
   })
   .strict();
 
@@ -483,6 +492,7 @@ export const objectiveSchema = z
     isOverdue: z.boolean(),
     responsible: objectiveResponsibleSchema.nullable(),
     origin: contributionOriginSchema,
+    doctoralYear: doctoralYearSchema.default(1),
     createdAt: z.string().datetime(),
     updatedAt: z.string().datetime(),
   })
@@ -565,9 +575,30 @@ export const requestChangesSchema = z
   })
   .strict();
 
+export const yearSuggestionSchema = z
+  .object({
+    total: z.number().int().min(0),
+    missing: z.number().int().min(0),
+  })
+  .strict();
+
 export const objectiveListSchema = z
   .object({
     objectives: z.array(objectiveSchema).max(500),
+    year: doctoralYearSchema.nullable().default(null),
+    suggested: yearSuggestionSchema.default({ total: 0, missing: 0 }),
+  })
+  .strict();
+
+export const yearObjectivesBodySchema = z
+  .object({
+    year: doctoralYearSchema,
+  })
+  .strict();
+
+export const yearObjectivesResultSchema = z
+  .object({
+    created: z.number().int().min(0),
   })
   .strict();
 

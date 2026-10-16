@@ -65,6 +65,7 @@ model Profile {
   cvUrl            String?  @map("cv_url") @db.VarChar(500)
   googleScholarUrl String?  @map("google_scholar_url") @db.VarChar(500)
   linkedinUrl      String?  @map("linkedin_url") @db.VarChar(500)
+  doctoralYear     Int      @default(1) @map("doctoral_year")
   createdAt        DateTime @default(now()) @map("created_at")
   updatedAt        DateTime @updatedAt @map("updated_at")
 
@@ -164,6 +165,7 @@ model Thesis {
   institution       String?      @db.VarChar(200)
   startedOn         DateTime?    @map("started_on") @db.Date
   expectedDefenseOn DateTime?    @map("expected_defense_on") @db.Date
+  doctoralYear      Int          @default(1) @map("doctoral_year")
   createdAt         DateTime     @default(now()) @map("created_at")
   updatedAt         DateTime     @updatedAt @map("updated_at")
 
@@ -340,6 +342,7 @@ model Objective {
   reviewMessage           String?               @map("review_message") @db.VarChar(500)
   origin                  ContributionOrigin    @default(DOCTORAL_STUDENT)
   templateCode            String?               @map("template_code") @db.VarChar(40)
+  doctoralYear            Int                   @default(1) @map("doctoral_year")
   createdById             String                @map("created_by_id") @db.Uuid
   responsibleUserId       String?               @map("responsible_user_id") @db.Uuid
   createdAt               DateTime              @default(now()) @map("created_at")
@@ -357,6 +360,7 @@ model Objective {
   @@unique([thesisId, templateCode])
   @@index([thesisId, status])
   @@index([thesisId, dueDate])
+  @@index([thesisId, doctoralYear])
   @@map("objectives")
 }
 
