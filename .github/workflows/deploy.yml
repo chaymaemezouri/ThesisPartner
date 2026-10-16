@@ -26,6 +26,7 @@ jobs:
 
       - run: npm ci
       - run: npm run build:packages
+      - run: npm exec -w @thesispartner/api -- prisma generate
       - run: npm run lint
       - run: npm run typecheck
       - run: npm run test
