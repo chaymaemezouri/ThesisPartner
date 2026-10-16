@@ -325,7 +325,7 @@ export class RemarksService {
     let objectiveId = body.objectiveId ?? null;
     let taskId = body.taskId ?? null;
     let deliverableId = body.deliverableId ?? null;
-    let deliverableVersionId = body.deliverableVersionId ?? null;
+    const deliverableVersionId = body.deliverableVersionId ?? null;
 
     if (taskId) {
       const task = await this.prisma.task.findFirst({

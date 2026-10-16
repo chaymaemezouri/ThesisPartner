@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 /**
  * Opt-in demo seed for a doctoral dashboard (~52% work progress).
  * Usage from repo root: npm run db:seed:demo
