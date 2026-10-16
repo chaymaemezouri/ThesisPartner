@@ -85,10 +85,7 @@ function ObjectiveRow({
                 </span>
               ) : null}
             </div>
-            <time
-              className="shrink-0 text-xs text-muted"
-              dateTime={objective.dueDate ?? undefined}
-            >
+            <time className="shrink-0 text-xs text-muted" dateTime={objective.dueDate ?? undefined}>
               {objective.dueDate
                 ? formatShortDay(objective.dueDate, dateLocale)
                 : t('objectives.notDue')}

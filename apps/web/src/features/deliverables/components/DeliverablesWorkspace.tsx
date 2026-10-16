@@ -1,18 +1,12 @@
 import { Button, EmptyState, Modal, Skeleton } from '@thesispartner/ui';
 import { useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import {
-  deliverableVersionSchema,
-  storedFileSchema,
-} from '@thesispartner/validation';
+import { deliverableVersionSchema, storedFileSchema } from '@thesispartner/validation';
 import { apiSend, apiUpload } from '../../../api/client';
 import { useT } from '../../../i18n/LocaleContext';
 import { useObjectives } from '../../objectives/hooks/use-objectives';
 import { QueryError } from '../../objectives/components/QueryError';
-import {
-  useCreateDeliverable,
-  useDeliverables,
-} from '../hooks/use-deliverables';
+import { useCreateDeliverable, useDeliverables } from '../hooks/use-deliverables';
 import { filtersFromSearch } from '../keys';
 import { DELIVERABLE_TAB_IDS, DELIVERABLE_TYPE_LABEL, type DeliverableTab } from '../labels';
 import { DeliverableForm } from './DeliverableForm';
@@ -154,13 +148,13 @@ export function DeliverablesWorkspace({
               onChange={(event) => update({ type: event.target.value || null })}
             >
               <option value="">{t('deliverables.filterAllTypes')}</option>
-              {(Object.keys(DELIVERABLE_TYPE_LABEL) as Array<keyof typeof DELIVERABLE_TYPE_LABEL>).map(
-                (value) => (
-                  <option key={value} value={value}>
-                    {t(`deliverables.type.${value}`)}
-                  </option>
-                ),
-              )}
+              {(
+                Object.keys(DELIVERABLE_TYPE_LABEL) as Array<keyof typeof DELIVERABLE_TYPE_LABEL>
+              ).map((value) => (
+                <option key={value} value={value}>
+                  {t(`deliverables.type.${value}`)}
+                </option>
+              ))}
             </select>
           </label>
           <label className="min-w-0 text-[11px] sm:text-xs">

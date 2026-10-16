@@ -272,7 +272,8 @@ describe('deliverables', () => {
     const path = `/api/v1/theses/${thesisId}/deliverables/${deliverable.id}`;
 
     expect(
-      (await student.agent.post(`${path}/submit`).set('x-csrf-token', student.csrf).send({})).status,
+      (await student.agent.post(`${path}/submit`).set('x-csrf-token', student.csrf).send({}))
+        .status,
     ).toBe(400);
 
     const version1 = await student.agent
@@ -310,12 +311,8 @@ describe('deliverables', () => {
       ).status,
     ).toBe(400);
     expect(
-      (
-        await student.agent
-          .post(`${path}/approve`)
-          .set('x-csrf-token', student.csrf)
-          .send({})
-      ).status,
+      (await student.agent.post(`${path}/approve`).set('x-csrf-token', student.csrf).send({}))
+        .status,
     ).toBe(403);
     expect(
       (
@@ -345,12 +342,8 @@ describe('deliverables', () => {
     expect(afterChanges.reviewedBy?.id).toBe(supervisor.userId);
 
     expect(
-      (
-        await student.agent
-          .post(`${path}/submit`)
-          .set('x-csrf-token', student.csrf)
-          .send({})
-      ).status,
+      (await student.agent.post(`${path}/submit`).set('x-csrf-token', student.csrf).send({}))
+        .status,
     ).toBe(400);
 
     const version2 = await student.agent

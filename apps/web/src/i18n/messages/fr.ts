@@ -95,7 +95,8 @@ export const fr: Messages = {
     institution: 'Établissement',
     optional: 'Facultatif',
     passwordHint: '12 caractères minimum',
-    forgotDone: 'Si un compte existe, un message vient d’être envoyé. Le lien expire dans une heure.',
+    forgotDone:
+      'Si un compte existe, un message vient d’être envoyé. Le lien expire dans une heure.',
     backToLogin: 'Retour à la connexion',
     resetDone: 'Le mot de passe est mis à jour.',
     verifyPending: 'Vérification en cours.',
@@ -433,8 +434,7 @@ export const fr: Messages = {
     saveVersion: 'Enregistrer la version',
     versionConflict: 'Une autre version vient d’être enregistrée. Réessayez.',
     historyAria: 'Historique des versions',
-    uploadHint:
-      'PDF, DOC, DOCX, PPT, PPTX, XLS, XLSX, TXT, CSV, ZIP ou JSON. 50 Mo maximum.',
+    uploadHint: 'PDF, DOC, DOCX, PPT, PPTX, XLS, XLSX, TXT, CSV, ZIP ou JSON. 50 Mo maximum.',
     fileTooLarge: 'Le fichier dépasse la taille maximale de 50 Mo.',
     fileTypeNotAllowed: 'Ce type de fichier n’est pas autorisé.',
     fileSignatureMismatch: 'Le fichier semble ne pas correspondre à son format.',
@@ -547,8 +547,7 @@ export const fr: Messages = {
     deliverableCountMany: '{count} livrables',
     studentFallback: 'Doctorant',
     deliverablesPick: 'Choisissez un doctorant pour ouvrir ses livrables.',
-    deliverablesEmptyDesc:
-      'Les livrables apparaîtront ici lorsqu’un doctorant vous y aura ajouté.',
+    deliverablesEmptyDesc: 'Les livrables apparaîtront ici lorsqu’un doctorant vous y aura ajouté.',
   },
   profile: {
     title: 'Profil',

@@ -15,9 +15,7 @@ export function canReply(role: MembershipRole, status: RemarkStatus): boolean {
 }
 
 export function canResolve(role: MembershipRole, status: RemarkStatus): boolean {
-  return (
-    role === 'DOCTORAL_STUDENT' && (status === 'OPEN' || status === 'IN_PROGRESS')
-  );
+  return role === 'DOCTORAL_STUDENT' && (status === 'OPEN' || status === 'IN_PROGRESS');
 }
 
 export function canClose(role: MembershipRole, status: RemarkStatus): boolean {

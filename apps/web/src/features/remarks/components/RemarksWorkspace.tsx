@@ -85,9 +85,7 @@ export function RemarksWorkspace({
               }
             />
           </label>
-          {canCreate ? (
-            <Button onClick={() => setCreating(true)}>{t('remarks.new')}</Button>
-          ) : null}
+          {canCreate ? <Button onClick={() => setCreating(true)}>{t('remarks.new')}</Button> : null}
         </div>
       </div>
       {remarks.isLoading ? (
@@ -117,8 +115,12 @@ export function RemarksWorkspace({
           <RemarkList remarks={remarks.data.remarks} detailPath={detailPath} />
         </div>
       ) : null}
-      <Modal open={creating} title={t('remarks.new')}
-        closeLabel={t('common.close')} onClose={() => setCreating(false)}>
+      <Modal
+        open={creating}
+        title={t('remarks.new')}
+        closeLabel={t('common.close')}
+        onClose={() => setCreating(false)}
+      >
         <RemarkForm
           objectives={objectives.data?.objectives ?? []}
           deliverables={deliverables.data?.deliverables ?? []}

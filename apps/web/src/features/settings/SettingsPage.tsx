@@ -13,7 +13,10 @@ export function SettingsPage() {
         <h1 className="font-serif text-2xl text-ink">{t('settings.title')}</h1>
         <p className="mt-2 text-sm text-muted">{t('settings.subtitle')}</p>
       </header>
-      <section className="rounded-md border border-line bg-surface px-4 py-4" aria-labelledby="language-title">
+      <section
+        className="rounded-md border border-line bg-surface px-4 py-4"
+        aria-labelledby="language-title"
+      >
         <h2 id="language-title" className="text-sm font-medium text-ink">
           {t('settings.language')}
         </h2>

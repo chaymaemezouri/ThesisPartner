@@ -27,9 +27,7 @@ export function AcademicProfileHeader({ profile }: { profile: DashboardData['pro
                   {profile.displayName}
                 </h2>
               </Link>
-              {specialty ? (
-                <p className="mt-0.5 truncate text-sm text-muted">{specialty}</p>
-              ) : null}
+              {specialty ? <p className="mt-0.5 truncate text-sm text-muted">{specialty}</p> : null}
             </div>
             <Link
               to="/profil"

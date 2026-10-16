@@ -84,14 +84,8 @@ describe('supervised theses', () => {
     expect(await screen.findByText('Ada Test')).toBeInTheDocument();
     expect(screen.getByText('Bea Test')).toBeInTheDocument();
     const links = screen.getAllByRole('link', { name: 'View follow-up' });
-    expect(links[0]).toHaveAttribute(
-      'href',
-      `/encadrement/${theses.theses[0]?.thesisId}`,
-    );
-    expect(links[1]).toHaveAttribute(
-      'href',
-      `/encadrement/${theses.theses[1]?.thesisId}`,
-    );
+    expect(links[0]).toHaveAttribute('href', `/encadrement/${theses.theses[0]?.thesisId}`);
+    expect(links[1]).toHaveAttribute('href', `/encadrement/${theses.theses[1]?.thesisId}`);
   });
 });
 

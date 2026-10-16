@@ -102,12 +102,7 @@ export class DeliverablesController {
     @Param('deliverableId', ParseUUIDPipe) deliverableId: string,
     @Req() request: Request,
   ) {
-    return this.deliverables.submit(
-      actorId(request),
-      thesisId,
-      deliverableId,
-      request.requestId,
-    );
+    return this.deliverables.submit(actorId(request), thesisId, deliverableId, request.requestId);
   }
 
   @Post(':deliverableId/request-changes')
@@ -138,12 +133,7 @@ export class DeliverablesController {
     @Param('deliverableId', ParseUUIDPipe) deliverableId: string,
     @Req() request: Request,
   ) {
-    return this.deliverables.approve(
-      actorId(request),
-      thesisId,
-      deliverableId,
-      request.requestId,
-    );
+    return this.deliverables.approve(actorId(request), thesisId, deliverableId, request.requestId);
   }
 }
 

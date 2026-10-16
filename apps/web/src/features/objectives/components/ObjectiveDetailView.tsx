@@ -3,11 +3,7 @@ import { Button, Modal, Skeleton } from '@thesispartner/ui';
 import { useState } from 'react';
 import { useLocale, useT } from '../../../i18n/LocaleContext';
 import { formatShortDay } from '../../dashboard/labels';
-import {
-  useDeleteObjective,
-  useUpdateObjective,
-  useObjective,
-} from '../hooks/use-objectives';
+import { useDeleteObjective, useUpdateObjective, useObjective } from '../hooks/use-objectives';
 import { ObjectiveForm } from './ObjectiveForm';
 import { ObjectiveStatusBadge } from './ObjectiveStatusBadge';
 import { ObjectiveTasks } from './ObjectiveTasks';

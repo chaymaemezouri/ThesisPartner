@@ -79,11 +79,13 @@ export class SupervisionService {
           progressPercentage,
           deliverableCount: membership.thesis._count.deliverables,
           supervisors,
-          meetings: membership.thesis.meetings.flatMap((meeting) => {
-            const scheduledOn = formatDay(meeting.scheduledOn);
-            if (!scheduledOn || scheduledOn < today) return [];
-            return [{ id: meeting.id, title: meeting.title, scheduledOn }];
-          }).slice(0, 8),
+          meetings: membership.thesis.meetings
+            .flatMap((meeting) => {
+              const scheduledOn = formatDay(meeting.scheduledOn);
+              if (!scheduledOn || scheduledOn < today) return [];
+              return [{ id: meeting.id, title: meeting.title, scheduledOn }];
+            })
+            .slice(0, 8),
           doctoralStudent: students[0] ?? null,
           doctoralStudents: students,
           objectiveSummary: supervisionSummary(counts),

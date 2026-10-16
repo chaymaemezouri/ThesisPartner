@@ -57,8 +57,7 @@ export function DeliverableDetailView({
   if (deliverable.isError || !deliverable.data) return <QueryError error={deliverable.error} />;
 
   const data = deliverable.data;
-  const editable =
-    canEdit && (data.status === 'DRAFT' || data.status === 'CHANGES_REQUESTED');
+  const editable = canEdit && (data.status === 'DRAFT' || data.status === 'CHANGES_REQUESTED');
   const canCancel = canEdit && data.status === 'DRAFT';
   const freshCorrection =
     !data.reviewedAt ||
@@ -100,7 +99,9 @@ export function DeliverableDetailView({
             <p className="mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[11px] text-muted">
               <span>{t(`deliverables.type.${data.type}`)}</span>
               <span aria-hidden="true">·</span>
-              <span className="font-medium text-ink">{t(`deliverables.status.${data.status}`)}</span>
+              <span className="font-medium text-ink">
+                {t(`deliverables.status.${data.status}`)}
+              </span>
               {data.isOverdue ? (
                 <>
                   <span aria-hidden="true">·</span>
@@ -166,7 +167,9 @@ export function DeliverableDetailView({
             <dt className="text-[10px] font-medium tracking-wide text-muted uppercase">
               {t('deliverables.metaDue')}
             </dt>
-            <dd className={`mt-0.5 tabular-nums ${data.isOverdue ? 'font-medium text-danger' : 'text-ink'}`}>
+            <dd
+              className={`mt-0.5 tabular-nums ${data.isOverdue ? 'font-medium text-danger' : 'text-ink'}`}
+            >
               {data.dueDate ? formatDay(data.dueDate, dateLocale) : t('common.notProvided')}
             </dd>
           </div>
@@ -185,7 +188,9 @@ export function DeliverableDetailView({
             <h2 className="text-[10px] font-medium tracking-wide text-muted uppercase">
               {t('deliverables.description')}
             </h2>
-            <p className="mt-0.5 break-words text-xs leading-relaxed text-ink">{data.description}</p>
+            <p className="mt-0.5 break-words text-xs leading-relaxed text-ink">
+              {data.description}
+            </p>
           </div>
         ) : null}
 

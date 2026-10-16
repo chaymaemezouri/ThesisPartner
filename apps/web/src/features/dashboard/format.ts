@@ -32,11 +32,7 @@ export function dayDiff(value: string, today = utcToday()): number {
   return Math.round((target - current) / 86_400_000);
 }
 
-export function relativeDays(
-  value: string,
-  today = utcToday(),
-  t: Translate = defaultT,
-): string {
+export function relativeDays(value: string, today = utcToday(), t: Translate = defaultT): string {
   const diff = dayDiff(value, today);
   if (diff === 0) return t('dashboard.relativeToday');
   if (diff > 0) {
@@ -50,11 +46,7 @@ export function relativeDays(
     : t('dashboard.relativeLateMany', { count: late });
 }
 
-export function lateDaysShort(
-  value: string,
-  today = utcToday(),
-  t: Translate = defaultT,
-): string {
+export function lateDaysShort(value: string, today = utcToday(), t: Translate = defaultT): string {
   const late = Math.max(1, -dayDiff(value, today));
   return t('dashboard.lateShort', { count: late });
 }

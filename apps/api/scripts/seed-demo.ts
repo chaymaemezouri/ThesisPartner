@@ -8,10 +8,17 @@
  * DEMO_PASSWORD (default ThesisPartner2026!)
  */
 import { Algorithm, hash } from '@node-rs/argon2';
-import { PrismaClient, type DeliverableStatus, type RemarkPriority, type RemarkStatus } from '@prisma/client';
+import {
+  PrismaClient,
+  type DeliverableStatus,
+  type RemarkPriority,
+  type RemarkStatus,
+} from '@prisma/client';
 import { STANDARD_OBJECTIVES } from '../src/objectives/standard-path.catalog';
 
-const STUDENT_EMAIL = (process.env.DEMO_STUDENT_EMAIL ?? 'demo.doctorant@example.test').toLowerCase();
+const STUDENT_EMAIL = (
+  process.env.DEMO_STUDENT_EMAIL ?? 'demo.doctorant@example.test'
+).toLowerCase();
 const SUPERVISOR_EMAIL = (
   process.env.DEMO_SUPERVISOR_EMAIL ?? 'demo.encadrant@example.test'
 ).toLowerCase();

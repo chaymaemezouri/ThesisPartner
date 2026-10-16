@@ -500,10 +500,7 @@ export class RemarksService {
   }
 }
 
-function toAuthor(user: {
-  id: string;
-  profile: { givenName: string; familyName: string } | null;
-}) {
+function toAuthor(user: { id: string; profile: { givenName: string; familyName: string } | null }) {
   if (!user.profile) throw new AppException(500, 'INTERNAL_ERROR', 'Internal server error');
   return {
     id: user.id,

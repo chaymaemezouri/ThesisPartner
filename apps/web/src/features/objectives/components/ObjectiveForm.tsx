@@ -60,7 +60,11 @@ export function ObjectiveForm({
         error={form.formState.errors.description?.message}
       />
       <div className="grid gap-2.5 sm:grid-cols-2">
-        <Select id="objective-status" label={t('objectives.form.status')} {...form.register('status')}>
+        <Select
+          id="objective-status"
+          label={t('objectives.form.status')}
+          {...form.register('status')}
+        >
           {(Object.keys(STATUS_LABEL) as Array<keyof typeof STATUS_LABEL>)
             .filter(
               (value) =>

@@ -402,7 +402,9 @@ function LinkCard({ href }: { href: string }) {
   const t = useT();
   return (
     <section className="rounded-2xl border border-line bg-surface p-4 shadow-[0_2px_12px_rgba(15,23,42,0.04)]">
-      <h2 className="text-xs font-semibold text-ink">{t('objectives.detail.linkedDeliverables')}</h2>
+      <h2 className="text-xs font-semibold text-ink">
+        {t('objectives.detail.linkedDeliverables')}
+      </h2>
       <p className="mt-1 text-xs text-muted">{t('objectives.detail.linkedDeliverablesHelp')}</p>
       <p className="mt-3">
         <Link to={href} className="text-sm font-medium text-brand">
@@ -605,7 +607,9 @@ function TaskForm({
       </Select>
       <div className="rounded-lg border border-dashed border-line p-3">
         <p className="text-sm font-medium text-ink">{t('objectives.detail.optionalDeliverable')}</p>
-        <p className="mt-0.5 text-xs text-muted">{t('objectives.detail.optionalDeliverableHelp')}</p>
+        <p className="mt-0.5 text-xs text-muted">
+          {t('objectives.detail.optionalDeliverableHelp')}
+        </p>
         <input
           ref={fileInput}
           type="file"
@@ -661,8 +665,7 @@ function localTaskFileError(
     /\.(pdf|docx?)$/i.test(file.name) ||
     file.type === 'application/pdf' ||
     file.type === 'application/msword' ||
-    file.type ===
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+    file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
   return ok ? null : t('objectives.detail.fileFormats');
 }
 
@@ -681,14 +684,18 @@ async function attachTaskDeliverable(input: {
   const existing = list.deliverables.find((item) => item.taskId === input.taskId);
   let deliverableId = existing?.id;
   if (!deliverableId) {
-    const created = await apiSend(`/api/v1/theses/${input.thesisId}/deliverables`, deliverableSchema, {
-      title: input.title,
-      type: 'REPORT',
-      objectiveId: input.objectiveId,
-      taskId: input.taskId,
-      dueDate: input.dueDate,
-      description: `Livrable de l’étape « ${input.title} »`,
-    });
+    const created = await apiSend(
+      `/api/v1/theses/${input.thesisId}/deliverables`,
+      deliverableSchema,
+      {
+        title: input.title,
+        type: 'REPORT',
+        objectiveId: input.objectiveId,
+        taskId: input.taskId,
+        dueDate: input.dueDate,
+        description: `Livrable de l’étape « ${input.title} »`,
+      },
+    );
     deliverableId = created.id;
   }
   const version = await apiSend(

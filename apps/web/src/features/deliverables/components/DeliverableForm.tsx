@@ -66,7 +66,11 @@ export function DeliverableForm({
         error={form.formState.errors.title?.message}
       />
       <div className="grid gap-2.5 sm:grid-cols-2">
-        <Select id="deliverable-type" label={t('deliverables.form.type')} {...form.register('type')}>
+        <Select
+          id="deliverable-type"
+          label={t('deliverables.form.type')}
+          {...form.register('type')}
+        >
           {(Object.keys(DELIVERABLE_TYPE_LABEL) as Array<keyof typeof DELIVERABLE_TYPE_LABEL>).map(
             (value) => (
               <option key={value} value={value}>

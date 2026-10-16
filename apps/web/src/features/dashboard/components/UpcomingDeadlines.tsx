@@ -14,7 +14,9 @@ function splitDay(value: string, dateLocale: string): { day: string; month: stri
   const date = new Date(Date.UTC(year, month - 1, day));
   return {
     day: String(day).padStart(2, '0'),
-    month: date.toLocaleDateString(dateLocale, { month: 'short', timeZone: 'UTC' }).replace('.', ''),
+    month: date
+      .toLocaleDateString(dateLocale, { month: 'short', timeZone: 'UTC' })
+      .replace('.', ''),
     year: String(year),
   };
 }

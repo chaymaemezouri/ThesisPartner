@@ -151,9 +151,7 @@ export function AppRoutes() {
             <Route
               key={item.to}
               path={item.to.slice(1)}
-              element={
-                <ModulePage title={t(item.labelKey)} description={t(item.descriptionKey)} />
-              }
+              element={<ModulePage title={t(item.labelKey)} description={t(item.descriptionKey)} />}
             />
           ))}
           <Route path="*" element={<NotFoundPage />} />

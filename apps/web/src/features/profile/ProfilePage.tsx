@@ -95,8 +95,7 @@ function ProfileForm({
 
   async function uploadAsset(kind: 'avatar' | 'cv', file: File | undefined) {
     if (!file) return;
-    const localError =
-      kind === 'avatar' ? localAvatarError(file, t) : localCvError(file, t);
+    const localError = kind === 'avatar' ? localAvatarError(file, t) : localCvError(file, t);
     if (localError) {
       setAssetSuccess(false);
       setAssetMessage(localError);
@@ -208,10 +207,7 @@ function ProfileForm({
             </div>
           </div>
           {assetMessage ? (
-            <p
-              className={`text-sm ${assetSuccess ? 'text-ink' : 'text-danger'}`}
-              role="alert"
-            >
+            <p className={`text-sm ${assetSuccess ? 'text-ink' : 'text-danger'}`} role="alert">
               {assetMessage}
             </p>
           ) : null}
@@ -230,11 +226,23 @@ function ProfileForm({
           error={form.formState.errors.familyName?.message}
           {...form.register('familyName')}
         />
-        <Input id="academicTitle" label={t('profile.academicTitle')} {...form.register('academicTitle')} />
+        <Input
+          id="academicTitle"
+          label={t('profile.academicTitle')}
+          {...form.register('academicTitle')}
+        />
         <Input id="specialty" label={t('profile.specialty')} {...form.register('specialty')} />
-        <Input id="institution" label={t('profile.institution')} {...form.register('institution')} />
+        <Input
+          id="institution"
+          label={t('profile.institution')}
+          {...form.register('institution')}
+        />
         <Input id="laboratory" label={t('profile.laboratory')} {...form.register('laboratory')} />
-        <Input id="doctoralSchool" label={t('profile.doctoralSchool')} {...form.register('doctoralSchool')} />
+        <Input
+          id="doctoralSchool"
+          label={t('profile.doctoralSchool')}
+          {...form.register('doctoralSchool')}
+        />
         <Input id="city" label={t('profile.city')} {...form.register('city')} />
         <Input id="country" label={t('profile.country')} {...form.register('country')} />
         <Input
@@ -272,14 +280,9 @@ function ProfileForm({
   );
 }
 
-function localAvatarError(
-  file: File,
-  t: ReturnType<typeof useT>,
-): string | null {
+function localAvatarError(file: File, t: ReturnType<typeof useT>): string | null {
   if (file.size > 5 * 1024 * 1024) return t('profile.photoTooLarge');
-  const ok =
-    /^image\/(jpeg|png|webp)$/.test(file.type) ||
-    /\.(jpe?g|png|webp)$/i.test(file.name);
+  const ok = /^image\/(jpeg|png|webp)$/.test(file.type) || /\.(jpe?g|png|webp)$/i.test(file.name);
   return ok ? null : t('profile.photoFormats');
 }
 

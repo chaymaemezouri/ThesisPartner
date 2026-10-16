@@ -60,11 +60,7 @@ export class DeliverableFilesService {
       if (loaded.role !== 'DOCTORAL_STUDENT') {
         throw new AppException(403, 'FORBIDDEN', 'Ajout de fichier non autorisé');
       }
-      throw new AppException(
-        400,
-        'BAD_REQUEST',
-        'Un fichier ne peut pas être ajouté à ce stade',
-      );
+      throw new AppException(400, 'BAD_REQUEST', 'Un fichier ne peut pas être ajouté à ce stade');
     }
     if (loaded.version.file) {
       throw new AppException(

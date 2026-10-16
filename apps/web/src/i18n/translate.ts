@@ -21,10 +21,7 @@ export function getMessage(messages: Messages, key: MessageKey): string {
   return typeof current === 'string' ? current : key;
 }
 
-export function formatMessage(
-  template: string,
-  params?: Record<string, string | number>,
-): string {
+export function formatMessage(template: string, params?: Record<string, string | number>): string {
   if (!params) return template;
   return Object.entries(params).reduce(
     (text, [name, value]) => text.replaceAll(`{${name}}`, String(value)),

@@ -7,13 +7,7 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import {
-  DEFAULT_LOCALE,
-  LOCALE_STORAGE_KEY,
-  LOCALE_TAG,
-  isLocale,
-  type Locale,
-} from './locales';
+import { DEFAULT_LOCALE, LOCALE_STORAGE_KEY, LOCALE_TAG, isLocale, type Locale } from './locales';
 import { en } from './messages/en';
 import { fr } from './messages/fr';
 import { formatMessage, getMessage, type MessageKey } from './translate';

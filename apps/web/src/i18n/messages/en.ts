@@ -431,8 +431,7 @@ export const en = {
     saveVersion: 'Save version',
     versionConflict: 'Another version was just saved. Please try again.',
     historyAria: 'Version history',
-    uploadHint:
-      'PDF, DOC, DOCX, PPT, PPTX, XLS, XLSX, TXT, CSV, ZIP or JSON. 50 MB maximum.',
+    uploadHint: 'PDF, DOC, DOCX, PPT, PPTX, XLS, XLSX, TXT, CSV, ZIP or JSON. 50 MB maximum.',
     fileTooLarge: 'The file exceeds the 50 MB size limit.',
     fileTypeNotAllowed: 'This file type is not allowed.',
     fileSignatureMismatch: 'The file does not appear to match its format.',
@@ -585,8 +584,7 @@ export const en = {
     noSupervisor: 'No supervisor',
     editThesis: 'Edit thesis',
     deleteThesis: 'Delete thesis',
-    deleteThesisConfirm:
-      'Delete “{title}”? Objectives and steps for this thesis will be removed.',
+    deleteThesisConfirm: 'Delete “{title}”? Objectives and steps for this thesis will be removed.',
     photoTooLarge: 'The photo exceeds 5 MB.',
     photoFormats: 'Accepted formats: JPG, PNG or WebP.',
     cvTooLarge: 'The CV exceeds 15 MB.',

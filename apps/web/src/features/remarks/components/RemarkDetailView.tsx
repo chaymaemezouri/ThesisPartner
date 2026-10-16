@@ -36,10 +36,7 @@ export function RemarkDetailView({
   const reopen = useReopenRemark(thesisId, remarkId);
   const [message, setMessage] = useState('');
   const [correctionVersionId, setCorrectionVersionId] = useState('');
-  const versions = useDeliverableVersions(
-    thesisId,
-    remark.data?.deliverableId ?? null,
-  );
+  const versions = useDeliverableVersions(thesisId, remark.data?.deliverableId ?? null);
 
   if (remark.isLoading) {
     return (
@@ -53,11 +50,9 @@ export function RemarkDetailView({
   const data = remark.data;
   const crumbs = trail ?? [{ label: t('remarks.title'), to: backTo }];
   const canReplyAction = data.status !== 'CLOSED';
-  const canResolveAction =
-    !canCreate && (data.status === 'OPEN' || data.status === 'IN_PROGRESS');
+  const canResolveAction = !canCreate && (data.status === 'OPEN' || data.status === 'IN_PROGRESS');
   const canCloseAction = canCreate && data.status === 'RESOLVED';
-  const canReopenAction =
-    canCreate && (data.status === 'RESOLVED' || data.status === 'CLOSED');
+  const canReopenAction = canCreate && (data.status === 'RESOLVED' || data.status === 'CLOSED');
   const versionOptions = versions.data?.versions ?? [];
 
   return (
@@ -218,9 +213,7 @@ export function RemarkDetailView({
           <div className="mt-3">
             <Button
               disabled={resolve.isPending}
-              onClick={() =>
-                resolve.mutate(correctionVersionId ? { correctionVersionId } : {})
-              }
+              onClick={() => resolve.mutate(correctionVersionId ? { correctionVersionId } : {})}
             >
               {t('remarks.correctionDone')}
             </Button>
@@ -228,18 +221,17 @@ export function RemarkDetailView({
         </section>
       ) : null}
       {canCloseAction || canReopenAction ? (
-        <section className="mt-8 flex flex-wrap gap-2" aria-label={t('remarks.supervisorActionsAria')}>
+        <section
+          className="mt-8 flex flex-wrap gap-2"
+          aria-label={t('remarks.supervisorActionsAria')}
+        >
           {canCloseAction ? (
             <Button disabled={close.isPending} onClick={() => close.mutate()}>
               {t('remarks.close')}
             </Button>
           ) : null}
           {canReopenAction ? (
-            <Button
-              variant="secondary"
-              disabled={reopen.isPending}
-              onClick={() => reopen.mutate()}
-            >
+            <Button variant="secondary" disabled={reopen.isPending} onClick={() => reopen.mutate()}>
               {t('remarks.reopen')}
             </Button>
           ) : null}
