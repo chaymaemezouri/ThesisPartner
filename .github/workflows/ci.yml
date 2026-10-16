@@ -31,6 +31,11 @@ jobs:
           --health-timeout 3s
           --health-retries 12
     env:
+      S3_ENDPOINT: http://127.0.0.1:9000
+      S3_REGION: us-east-1
+      S3_BUCKET: thesispartner
+      S3_ACCESS_KEY: thesispartner
+      S3_SECRET_KEY: thesispartner-secret
       NODE_ENV: test
       APP_URL: http://localhost:5173
       API_PORT: 3000
@@ -47,6 +52,22 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run build:packages
+      - name: Start test S3
+        run: |
+          docker run -d --name thesispartner-ci-minio \
+            -p 127.0.0.1:9000:9000 \
+            -e MINIO_ROOT_USER=thesispartner \
+            -e MINIO_ROOT_PASSWORD=thesispartner-secret \
+            quay.io/minio/minio:RELEASE.2025-09-07T16-13-09Z server /data
+
+          for i in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:9000/minio/health/live >/dev/null; then
+              exit 0
+            fi
+            sleep 2
+          done
+          docker logs thesispartner-ci-minio
+          exit 1
       - run: npm run test:integration
       - run: npm run lint
       - run: npm run typecheck
