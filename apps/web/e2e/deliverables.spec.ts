@@ -311,10 +311,12 @@ async function login(page: Page, email: string) {
   try {
     await expect(page.getByRole('heading', { name: /Bonjour/ })).toBeVisible();
   } catch (error) {
-    console.error('E2E current URL:', page.url());
-    console.error('E2E alerts:', await page.getByRole('alert').allTextContents());
-    console.error('E2E page text:', (await page.locator('body').innerText()).slice(0, 1500));
-    throw error;
+    const diagnostic = [
+      `E2E current URL: ${page.url()}`,
+      `E2E alerts: ${JSON.stringify(await page.getByRole('alert').allTextContents())}`,
+      `E2E page text: ${(await page.locator('body').innerText()).slice(0, 1500)}`,
+    ].join('\n');
+    throw new Error(diagnostic, { cause: error });
   }
 }
 
