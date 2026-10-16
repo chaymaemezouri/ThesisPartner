@@ -95,7 +95,7 @@ test('a doctoral student records versions that the supervisor can only read', as
 
   await login(page, ada.email);
   await page.goto('/livrables');
-  await page.getByRole('link', { name: 'Ouvrir' }).click();
+  await page.getByRole('link', { name: new RegExp(title) }).click();
   await expect(page.getByRole('heading', { name: title })).toBeVisible();
   await expect(page.getByText('Aucune version n’a encore été créée.')).toBeVisible();
   await page.getByRole('button', { name: 'Créer la première version' }).click();
@@ -156,7 +156,7 @@ test('a doctoral student uploads a file the supervisor can only download', async
 
   await login(page, ada.email);
   await page.goto('/livrables');
-  await page.getByRole('link', { name: 'Ouvrir' }).click();
+  await page.getByRole('link', { name: new RegExp(title) }).click();
   await page.getByRole('button', { name: 'Créer la première version' }).click();
   const dialog = page.getByRole('dialog');
   await dialog.getByLabel('Résumé des modifications').fill('Version avec document');
@@ -308,7 +308,14 @@ async function login(page: Page, email: string) {
   await page.getByLabel('E-mail', { exact: true }).fill(email);
   await page.getByLabel('Mot de passe').fill(password);
   await page.getByRole('button', { name: 'Se connecter' }).click();
-  await expect(page.getByRole('heading', { name: /Bonjour/ })).toBeVisible();
+  try {
+    await expect(page.getByRole('heading', { name: /Bonjour/ })).toBeVisible();
+  } catch (error) {
+    console.error('E2E current URL:', page.url());
+    console.error('E2E alerts:', await page.getByRole('alert').allTextContents());
+    console.error('E2E page text:', (await page.locator('body').innerText()).slice(0, 1500));
+    throw error;
+  }
 }
 
 async function logout(page: Page, displayName: string) {

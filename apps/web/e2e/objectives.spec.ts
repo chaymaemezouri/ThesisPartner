@@ -103,7 +103,14 @@ async function login(page: Page, email: string) {
   await page.getByLabel('E-mail', { exact: true }).fill(email);
   await page.getByLabel('Mot de passe').fill(password);
   await page.getByRole('button', { name: 'Se connecter' }).click();
-  await expect(page.getByRole('heading', { name: /Bonjour/ })).toBeVisible();
+  try {
+    await expect(page.getByRole('heading', { name: /Bonjour/ })).toBeVisible();
+  } catch (error) {
+    console.error('E2E current URL:', page.url());
+    console.error('E2E alerts:', await page.getByRole('alert').allTextContents());
+    console.error('E2E page text:', (await page.locator('body').innerText()).slice(0, 1500));
+    throw error;
+  }
 }
 
 async function logout(page: Page, displayName: string) {
