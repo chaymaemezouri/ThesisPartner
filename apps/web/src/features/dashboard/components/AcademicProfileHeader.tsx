@@ -3,7 +3,13 @@ import { Avatar } from '@thesispartner/ui';
 import { useT } from '../../../i18n/LocaleContext';
 import type { DashboardData } from '../labels';
 
-export function AcademicProfileHeader({ profile }: { profile: DashboardData['profile'] }) {
+export function AcademicProfileHeader({
+  profile,
+  readOnly = false,
+}: {
+  profile: DashboardData['profile'];
+  readOnly?: boolean;
+}) {
   const t = useT();
   const specialty = profile.specialty ?? profile.academicTitle;
   const links = [
@@ -13,28 +19,42 @@ export function AcademicProfileHeader({ profile }: { profile: DashboardData['pro
   ].filter((item): item is { label: string; href: string } => item !== null);
 
   return (
-    <section className="overflow-hidden rounded-md border border-line bg-surface">
+    <section className="overflow-hidden rounded-md border border-line bg-surface shadow-card">
       <div className="flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-stretch sm:gap-4">
-        <Link to="/profil" className="shrink-0 self-start">
-          <Avatar label={profile.displayName} imageUrl={profile.avatarUrl} size="lg" />
-        </Link>
+        {readOnly ? (
+          <span className="shrink-0 self-start">
+            <Avatar label={profile.displayName} imageUrl={profile.avatarUrl} size="lg" />
+          </span>
+        ) : (
+          <Link to="/profil" className="shrink-0 self-start">
+            <Avatar label={profile.displayName} imageUrl={profile.avatarUrl} size="lg" />
+          </Link>
+        )}
 
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
             <div className="min-w-0">
-              <Link to="/profil" className="block min-w-0">
-                <h2 className="truncate font-serif text-lg text-ink sm:text-xl">
+              {readOnly ? (
+                <h2 className="truncate text-lg font-semibold tracking-tight text-ink sm:text-xl">
                   {profile.displayName}
                 </h2>
-              </Link>
+              ) : (
+                <Link to="/profil" className="block min-w-0">
+                  <h2 className="truncate text-lg font-semibold tracking-tight text-ink sm:text-xl">
+                    {profile.displayName}
+                  </h2>
+                </Link>
+              )}
               {specialty ? <p className="mt-0.5 truncate text-sm text-muted">{specialty}</p> : null}
             </div>
-            <Link
-              to="/profil"
-              className="shrink-0 text-xs font-medium tracking-wide text-muted uppercase transition-colors hover:text-ink"
-            >
-              {t('dashboard.editMyProfile')}
-            </Link>
+            {readOnly ? null : (
+              <Link
+                to="/profil"
+                className="shrink-0 text-xs font-medium tracking-wide text-muted uppercase transition-colors hover:text-ink"
+              >
+                {t('dashboard.editMyProfile')}
+              </Link>
+            )}
           </div>
 
           <dl className="mt-3 grid gap-x-6 gap-y-2 border-t border-line pt-3 text-sm sm:grid-cols-2">

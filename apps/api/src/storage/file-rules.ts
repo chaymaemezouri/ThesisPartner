@@ -100,10 +100,11 @@ function stripControls(value: string): string {
   return result;
 }
 
-export function contentDisposition(filename: string): string {
+export function contentDisposition(filename: string, inline = false): string {
   const safe = sanitizeOriginalName(filename);
   const ascii = safe.replace(/[^\x20-\x7e]/g, '_');
-  return `attachment; filename="${ascii}"; filename*=UTF-8''${encodeURIComponent(safe)}`;
+  const kind = inline ? 'inline' : 'attachment';
+  return `${kind}; filename="${ascii}"; filename*=UTF-8''${encodeURIComponent(safe)}`;
 }
 
 export function buildStorageKey(input: {

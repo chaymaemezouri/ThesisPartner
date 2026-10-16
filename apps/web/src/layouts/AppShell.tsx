@@ -23,11 +23,12 @@ export function AppShell() {
   }, [location.pathname]);
 
   const dashboard = location.pathname === '/';
+  const chat = location.pathname === '/messagerie' || location.pathname.startsWith('/messagerie/');
 
   return (
     <div
       className={
-        dashboard
+        dashboard || chat
           ? 'min-h-screen overflow-x-clip bg-canvas text-ink lg:h-dvh lg:overflow-hidden'
           : 'min-h-screen overflow-x-clip bg-canvas text-ink'
       }
@@ -35,18 +36,30 @@ export function AppShell() {
       <a href="#contenu" className="skip-link">
         {t('common.skipToContent')}
       </a>
-      <div className={dashboard ? 'flex min-h-screen lg:h-full lg:min-h-0' : 'flex min-h-screen'}>
-        <aside className="hidden shrink-0 border-r border-line bg-surface lg:flex lg:w-[4.5rem] lg:flex-col xl:w-60">
+      <div
+        className={
+          dashboard || chat ? 'flex min-h-screen lg:h-full lg:min-h-0' : 'flex min-h-screen'
+        }
+      >
+        <aside className="hidden shrink-0 border-r border-line bg-surface/95 shadow-[1px_0_0_rgba(15,23,42,0.03)] backdrop-blur lg:sticky lg:top-0 lg:flex lg:h-dvh lg:w-[4.5rem] lg:flex-col lg:self-start lg:overflow-hidden xl:w-60">
           <Sidebar variant="responsive" />
         </aside>
-        <div className="flex min-w-0 flex-1 flex-col">
+        <div
+          className={
+            dashboard || chat
+              ? 'flex min-h-0 min-w-0 flex-1 flex-col'
+              : 'flex min-w-0 flex-1 flex-col'
+          }
+        >
           <Topbar onOpenMenu={() => setMenuOpen(true)} />
           <main
             id="contenu"
             className={
               location.pathname === '/'
                 ? 'flex min-h-0 w-full flex-1 flex-col px-4 py-2 lg:overflow-hidden lg:px-5 lg:py-1.5'
-                : 'w-full flex-1 px-4 py-4 md:px-5'
+                : chat
+                  ? 'flex min-h-0 w-full flex-1 flex-col overflow-hidden'
+                  : 'w-full flex-1 px-4 py-4 md:px-6 lg:py-5'
             }
           >
             <Outlet />
@@ -81,7 +94,7 @@ function Topbar({ onOpenMenu }: { onOpenMenu: () => void }) {
   const currentLabel = current ? t(current.labelKey) : t('common.appName');
 
   return (
-    <header className="sticky top-0 z-10 flex h-14 items-center justify-between gap-3 border-b border-line bg-surface px-4 md:px-6">
+    <header className="sticky top-0 z-10 flex h-14 items-center justify-between gap-3 border-b border-line bg-surface/90 px-4 shadow-[0_1px_2px_rgba(15,23,42,0.04)] backdrop-blur md:px-6">
       <div className="flex min-w-0 items-center gap-2">
         <Button
           variant="ghost"
@@ -91,39 +104,49 @@ function Topbar({ onOpenMenu }: { onOpenMenu: () => void }) {
         >
           <Icon name="menu" />
         </Button>
-        <p className="truncate text-sm font-medium">{currentLabel}</p>
+        <p className="truncate text-sm font-semibold tracking-tight">{currentLabel}</p>
       </div>
-      <Dropdown
-        menuLabel={t('common.account')}
-        label={
-          <>
-            <Avatar label={accountLabel} decorative />
-            <span className="sr-only max-w-40 truncate sm:not-sr-only">{accountLabel}</span>
-          </>
-        }
-      >
-        {(close) => (
-          <>
-            <AccountLink to="/profil" onSelect={close}>
-              {t('common.profile')}
-            </AccountLink>
-            <AccountLink to="/parametres" onSelect={close}>
-              {t('common.settings')}
-            </AccountLink>
-            <button
-              type="button"
-              role="menuitem"
-              className="block w-full px-3 py-2 text-left text-sm text-ink hover:bg-canvas"
-              onClick={() => {
-                close();
-                logout.mutate();
-              }}
-            >
-              {t('common.signOut')}
-            </button>
-          </>
-        )}
-      </Dropdown>
+      <div className="flex shrink-0 items-center gap-2">
+        <Link
+          to="/messagerie"
+          aria-label={t('nav.messages')}
+          title={t('nav.messages')}
+          className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-line bg-surface text-muted shadow-control transition-[background-color,border-color,color,box-shadow] duration-150 hover:border-brand/30 hover:bg-brand-soft hover:text-brand"
+        >
+          <Icon name="messages" />
+        </Link>
+        <Dropdown
+          menuLabel={t('common.account')}
+          label={
+            <>
+              <Avatar label={accountLabel} decorative />
+              <span className="sr-only max-w-40 truncate sm:not-sr-only">{accountLabel}</span>
+            </>
+          }
+        >
+          {(close) => (
+            <>
+              <AccountLink to="/profil" onSelect={close}>
+                {t('common.profile')}
+              </AccountLink>
+              <AccountLink to="/parametres" onSelect={close}>
+                {t('common.settings')}
+              </AccountLink>
+              <button
+                type="button"
+                role="menuitem"
+                className="block w-full px-3 py-2 text-left text-sm text-ink transition-colors hover:bg-canvas"
+                onClick={() => {
+                  close();
+                  logout.mutate();
+                }}
+              >
+                {t('common.signOut')}
+              </button>
+            </>
+          )}
+        </Dropdown>
+      </div>
     </header>
   );
 }
@@ -142,7 +165,7 @@ function AccountLink({
       role="menuitem"
       to={to}
       onClick={onSelect}
-      className="block px-3 py-2 text-sm text-ink hover:bg-canvas"
+      className="block px-3 py-2 text-sm text-ink transition-colors hover:bg-canvas"
     >
       {children}
     </Link>
@@ -165,7 +188,7 @@ function Sidebar({
     <div className="flex h-full min-h-0 flex-col">
       <div className="border-b border-line px-3 py-4">
         <Link to="/" onClick={onNavigate} className="flex items-center gap-2.5 px-1">
-          <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-brand text-white">
+          <span className="grid h-8 w-8 shrink-0 place-items-center rounded-md bg-brand text-white shadow-[0_8px_18px_rgba(36,87,167,0.18)]">
             <Icon name="thesis" className="h-4 w-4" />
           </span>
           <span className={compact ? 'sr-only xl:not-sr-only' : undefined}>
@@ -211,8 +234,10 @@ function SidebarLink({
       onClick={onNavigate}
       className={({ isActive }) =>
         [
-          'flex items-center gap-3 rounded-md px-2.5 py-2 text-sm font-medium transition-colors duration-150',
-          isActive ? 'bg-brand-soft font-medium text-brand' : 'text-ink hover:bg-canvas',
+          'relative flex items-center gap-3 rounded-md px-2.5 py-2 text-sm font-medium transition-[background-color,color,box-shadow] duration-150',
+          isActive
+            ? 'bg-brand-soft font-semibold text-brand shadow-[inset_3px_0_0_var(--color-brand),0_1px_2px_rgba(15,23,42,0.04)]'
+            : 'text-muted hover:bg-canvas hover:text-ink',
         ].join(' ')
       }
     >

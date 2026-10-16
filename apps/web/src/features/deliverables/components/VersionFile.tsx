@@ -1,4 +1,5 @@
 import { Button } from '@thesispartner/ui';
+import { IconAction } from '../../../components/IconAction';
 import { useRef, useState } from 'react';
 import { ApiClientError } from '../../../api/client';
 import { useLocale, useT } from '../../../i18n/LocaleContext';
@@ -122,14 +123,13 @@ export function FilePicker({
           event.target.value = '';
         }}
       />
-      <Button
-        type="button"
-        variant="secondary"
+      <IconAction
+        tone="neutral"
+        icon="plus"
+        label={label}
         disabled={busy}
         onClick={() => inputRef.current?.click()}
-      >
-        {label}
-      </Button>
+      />
       <p className="mt-2 text-sm text-muted">{t('deliverables.uploadHint')}</p>
       {progress ? <p className="mt-2 text-sm text-ink">{progress}</p> : null}
       {localError ? (

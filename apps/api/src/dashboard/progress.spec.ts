@@ -1,4 +1,4 @@
-import { assessProgress } from './progress';
+import { assessProgress, workProgressPercentage } from './progress';
 
 describe('assessProgress', () => {
   it('stays at zero when no thesis exists', () => {
@@ -45,5 +45,21 @@ describe('assessProgress', () => {
 
     expect(result.percentage).toBe(33);
     expect(result.status).toBe('AT_RISK');
+  });
+});
+
+describe('workProgressPercentage', () => {
+  it('averages active objectives and ignores cancelled ones', () => {
+    expect(
+      workProgressPercentage([
+        { status: 'IN_PROGRESS', progress: 50 },
+        { status: 'COMPLETED', progress: 100 },
+        { status: 'CANCELLED', progress: 0 },
+      ]),
+    ).toBe(75);
+  });
+
+  it('is zero when every objective is cancelled', () => {
+    expect(workProgressPercentage([{ status: 'CANCELLED', progress: 80 }])).toBe(0);
   });
 });

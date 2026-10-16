@@ -194,6 +194,24 @@ export function useUploadDeliverableFile(thesisId: string, deliverableId: string
   });
 }
 
+export function useDeliverableFilePreview(
+  thesisId: string,
+  deliverableId: string,
+  versionId: string | null,
+) {
+  return useQuery({
+    queryKey: [...deliverableKeys.version(thesisId, deliverableId, versionId ?? 'none'), 'preview'],
+    enabled: Boolean(versionId),
+    retry: false,
+    staleTime: 4 * 60 * 1000,
+    queryFn: () =>
+      apiGet(
+        `${base(thesisId, deliverableId)}/versions/${versionId}/file/download?inline=1`,
+        fileDownloadSchema,
+      ),
+  });
+}
+
 export function useDownloadDeliverableFile(thesisId: string, deliverableId: string) {
   return useMutation({
     mutationFn: (versionId: string) =>

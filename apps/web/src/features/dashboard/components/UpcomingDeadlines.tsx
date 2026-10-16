@@ -21,27 +21,32 @@ function splitDay(value: string, dateLocale: string): { day: string; month: stri
   };
 }
 
-function deadlinePath(item: DashboardData['upcomingDeadlines'][number]): string {
-  if (item.kind === 'OBJECTIVE') return `/objectifs/${item.id}`;
-  if (item.kind === 'DELIVERABLE') return `/livrables/${item.id}`;
-  if (item.kind === 'EXPECTED_DEFENSE') return '/profil';
-  return '/objectifs';
+function scopedDeadline(item: DashboardData['upcomingDeadlines'][number], scope: string): string {
+  const root = scope || '';
+  if (item.kind === 'OBJECTIVE') return `${root}/objectifs/${item.id}`;
+  if (item.kind === 'DELIVERABLE') return `${root}/livrables/${item.id}`;
+  if (item.kind === 'EXPECTED_DEFENSE') return scope ? `${scope}/profil` : '/profil';
+  return scope ? `${scope}/objectifs` : '/objectifs';
 }
 
 export function UpcomingDeadlines({
   deadlines,
+  scope = '',
 }: {
   deadlines: DashboardData['upcomingDeadlines'];
+  scope?: string;
 }) {
   const t = useT();
   const { dateLocale } = useLocale();
 
   return (
-    <section className="flex min-h-0 flex-col overflow-hidden rounded-md border border-line bg-surface lg:h-full">
+    <section className="flex min-h-0 flex-col overflow-hidden rounded-md border border-line bg-surface shadow-card lg:h-full">
       <header className="flex shrink-0 items-baseline justify-between gap-3 border-b border-line px-4 py-3">
-        <h2 className="font-serif text-lg text-ink">{t('dashboard.upcomingDeadlines')}</h2>
+        <h2 className="text-base font-semibold tracking-tight text-ink">
+          {t('dashboard.upcomingDeadlines')}
+        </h2>
         <Link
-          to="/objectifs"
+          to={scope ? `${scope}/objectifs` : '/objectifs'}
           className="text-xs font-medium tracking-wide text-muted uppercase transition-colors hover:text-ink"
         >
           {t('dashboard.viewAll')}
@@ -58,8 +63,8 @@ export function UpcomingDeadlines({
             return (
               <li key={`${item.kind}-${item.id}`}>
                 <Link
-                  to={deadlinePath(item)}
-                  className="grid grid-cols-[4.25rem_minmax(0,1fr)] gap-3 px-4 py-3 transition-colors hover:bg-canvas/70"
+                  to={scopedDeadline(item, scope)}
+                  className="grid grid-cols-[4.25rem_minmax(0,1fr)] gap-3 px-4 py-3 transition-colors hover:bg-canvas/80"
                 >
                   <time
                     dateTime={item.occursOn}

@@ -1,4 +1,5 @@
-import { Button, EmptyState, Modal, Skeleton } from '@thesispartner/ui';
+import { EmptyState, Modal, Skeleton } from '@thesispartner/ui';
+import { IconAction } from '../../../components/IconAction';
 import { useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useT } from '../../../i18n/LocaleContext';
@@ -15,10 +16,12 @@ export function RemarksWorkspace({
   thesisId,
   canCreate,
   detailPath,
+  tabsAside = false,
 }: {
   thesisId: string;
   canCreate: boolean;
   detailPath: (remarkId: string) => string;
+  tabsAside?: boolean;
 }) {
   const t = useT();
   const [params, setParams] = useSearchParams();
@@ -52,87 +55,128 @@ export function RemarksWorkspace({
     setParams(copy);
   }
 
+  const statusTabs = (
+    <div
+      className={
+        tabsAside
+          ? 'flex gap-0.5 overflow-x-auto rounded-md border border-line bg-surface p-1.5 shadow-control md:sticky md:top-20 md:flex-col md:overflow-visible [scrollbar-width:none] [&::-webkit-scrollbar]:hidden'
+          : 'flex min-w-0 flex-1 gap-1 overflow-x-auto rounded-md border border-line bg-canvas p-1 shadow-control [scrollbar-width:none] [&::-webkit-scrollbar]:hidden'
+      }
+      role="tablist"
+      aria-label={t('remarks.title')}
+    >
+      {tabs.map((item) => (
+        <button
+          key={item.id}
+          type="button"
+          role="tab"
+          aria-selected={tab === item.id}
+          className={
+            tabsAside
+              ? item.id === tab
+                ? 'shrink-0 rounded-md bg-brand-soft px-3 py-2 text-left text-sm font-semibold text-brand md:w-full'
+                : 'shrink-0 rounded-md px-3 py-2 text-left text-sm font-medium text-muted transition-colors hover:bg-brand-soft hover:text-brand md:w-full'
+              : item.id === tab
+                ? 'shrink-0 whitespace-nowrap rounded-md bg-surface px-2.5 py-1 text-xs font-semibold text-ink shadow-[0_1px_2px_rgba(15,23,42,0.06)] sm:text-sm'
+                : 'shrink-0 whitespace-nowrap rounded-md px-2.5 py-1 text-xs text-muted hover:text-ink sm:text-sm'
+          }
+          onClick={() => update({ status: item.id === 'all' ? null : item.id })}
+        >
+          {item.label}
+        </button>
+      ))}
+    </div>
+  );
+
   return (
-    <div className="min-w-0">
-      <div className="flex flex-col gap-3">
-        <div className="flex flex-wrap gap-2" role="tablist" aria-label={t('remarks.title')}>
-          {tabs.map((item) => (
-            <button
-              key={item.id}
-              type="button"
-              role="tab"
-              aria-selected={tab === item.id}
-              className={
-                tab === item.id
-                  ? 'rounded-md bg-brand px-3 py-1.5 text-sm text-white'
-                  : 'rounded-md border border-line bg-surface px-3 py-1.5 text-sm text-ink'
-              }
-              onClick={() => update({ status: item.id === 'all' ? null : item.id })}
-            >
-              {item.label}
-            </button>
+    <div
+      className={
+        tabsAside ? 'grid items-start gap-4 md:grid-cols-[11rem_minmax(0,1fr)]' : 'min-w-0'
+      }
+    >
+      {tabsAside ? <div className="md:col-start-1 md:row-start-1">{statusTabs}</div> : null}
+      <div className={tabsAside ? 'min-w-0 md:col-start-2 md:row-start-1' : undefined}>
+        <ol
+          className="mb-3 grid gap-2 rounded-md border border-line bg-surface p-2.5 sm:grid-cols-4"
+          aria-label={t('remarks.cycleLabel')}
+        >
+          {(['OPEN', 'IN_PROGRESS', 'RESOLVED', 'CLOSED'] as const).map((status, index) => (
+            <li key={status} className="min-w-0">
+              <p className="text-[11px] font-medium text-ink">
+                <span className="mr-1 tabular-nums text-muted">{index + 1}.</span>
+                {t(`remarks.statusLabel.${status}`)}
+              </p>
+              <p className="mt-0.5 text-[11px] leading-snug text-muted">
+                {canCreate ? t(`remarks.cycle.${status}`) : t(`remarks.cycleStudent.${status}`)}
+              </p>
+            </li>
           ))}
-        </div>
-        <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center">
-          <label className="min-w-0 flex-1 text-sm">
+        </ol>
+        <div className="flex flex-col gap-2.5">
+          <div className="flex items-center gap-2">
+            {tabsAside ? null : statusTabs}
+            {canCreate ? (
+              <IconAction label={t('remarks.new')} icon="plus" onClick={() => setCreating(true)} />
+            ) : null}
+          </div>
+          <label className="min-w-0 text-xs">
             <span className="sr-only">{t('common.search')}</span>
             <input
               value={params.get('search') ?? ''}
               placeholder={t('common.search')}
-              className="w-full rounded-md border border-line bg-surface px-3 py-2 text-sm text-ink"
+              className="w-full rounded-md border border-line bg-surface px-2.5 py-1.5 text-xs text-ink sm:text-sm"
               onChange={(event) =>
                 update({ search: event.target.value.trim() ? event.target.value : null })
               }
             />
           </label>
-          {canCreate ? <Button onClick={() => setCreating(true)}>{t('remarks.new')}</Button> : null}
         </div>
-      </div>
-      {remarks.isLoading ? (
-        <div className="mt-4" aria-busy="true">
-          <Skeleton className="h-24" />
-        </div>
-      ) : null}
-      {remarks.isError ? (
-        <div className="mt-4">
-          <QueryError error={remarks.error} />
-        </div>
-      ) : null}
-      {remarks.data && remarks.data.remarks.length === 0 ? (
-        <div className="mt-4">
-          <EmptyState
-            title={t('remarks.emptyTitle')}
-            description={
-              canCreate
-                ? t('remarks.emptyDescriptionSupervisor')
-                : t('remarks.emptyDescriptionStudent')
-            }
+        {remarks.isLoading ? (
+          <div className="mt-4" aria-busy="true">
+            <Skeleton className="h-24" />
+          </div>
+        ) : null}
+        {remarks.isError ? (
+          <div className="mt-4">
+            <QueryError error={remarks.error} />
+          </div>
+        ) : null}
+        {remarks.data && remarks.data.remarks.length === 0 ? (
+          <div className="mt-4">
+            <EmptyState
+              title={t('remarks.emptyTitle')}
+              description={
+                canCreate
+                  ? t('remarks.emptyDescriptionSupervisor')
+                  : t('remarks.emptyDescriptionStudent')
+              }
+            />
+          </div>
+        ) : null}
+        {remarks.data && remarks.data.remarks.length > 0 ? (
+          <div className="mt-4">
+            <RemarkList remarks={remarks.data.remarks} detailPath={detailPath} />
+          </div>
+        ) : null}
+        <Modal
+          open={creating}
+          title={t('remarks.new')}
+          closeLabel={t('common.close')}
+          onClose={() => setCreating(false)}
+        >
+          <RemarkForm
+            objectives={objectives.data?.objectives ?? []}
+            deliverables={deliverables.data?.deliverables ?? []}
+            pending={create.isPending}
+            error={create.error}
+            onCancel={() => setCreating(false)}
+            onSubmit={async (body) => {
+              await create.mutateAsync(body);
+              setCreating(false);
+            }}
           />
-        </div>
-      ) : null}
-      {remarks.data && remarks.data.remarks.length > 0 ? (
-        <div className="mt-4">
-          <RemarkList remarks={remarks.data.remarks} detailPath={detailPath} />
-        </div>
-      ) : null}
-      <Modal
-        open={creating}
-        title={t('remarks.new')}
-        closeLabel={t('common.close')}
-        onClose={() => setCreating(false)}
-      >
-        <RemarkForm
-          objectives={objectives.data?.objectives ?? []}
-          deliverables={deliverables.data?.deliverables ?? []}
-          pending={create.isPending}
-          error={create.error}
-          onCancel={() => setCreating(false)}
-          onSubmit={async (body) => {
-            await create.mutateAsync(body);
-            setCreating(false);
-          }}
-        />
-      </Modal>
+        </Modal>
+      </div>
     </div>
   );
 }

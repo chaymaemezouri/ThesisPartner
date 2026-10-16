@@ -5,7 +5,13 @@ import { formatDate, utcToday } from '../format';
 import type { DashboardData } from '../labels';
 import { activityPath } from '../paths';
 
-export function ActivityList({ activity }: { activity: DashboardData['recentActivity'] }) {
+export function ActivityList({
+  activity,
+  scope = '',
+}: {
+  activity: DashboardData['recentActivity'];
+  scope?: string;
+}) {
   const t = useT();
   const { dateLocale } = useLocale();
   const lines = groupActivity(activity, utcToday(), (type) => t(`activity.${type}`), t);
@@ -19,7 +25,7 @@ export function ActivityList({ activity }: { activity: DashboardData['recentActi
         <ul className="mt-3 divide-y divide-line">
           {lines.map((line) => (
             <li key={`${line.date}-${line.type}-${line.text}`} className="py-2 text-sm">
-              <Link to={activityPath(line.type)} className="hover:text-brand">
+              <Link to={scopedActivity(line.type, scope)} className="hover:text-brand">
                 <span className="text-muted">{formatDate(line.date, dateLocale)}</span>
                 <span aria-hidden="true"> · </span>
                 <span className="text-ink">{line.text}</span>
@@ -30,4 +36,12 @@ export function ActivityList({ activity }: { activity: DashboardData['recentActi
       )}
     </section>
   );
+}
+
+function scopedActivity(type: Parameters<typeof activityPath>[0], scope: string): string {
+  const path = activityPath(type);
+  if (!scope) return path;
+  if (path.startsWith('/livrables')) return `${scope}/livrables`;
+  if (path.startsWith('/objectifs')) return `${scope}/objectifs`;
+  return `${scope}/profil`;
 }

@@ -32,6 +32,8 @@ function student(thesisId: string, givenName: string, title: string) {
     durationYears: 5,
     progressPercentage: 0,
     deliverableCount: 0,
+    pendingValidationCount: 0,
+    pendingDeliverables: [],
     supervisors: [{ displayName: 'Noa Bernard' }],
     meetings: [],
     doctoralStudent: person,
@@ -83,7 +85,9 @@ describe('supervised theses', () => {
     renderPage();
     expect(await screen.findByText('Ada Test')).toBeInTheDocument();
     expect(screen.getByText('Bea Test')).toBeInTheDocument();
-    const links = screen.getAllByRole('link', { name: 'View follow-up' });
+    expect(screen.getByText('These Alpha')).toBeInTheDocument();
+    expect(screen.queryByText('Doctoral students')).not.toBeInTheDocument();
+    const links = screen.getAllByRole('link', { name: 'Open workspace' });
     expect(links[0]).toHaveAttribute('href', `/encadrement/${theses.theses[0]?.thesisId}`);
     expect(links[1]).toHaveAttribute('href', `/encadrement/${theses.theses[1]?.thesisId}`);
   });

@@ -11,10 +11,7 @@ export function DoctoralRemarksPage() {
   const dashboard = useDashboard();
   return (
     <div className="min-w-0">
-      <header className="mb-6 max-w-2xl">
-        <h1 className="font-serif text-2xl text-ink">{t('remarks.title')}</h1>
-        <p className="mt-2 text-sm text-muted">{t('remarks.subtitle')}</p>
-      </header>
+      <h1 className="sr-only">{t('remarks.title')}</h1>
       {dashboard.isLoading ? (
         <div aria-busy="true">
           <Skeleton className="h-24" />
@@ -41,6 +38,7 @@ export function DoctoralRemarksPage() {
         <RemarksWorkspace
           thesisId={dashboard.data.thesis.id}
           canCreate={false}
+          tabsAside
           detailPath={(remarkId) => `/remarques/${remarkId}`}
         />
       ) : null}

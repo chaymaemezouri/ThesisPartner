@@ -1,9 +1,10 @@
-import { Link, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { Skeleton } from '@thesispartner/ui';
 import { useT } from '../../i18n/LocaleContext';
 import { useThesisMembers } from '../objectives/hooks/use-objectives';
 import { QueryError } from '../objectives/components/QueryError';
 import { DeliverableDetailView } from './components/DeliverableDetailView';
+import { StudentSpaceNav } from '../supervision/StudentSpaceNav';
 import { DeliverablesWorkspace } from './components/DeliverablesWorkspace';
 
 export function SupervisorDeliverablesPage() {
@@ -13,19 +14,8 @@ export function SupervisorDeliverablesPage() {
   const thesis = useThesisMembers(thesisId);
   return (
     <div className="min-w-0">
-      <header className="mb-6 max-w-2xl">
-        <p className="text-sm text-muted">
-          <Link to="/encadrement" className="text-brand">
-            {t('objectives.supervisor.students')}
-          </Link>
-          <span aria-hidden="true"> · </span>
-          <Link to={`/encadrement/${thesisId}`} className="text-brand">
-            {t('objectives.supervisor.dossier')}
-          </Link>
-        </p>
-        <h1 className="mt-2 font-serif text-2xl text-ink">{t('deliverables.title')}</h1>
-        <p className="mt-2 text-sm text-muted">{t('deliverables.supervisorSubtitle')}</p>
-      </header>
+      <StudentSpaceNav thesisId={thesisId} />
+      <h1 className="sr-only">{t('deliverables.title')}</h1>
       {thesis.isLoading ? (
         <div aria-busy="true">
           <Skeleton className="h-24" />
@@ -36,6 +26,8 @@ export function SupervisorDeliverablesPage() {
         <DeliverablesWorkspace
           thesisId={thesisId}
           canCreate={thesis.data.role === 'DOCTORAL_STUDENT'}
+          canRemark={thesis.data.role === 'SUPERVISOR'}
+          tabsAside
           detailPath={(deliverableId) => `/encadrement/${thesisId}/livrables/${deliverableId}`}
         />
       ) : null}

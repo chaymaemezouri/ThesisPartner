@@ -10,6 +10,6 @@ import { SessionService } from './session.service';
   imports: [SecurityModule],
   controllers: [AuthController],
   providers: [AuthService, SessionService, AuthMailer, LoginAttemptTracker],
-  exports: [SessionService],
+  exports: [SessionService, AuthMailer],
 })
 export class AuthModule {}

@@ -1,9 +1,11 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { Button, Modal, Skeleton } from '@thesispartner/ui';
+import { IconAction } from '../../../components/IconAction';
 import { useState } from 'react';
 import { useLocale, useT } from '../../../i18n/LocaleContext';
 import { formatShortDay } from '../../dashboard/labels';
 import { useDeleteObjective, useUpdateObjective, useObjective } from '../hooks/use-objectives';
+import { LinkedRemarkButton } from '../../remarks/components/LinkedRemarkButton';
 import { ObjectiveForm } from './ObjectiveForm';
 import { ObjectiveStatusBadge } from './ObjectiveStatusBadge';
 import { ObjectiveTasks } from './ObjectiveTasks';
@@ -13,12 +15,14 @@ export function ObjectiveDetailView({
   thesisId,
   objectiveId,
   canManage,
+  canRemark = false,
   studentView = false,
   backTo,
 }: {
   thesisId: string;
   objectiveId: string;
   canManage: boolean;
+  canRemark?: boolean;
   studentView?: boolean;
   backTo: string;
 }) {
@@ -83,14 +87,31 @@ export function ObjectiveDetailView({
               </div>
             </div>
           </div>
-          {canRevise ? (
-            <div className="flex shrink-0 gap-2">
-              <Button variant="secondary" onClick={() => setEditing(true)}>
-                {t('common.edit')}
-              </Button>
-              <Button variant="secondary" onClick={() => setConfirmDelete(true)}>
-                {t('common.delete')}
-              </Button>
+          {canRevise || canRemark ? (
+            <div className="flex shrink-0 items-center gap-2">
+              {canRemark ? (
+                <LinkedRemarkButton
+                  thesisId={thesisId}
+                  subject={data.title}
+                  objectiveId={objectiveId}
+                />
+              ) : null}
+              {canRevise ? (
+                <>
+                  <IconAction
+                    tone="neutral"
+                    icon="pencil"
+                    label={t('common.edit')}
+                    onClick={() => setEditing(true)}
+                  />
+                  <IconAction
+                    tone="danger"
+                    icon="trash"
+                    label={t('common.delete')}
+                    onClick={() => setConfirmDelete(true)}
+                  />
+                </>
+              ) : null}
             </div>
           ) : null}
         </div>

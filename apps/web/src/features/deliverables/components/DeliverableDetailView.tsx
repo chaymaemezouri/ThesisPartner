@@ -1,4 +1,5 @@
 import { Button, Modal, Skeleton, Textarea } from '@thesispartner/ui';
+import { IconAction } from '../../../components/IconAction';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useLocale, useT } from '../../../i18n/LocaleContext';
@@ -14,6 +15,8 @@ import {
   useUpdateDeliverable,
   type Deliverable,
 } from '../hooks/use-deliverables';
+import { LinkedRemarkButton } from '../../remarks/components/LinkedRemarkButton';
+import { DeliverableDocument } from './DeliverableDocument';
 import { DeliverableForm } from './DeliverableForm';
 import { DeliverableVersionHistory } from './DeliverableVersionHistory';
 
@@ -119,30 +122,37 @@ export function DeliverableDetailView({
                 </>
               ) : null}
             </p>
-            <p className="mt-1.5 max-w-2xl text-[11px] leading-snug text-muted">
-              {t(`deliverables.statusHelp.${data.status}`)}
-              {overdueHint ? ` ${overdueHint}` : ''}
-            </p>
+            {canReview ? null : (
+              <p className="mt-1.5 max-w-2xl text-[11px] leading-snug text-muted">
+                {t(`deliverables.statusHelp.${data.status}`)}
+                {overdueHint ? ` ${overdueHint}` : ''}
+              </p>
+            )}
           </div>
-          {editable || canCancel ? (
-            <div className="flex shrink-0 flex-wrap gap-1.5">
+          {editable || canCancel || canReview ? (
+            <div className="flex shrink-0 flex-wrap items-center gap-1.5">
+              {canReview ? (
+                <LinkedRemarkButton
+                  thesisId={thesisId}
+                  subject={data.title}
+                  deliverableId={deliverableId}
+                />
+              ) : null}
               {editable ? (
-                <Button
-                  variant="secondary"
-                  className="h-8 px-2.5 text-xs"
+                <IconAction
+                  tone="neutral"
+                  icon="pencil"
+                  label={t('common.edit')}
                   onClick={() => setEditing(true)}
-                >
-                  {t('common.edit')}
-                </Button>
+                />
               ) : null}
               {canCancel ? (
-                <Button
-                  variant="secondary"
-                  className="h-8 px-2.5 text-xs"
+                <IconAction
+                  tone="danger"
+                  icon="close"
+                  label={t('deliverables.cancel')}
                   onClick={() => setConfirming(true)}
-                >
-                  {t('deliverables.cancel')}
-                </Button>
+                />
               ) : null}
             </div>
           ) : null}
@@ -210,6 +220,8 @@ export function DeliverableDetailView({
           onChanges={() => requestChanges.mutate(reason)}
         />
       </section>
+
+      <DeliverableDocument thesisId={thesisId} deliverableId={deliverableId} />
 
       <DeliverableVersionHistory
         thesisId={thesisId}

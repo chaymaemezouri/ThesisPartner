@@ -35,6 +35,14 @@ model User {
   meetingsCreated            Meeting[]            @relation("MeetingOrganizer")
   remarksAuthored            Remark[]             @relation("RemarkAuthor")
   remarkRepliesAuthored      RemarkReply[]        @relation("RemarkReplyAuthor")
+  publications               Publication[]
+  evaluationsAuthored        PeriodicEvaluation[] @relation("EvaluationAuthor")
+  portfolioProjects          PortfolioProject[]
+  portfolioSkills            PortfolioSkill[]
+  conversationsCreated       Conversation[]       @relation("ConversationCreator")
+  conversationMemberships    ConversationMember[]
+  messagesAuthored           Message[]            @relation("MessageAuthor")
+  sharedResources            SharedResource[]
 
   @@map("users")
 }
@@ -57,12 +65,89 @@ model Profile {
   cvUrl            String?  @map("cv_url") @db.VarChar(500)
   googleScholarUrl String?  @map("google_scholar_url") @db.VarChar(500)
   linkedinUrl      String?  @map("linkedin_url") @db.VarChar(500)
+  doctoralYear     Int      @default(1) @map("doctoral_year")
   createdAt        DateTime @default(now()) @map("created_at")
   updatedAt        DateTime @updatedAt @map("updated_at")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("profiles")
+}
+
+enum PublicationKind {
+  ARTICLE
+  CONFERENCE
+}
+
+enum PublicationStatus {
+  IN_PREPARATION
+  SUBMITTED
+  ACCEPTED
+  PUBLISHED
+}
+
+/// A scientific output kept on the doctoral student's own portfolio.
+model Publication {
+  id        String          @id @default(uuid()) @db.Uuid
+  userId    String          @map("user_id") @db.Uuid
+  title     String          @db.VarChar(300)
+  venue     String          @db.VarChar(200)
+  year      Int
+  kind      PublicationKind
+  status    PublicationStatus @default(PUBLISHED)
+  createdAt DateTime        @default(now()) @map("created_at")
+  updatedAt DateTime        @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, year])
+  @@map("publications")
+}
+
+/// Supervisor judgement kept on the thesis. Rows stay; they are not deleted.
+model PeriodicEvaluation {
+  id           String   @id @default(uuid()) @db.Uuid
+  thesisId     String   @map("thesis_id") @db.Uuid
+  authorId     String   @map("author_id") @db.Uuid
+  evaluatedOn  DateTime @map("evaluated_on") @db.Date
+  quality      Int
+  autonomy     Int
+  methodology  Int
+  advancement  Int
+  comment      String?  @db.VarChar(2000)
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  thesis Thesis @relation(fields: [thesisId], references: [id], onDelete: Cascade)
+  author User   @relation("EvaluationAuthor", fields: [authorId], references: [id], onDelete: Restrict)
+
+  @@index([thesisId, evaluatedOn])
+  @@map("periodic_evaluations")
+}
+
+model PortfolioProject {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  title     String   @db.VarChar(200)
+  summary   String?  @db.VarChar(1000)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("portfolio_projects")
+}
+
+model PortfolioSkill {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  label     String   @db.VarChar(80)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, label])
+  @@map("portfolio_skills")
 }
 
 enum ThesisStatus {
@@ -80,6 +165,7 @@ model Thesis {
   institution       String?      @db.VarChar(200)
   startedOn         DateTime?    @map("started_on") @db.Date
   expectedDefenseOn DateTime?    @map("expected_defense_on") @db.Date
+  doctoralYear      Int          @default(1) @map("doctoral_year")
   createdAt         DateTime     @default(now()) @map("created_at")
   updatedAt         DateTime     @updatedAt @map("updated_at")
 
@@ -87,8 +173,10 @@ model Thesis {
   auditLogs    AuditLog[]
   objectives   Objective[]
   deliverables Deliverable[]
-  meetings     Meeting[]
-  remarks      Remark[]
+  meetings      Meeting[]
+  remarks       Remark[]
+  evaluations   PeriodicEvaluation[]
+  conversations Conversation[]
 
   @@index([status])
   @@map("theses")
@@ -254,6 +342,7 @@ model Objective {
   reviewMessage           String?               @map("review_message") @db.VarChar(500)
   origin                  ContributionOrigin    @default(DOCTORAL_STUDENT)
   templateCode            String?               @map("template_code") @db.VarChar(40)
+  doctoralYear            Int                   @default(1) @map("doctoral_year")
   createdById             String                @map("created_by_id") @db.Uuid
   responsibleUserId       String?               @map("responsible_user_id") @db.Uuid
   createdAt               DateTime              @default(now()) @map("created_at")
@@ -271,6 +360,7 @@ model Objective {
   @@unique([thesisId, templateCode])
   @@index([thesisId, status])
   @@index([thesisId, dueDate])
+  @@index([thesisId, doctoralYear])
   @@map("objectives")
 }
 
@@ -364,20 +454,44 @@ model Deliverable {
   @@map("deliverables")
 }
 
+enum MeetingMode {
+  ONLINE
+  IN_PERSON
+}
+
+enum MeetingStatus {
+  REQUESTED
+  PLANNED
+  HELD
+  CANCELLED
+}
+
 /// A scheduled working session between the supervisor and the doctoral student.
+/// Past meetings stay in the history. The title is the subject of the session.
 model Meeting {
-  id           String   @id @default(uuid()) @db.Uuid
-  thesisId     String   @map("thesis_id") @db.Uuid
-  title        String   @db.VarChar(200)
-  scheduledOn  DateTime @map("scheduled_on") @db.Date
-  createdById  String   @map("created_by_id") @db.Uuid
-  createdAt    DateTime @default(now()) @map("created_at")
-  updatedAt    DateTime @updatedAt @map("updated_at")
+  id           String        @id @default(uuid()) @db.Uuid
+  thesisId     String        @map("thesis_id") @db.Uuid
+  title        String        @db.VarChar(200)
+  scheduledOn  DateTime?     @map("scheduled_on") @db.Date
+  mode         MeetingMode?
+  status       MeetingStatus @default(PLANNED)
+  location     String?       @db.VarChar(300)
+  meetingUrl   String?       @map("meeting_url") @db.VarChar(500)
+  agenda       String?       @db.VarChar(4000)
+  minutes      String?       @db.VarChar(4000)
+  cancelReason String?       @map("cancel_reason") @db.VarChar(500)
+  heldAt          DateTime? @map("held_at")
+  cancelledAt     DateTime? @map("cancelled_at")
+  reminderSentAt  DateTime? @map("reminder_sent_at")
+  createdById  String        @map("created_by_id") @db.Uuid
+  createdAt    DateTime      @default(now()) @map("created_at")
+  updatedAt    DateTime      @updatedAt @map("updated_at")
 
   thesis    Thesis @relation(fields: [thesisId], references: [id], onDelete: Cascade)
   createdBy User   @relation("MeetingOrganizer", fields: [createdById], references: [id], onDelete: Restrict)
 
   @@index([thesisId, scheduledOn])
+  @@index([thesisId, status])
   @@map("meetings")
 }
 
@@ -493,4 +607,81 @@ model StoredFile {
   uploadedBy User               @relation("StoredFileUploader", fields: [uploadedById], references: [id], onDelete: Restrict)
 
   @@map("stored_files")
+}
+
+enum ConversationKind {
+  DIRECT
+  GROUP
+}
+
+/// A direct thread belongs to one thesis. A group is chosen by a supervisor.
+model Conversation {
+  id          String           @id @default(uuid()) @db.Uuid
+  kind        ConversationKind
+  title       String?          @db.VarChar(120)
+  thesisId    String?          @unique @map("thesis_id") @db.Uuid
+  createdById String           @map("created_by_id") @db.Uuid
+  createdAt   DateTime         @default(now()) @map("created_at")
+  updatedAt   DateTime         @updatedAt @map("updated_at")
+
+  thesis    Thesis?              @relation(fields: [thesisId], references: [id], onDelete: Cascade)
+  createdBy User                 @relation("ConversationCreator", fields: [createdById], references: [id], onDelete: Restrict)
+  members   ConversationMember[]
+  messages  Message[]
+
+  @@index([kind])
+  @@map("conversations")
+}
+
+model ConversationMember {
+  id             String    @id @default(uuid()) @db.Uuid
+  conversationId String    @map("conversation_id") @db.Uuid
+  userId         String    @map("user_id") @db.Uuid
+  lastReadAt     DateTime? @map("last_read_at")
+  createdAt      DateTime  @default(now()) @map("created_at")
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([conversationId, userId])
+  @@index([userId])
+  @@map("conversation_members")
+}
+
+model Message {
+  id             String   @id @default(uuid()) @db.Uuid
+  conversationId String   @map("conversation_id") @db.Uuid
+  authorId       String   @map("author_id") @db.Uuid
+  body           String   @db.VarChar(4000)
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  author       User         @relation("MessageAuthor", fields: [authorId], references: [id], onDelete: Restrict)
+
+  @@index([conversationId, createdAt])
+  @@map("messages")
+}
+
+enum SharedResourceKind {
+  COURSE
+  ARTICLE
+  DOCUMENT
+}
+
+/// A course, article, or document a supervisor shares with the doctoral students they supervise.
+model SharedResource {
+  id        String             @id @default(uuid()) @db.Uuid
+  authorId  String             @map("author_id") @db.Uuid
+  kind      SharedResourceKind
+  title     String             @db.VarChar(200)
+  source    String?            @db.VarChar(200)
+  summary   String?            @db.VarChar(2000)
+  url       String?            @db.VarChar(500)
+  createdAt DateTime           @default(now()) @map("created_at")
+  updatedAt DateTime           @updatedAt @map("updated_at")
+
+  author User @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([authorId, createdAt])
+  @@map("shared_resources")
 }

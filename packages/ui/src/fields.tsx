@@ -15,7 +15,7 @@ type FieldProps = {
 };
 
 const controlClass =
-  'w-full rounded-md border border-line bg-surface px-3 py-2 text-sm text-ink outline-none placeholder:text-muted';
+  'w-full rounded-md border border-line bg-surface px-3 py-2 text-sm text-ink shadow-control outline-none transition-[border-color,box-shadow,background-color] duration-150 placeholder:text-muted/70 hover:border-brand/35 focus:border-brand focus:bg-white focus:shadow-[0_0_0_3px_rgba(36,87,167,0.12)] disabled:cursor-not-allowed disabled:bg-canvas disabled:text-muted';
 
 function describedBy(id: string, hint?: string, error?: string): string | undefined {
   const ids = [hint ? `${id}-hint` : null, error ? `${id}-error` : null].filter(Boolean);
@@ -45,7 +45,7 @@ export const Input = forwardRef<
 >(function Input({ id, label, hint, error, className, ...props }, ref) {
   return (
     <div className="flex flex-col gap-1.5">
-      <label htmlFor={id} className="text-sm font-medium text-ink">
+      <label htmlFor={id} className="text-xs font-semibold text-muted">
         {label}
       </label>
       <input
@@ -67,7 +67,7 @@ export const Textarea = forwardRef<
 >(function Textarea({ id, label, hint, error, className, ...props }, ref) {
   return (
     <div className="flex flex-col gap-1.5">
-      <label htmlFor={id} className="text-sm font-medium text-ink">
+      <label htmlFor={id} className="text-xs font-semibold text-muted">
         {label}
       </label>
       <textarea
@@ -89,7 +89,7 @@ export const Select = forwardRef<
 >(function Select({ id, label, hint, error, className, children, ...props }, ref) {
   return (
     <div className="flex flex-col gap-1.5">
-      <label htmlFor={id} className="text-sm font-medium text-ink">
+      <label htmlFor={id} className="text-xs font-semibold text-muted">
         {label}
       </label>
       <select

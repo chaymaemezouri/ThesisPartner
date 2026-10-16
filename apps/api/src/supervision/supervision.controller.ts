@@ -1,4 +1,4 @@
-import { Controller, Get, Req } from '@nestjs/common';
+import { Controller, Get, Param, ParseUUIDPipe, Req } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import type { Request } from 'express';
 import { AppException } from '../common/errors/app.exception';
@@ -14,5 +14,12 @@ export class SupervisionController {
   list(@Req() request: Request) {
     if (!request.auth) throw new AppException(401, 'UNAUTHORIZED', 'Authentication required');
     return this.supervision.list(request.auth.userId);
+  }
+
+  @Get(':thesisId')
+  @ApiOperation({ summary: 'Doctoral workspace for a thesis this user supervises' })
+  space(@Param('thesisId', ParseUUIDPipe) thesisId: string, @Req() request: Request) {
+    if (!request.auth) throw new AppException(401, 'UNAUTHORIZED', 'Authentication required');
+    return this.supervision.space(request.auth.userId, thesisId);
   }
 }

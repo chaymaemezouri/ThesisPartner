@@ -12,7 +12,7 @@ export function RemarkStatusBadge({ status }: { status: RemarkListItem['status']
   const t = useT();
   return (
     <span
-      className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${STYLE[status]}`}
+      className={`inline-flex items-center rounded-md px-1.5 py-0.5 text-[11px] font-medium ${STYLE[status]}`}
     >
       {t(`remarks.statusLabel.${status}`)}
     </span>

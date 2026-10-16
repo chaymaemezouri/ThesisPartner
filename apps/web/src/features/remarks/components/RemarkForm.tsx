@@ -3,7 +3,6 @@ import { useState } from 'react';
 import { useT } from '../../../i18n/LocaleContext';
 import { queryErrorMessage } from '../../objectives/components/QueryError';
 import type { RemarkDraft } from '../hooks/use-remarks';
-import { REMARK_PRIORITY_LABEL } from '../labels';
 
 type Option = { id: string; title: string };
 
@@ -12,6 +11,7 @@ export function RemarkForm({
   deliverables,
   pending,
   error,
+  fixed,
   onCancel,
   onSubmit,
 }: {
@@ -19,13 +19,13 @@ export function RemarkForm({
   deliverables: Option[];
   pending: boolean;
   error: unknown;
+  fixed?: { objectiveId?: string | null; deliverableId?: string | null; label?: string };
   onCancel: () => void;
   onSubmit: (body: RemarkDraft) => Promise<void>;
 }) {
   const t = useT();
   const [title, setTitle] = useState('');
   const [message, setMessage] = useState('');
-  const [priority, setPriority] = useState<'LOW' | 'MEDIUM' | 'HIGH'>('MEDIUM');
   const [location, setLocation] = useState('');
   const [objectiveId, setObjectiveId] = useState('');
   const [deliverableId, setDeliverableId] = useState('');
@@ -41,10 +41,9 @@ export function RemarkForm({
           await onSubmit({
             title,
             message,
-            priority,
             location: location.trim() || undefined,
-            objectiveId: objectiveId || null,
-            deliverableId: deliverableId || null,
+            objectiveId: fixed ? (fixed.objectiveId ?? null) : objectiveId || null,
+            deliverableId: fixed ? (fixed.deliverableId ?? null) : deliverableId || null,
           });
         } finally {
           setSubmitting(false);
@@ -67,46 +66,37 @@ export function RemarkForm({
         required
         onChange={(event) => setMessage(event.target.value)}
       />
-      <Select
-        id="remark-priority"
-        label={t('remarks.form.priority')}
-        value={priority}
-        onChange={(event) => setPriority(event.target.value as 'LOW' | 'MEDIUM' | 'HIGH')}
-      >
-        {(Object.keys(REMARK_PRIORITY_LABEL) as Array<keyof typeof REMARK_PRIORITY_LABEL>).map(
-          (value) => (
-            <option key={value} value={value}>
-              {t(`remarks.priorityLabel.${value}`)}
-            </option>
-          ),
-        )}
-      </Select>
-      <Select
-        id="remark-objective"
-        label={t('remarks.form.objective')}
-        value={objectiveId}
-        onChange={(event) => setObjectiveId(event.target.value)}
-      >
-        <option value="">{t('common.none')}</option>
-        {objectives.map((item) => (
-          <option key={item.id} value={item.id}>
-            {item.title}
-          </option>
-        ))}
-      </Select>
-      <Select
-        id="remark-deliverable"
-        label={t('remarks.form.deliverable')}
-        value={deliverableId}
-        onChange={(event) => setDeliverableId(event.target.value)}
-      >
-        <option value="">{t('common.none')}</option>
-        {deliverables.map((item) => (
-          <option key={item.id} value={item.id}>
-            {item.title}
-          </option>
-        ))}
-      </Select>
+      {fixed?.label ? <p className="text-sm font-medium text-ink">{fixed.label}</p> : null}
+      {fixed ? null : (
+        <>
+          <Select
+            id="remark-objective"
+            label={t('remarks.form.objective')}
+            value={objectiveId}
+            onChange={(event) => setObjectiveId(event.target.value)}
+          >
+            <option value="">{t('common.none')}</option>
+            {objectives.map((item) => (
+              <option key={item.id} value={item.id}>
+                {item.title}
+              </option>
+            ))}
+          </Select>
+          <Select
+            id="remark-deliverable"
+            label={t('remarks.form.deliverable')}
+            value={deliverableId}
+            onChange={(event) => setDeliverableId(event.target.value)}
+          >
+            <option value="">{t('common.none')}</option>
+            {deliverables.map((item) => (
+              <option key={item.id} value={item.id}>
+                {item.title}
+              </option>
+            ))}
+          </Select>
+        </>
+      )}
       <Input
         id="remark-location"
         label={t('remarks.form.location')}

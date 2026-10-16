@@ -1,6 +1,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { Button, Input, Modal, Select, Textarea } from '@thesispartner/ui';
+import { IconAction } from '../../../components/IconAction';
 import {
   createTaskSchema,
   deliverableListSchema,
@@ -88,7 +89,11 @@ export function ObjectiveTasks({
             ) : null}
           </div>
           {canManage && !frozen ? (
-            <Button onClick={() => setComposer('create')}>{t('objectives.detail.newStep')}</Button>
+            <IconAction
+              label={t('objectives.detail.newStep')}
+              icon="plus"
+              onClick={() => setComposer('create')}
+            />
           ) : null}
         </div>
         {selected ? (

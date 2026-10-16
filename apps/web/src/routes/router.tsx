@@ -1,5 +1,5 @@
 import { lazy, Suspense, type ReactNode } from 'react';
-import { Navigate, Route, Routes } from 'react-router-dom';
+import { Navigate, Route, Routes, useParams } from 'react-router-dom';
 import { Skeleton } from '@thesispartner/ui';
 import { RequireAuth } from '../layouts/RequireAuth';
 import { AppShell } from '../layouts/AppShell';
@@ -16,6 +16,14 @@ import {
   SupervisorObjectivesPage,
 } from '../features/objectives/SupervisorObjectivesPage';
 import {
+  DoctoralMeetingDetailPage,
+  DoctoralMeetingsPage,
+} from '../features/meetings/DoctoralMeetingsPage';
+import {
+  SupervisorMeetingDetailPage,
+  SupervisorMeetingsPage,
+} from '../features/meetings/SupervisorMeetingsPage';
+import {
   DoctoralRemarkDetailPage,
   DoctoralRemarksPage,
 } from '../features/remarks/DoctoralRemarksPage';
@@ -24,9 +32,15 @@ import {
   SupervisorRemarksPage,
 } from '../features/remarks/SupervisorRemarksPage';
 import { SupervisionPage } from '../features/supervision/SupervisionPage';
+import { StudentProfilePage } from '../features/supervision/StudentProfilePage';
 import { SupervisorDossierPage } from '../features/supervision/SupervisorDossierPage';
 import { SupervisorDeliverablesIndex } from '../features/supervision/SupervisorDeliverablesIndex';
+import { SupervisorMeetingsIndex } from '../features/supervision/SupervisorMeetingsIndex';
 import { useSupervisedTheses } from '../features/supervision/hooks/use-supervised-theses';
+import { MessagesPage } from '../features/messages/MessagesPage';
+import { PortfolioPage } from '../features/portfolio/PortfolioPage';
+import { ResourcesPage } from '../features/resources/ResourcesPage';
+import { SupervisorDeskPage } from '../features/supervision/SupervisorDeskPage';
 import { ProfilePage } from '../features/profile/ProfilePage';
 import { SettingsPage } from '../features/settings/SettingsPage';
 import { DashboardPage } from '../pages/DashboardPage';
@@ -66,6 +80,17 @@ function DeliverablesEntry() {
   );
 }
 
+function MeetingsEntry() {
+  const supervised = useSupervisedTheses();
+  if ((supervised.data?.theses.length ?? 0) > 0) return <SupervisorMeetingsIndex />;
+  return <DoctoralMeetingsPage />;
+}
+
+function StudentThesisRedirect() {
+  const params = useParams();
+  return <Navigate to={`/encadrement/${params.thesisId}/profil`} replace />;
+}
+
 function Deferred({ children }: { children: ReactNode }) {
   return (
     <Suspense
@@ -90,7 +115,11 @@ export function AppRoutes() {
       item.to !== '/objectifs' &&
       item.to !== '/encadrement' &&
       item.to !== '/livrables' &&
-      item.to !== '/remarques',
+      item.to !== '/remarques' &&
+      item.to !== '/reunions' &&
+      item.to !== '/portfolio' &&
+      item.to !== '/messagerie' &&
+      item.to !== '/ressources',
   );
 
   return (
@@ -119,6 +148,8 @@ export function AppRoutes() {
           />
           <Route path="encadrement" element={<SupervisionPage />} />
           <Route path="encadrement/:thesisId" element={<SupervisorDossierPage />} />
+          <Route path="encadrement/:thesisId/these" element={<StudentThesisRedirect />} />
+          <Route path="encadrement/:thesisId/profil" element={<StudentProfilePage />} />
           <Route
             path="encadrement/:thesisId/livrables"
             element={
@@ -140,6 +171,18 @@ export function AppRoutes() {
             path="encadrement/:thesisId/objectifs/:objectiveId"
             element={<SupervisorObjectiveDetailPage />}
           />
+          <Route path="portfolio" element={<PortfolioPage />} />
+          <Route path="ressources" element={<ResourcesPage />} />
+          <Route path="suivi" element={<SupervisorDeskPage />} />
+          <Route path="messagerie" element={<MessagesPage />} />
+          <Route path="messagerie/:conversationId" element={<MessagesPage />} />
+          <Route path="reunions" element={<MeetingsEntry />} />
+          <Route path="reunions/:meetingId" element={<DoctoralMeetingDetailPage />} />
+          <Route path="encadrement/:thesisId/reunions" element={<SupervisorMeetingsPage />} />
+          <Route
+            path="encadrement/:thesisId/reunions/:meetingId"
+            element={<SupervisorMeetingDetailPage />}
+          />
           <Route path="remarques" element={<DoctoralRemarksPage />} />
           <Route path="remarques/:remarkId" element={<DoctoralRemarkDetailPage />} />
           <Route path="encadrement/:thesisId/remarques" element={<SupervisorRemarksPage />} />
@@ -151,7 +194,7 @@ export function AppRoutes() {
             <Route
               key={item.to}
               path={item.to.slice(1)}
-              element={<ModulePage title={t(item.labelKey)} description={t(item.descriptionKey)} />}
+              element={<ModulePage title={t(item.labelKey)} />}
             />
           ))}
           <Route path="*" element={<NotFoundPage />} />
