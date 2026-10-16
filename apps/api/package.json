@@ -8,7 +8,7 @@
     "start": "node dist/main.js",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "prisma generate && jest --runInBand",
-    "test:integration": "prisma generate && jest --config ./test/jest-integration.cjs --runInBand",
+    "test:integration": "prisma generate && jest --config ./test/jest-integration.cjs --runInBand --forceExit",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate deploy"
   },
