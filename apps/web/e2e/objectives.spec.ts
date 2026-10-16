@@ -100,7 +100,7 @@ function csrf(cookie: string): string {
 
 async function login(page: Page, email: string) {
   await page.goto('/connexion');
-  await page.getByLabel('Adresse e-mail').fill(email);
+  await page.getByLabel('E-mail', { exact: true }).fill(email);
   await page.getByLabel('Mot de passe').fill(password);
   await page.getByRole('button', { name: 'Se connecter' }).click();
   await expect(page.getByRole('heading', { name: /Bonjour/ })).toBeVisible();
