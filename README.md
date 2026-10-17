@@ -1,5 +1,14 @@
 # ThesisPartner
 
+## Comptes de démonstration pour le client
+
+| Espace    | Nom               | Email                         | Mot de passe         |
+| --------- | ----------------- | ----------------------------- | -------------------- |
+| Doctorant | Youssef El Amrani | `demo.doctorant@example.test` | `ThesisPartner2026!` |
+| Encadrant | Nora Bernard      | `demo.encadrant@example.test` | `ThesisPartner2026!` |
+
+Après installation et application des migrations, `npm run db:seed:demo` crée les deux comptes et leur thèse de démonstration. Les identifiants sont réservés aux données fictives. Suivre le [guide de démonstration client](docs/demo-client.md) pour installer et tester les deux espaces.
+
 ThesisPartner est une plateforme web de suivi de thèse, prévue pour le doctorant et l’encadrant. Cette phase pose la fondation : monorepo, API, shell responsive, PostgreSQL, Redis, tests et CI. Les modules métier (objectifs, livrables, remarques, réunions, veille, Research Radar, portfolio, assistant) ne sont pas encore implémentés.
 
 L’application est une interface web responsive, desktop d’abord. Ce n’est pas une application mobile native.
