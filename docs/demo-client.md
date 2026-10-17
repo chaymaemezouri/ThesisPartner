@@ -32,6 +32,21 @@ Le seed ajoute la thèse de Youssef, ses objectifs, ses tâches, ses livrables e
 
 Git transporte le script et les identifiants de test. La base PostgreSQL locale n'est pas transférée par un push : exécuter le seed sur chaque nouvelle instance de démonstration. Si les variables `DEMO_STUDENT_EMAIL`, `DEMO_SUPERVISOR_EMAIL` ou `DEMO_PASSWORD` sont définies dans l'environnement ou `.env`, elles remplacent les identifiants ci-dessus.
 
+## Créer ou rétablir les accès sur un VPS avec Docker
+
+La base du site déployé est distincte de la base locale. Depuis le répertoire du projet sur le VPS, récupérer cette version du dépôt puis envoyer le script au conteneur API existant :
+
+```bash
+git pull --ff-only origin main
+docker compose exec -T api node --input-type=module < apps/api/scripts/ensure-demo-accounts.mjs
+```
+
+Cette méthode fonctionne sans reconstruire l'image. Si le déploiement utilise un fichier Compose personnalisé, ajouter les mêmes options `-f` et `-p` que pour son démarrage, et utiliser le nom de son service API. Les migrations doivent avoir été appliquées avant cette commande.
+
+Cette commande utilise uniquement les dépendances présentes dans l'image de production. Elle crée les deux comptes s'ils sont absents, rétablit leurs mots de passe, confirme leurs emails et rattache Nora comme encadrante à la thèse de Youssef. Elle crée une thèse vide si Youssef n'en a pas encore. Les objectifs, tâches, livrables et remarques existants sont conservés. Les sessions des deux comptes sont fermées ; reconnecter ensuite les utilisateurs.
+
+Les variables `DEMO_STUDENT_EMAIL`, `DEMO_SUPERVISOR_EMAIL` et `DEMO_PASSWORD` du conteneur peuvent remplacer les identifiants par défaut. Pour exécuter cette même opération hors Docker avec le `.env` racine, utiliser `npm run db:demo:accounts`.
+
 ## Tester les deux espaces
 
 Ouvrir l'adresse **Local** affichée par Vite dans le terminal. Le port habituel est `5173` ; si ce port est occupé, Vite en choisit un autre. Sur le poste de développement actuel, ThesisPartner est accessible à `http://localhost:5174`.
