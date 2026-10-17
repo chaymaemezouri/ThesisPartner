@@ -49,6 +49,18 @@ Les variables `DEMO_STUDENT_EMAIL`, `DEMO_SUPERVISOR_EMAIL` et `DEMO_PASSWORD` d
 
 ## Tester les deux espaces
 
+Pour enrichir une instance déjà accessible avec des données fictives via son API (les deux comptes doivent pouvoir se connecter) :
+
+```bash
+node apps/api/scripts/populate-demo-platform.mjs https://thesis.academyskills.net
+```
+
+Le script remplit les huit objectifs et leurs tâches, fait valider les quatre premières étapes par le compte encadrant, crée six livrables avec des PDF, des remarques et réponses, cinq réunions, un portfolio, une bibliothèque pédagogique, deux évaluations et une conversation fictive entre les deux comptes. Il suit les transitions normales de l'application et évite les doublons par titre. Les contenus et résultats scientifiques sont explicitement fictifs. Les mots de passe restent `ThesisPartner2026!`, sauf si `DEMO_PASSWORD` est défini. Le paramètre facultatif `DEMO_REFERENCE_DATE` (`AAAA-MM-JJ`) fixe la date de référence du calendrier.
+
+Les opérations sont effectuées au fil de l'exécution : en cas d'interruption, relancer le script pour terminer le remplissage. Les quatre objectifs déjà approuvés sont conservés, et les tâches déjà terminées ne sont pas remises à zéro. Ce script est réservé aux comptes de démonstration ; le lancer avant la recette client.
+
+Le script ajoute aussi un CV fictif à chaque compte s'il est absent. Sur une instance de production utilisant l'analyse de fichiers `stub`, les pièces jointes des livrables restent `PENDING` : leur dépôt fonctionne, mais leur téléchargement répond `FILE_SCAN_PENDING`. Le remplissage des comptes ne change pas ce contrôle. Configurer un véritable traitement d'analyse sur le serveur pour rendre ces téléchargements disponibles ; voir [Stockage et analyse des fichiers](storage.md).
+
 Ouvrir l'adresse **Local** affichée par Vite dans le terminal. Le port habituel est `5173` ; si ce port est occupé, Vite en choisit un autre. Sur le poste de développement actuel, ThesisPartner est accessible à `http://localhost:5174`.
 
 1. Se connecter avec le compte de Youssef et consulter le tableau de bord, les objectifs, les livrables et les remarques.
