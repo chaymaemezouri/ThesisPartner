@@ -596,12 +596,12 @@ async function main() {
 
   const supervisorId = await upsertUser({
     email: SUPERVISOR_EMAIL,
-    givenName: 'Nora',
-    familyName: 'Bernard',
+    givenName: 'Karim',
+    familyName: 'El Mansouri',
     profile: {
       institution: 'Université Mohammed V de Rabat',
       laboratory: 'LRIT',
-      academicTitle: 'Professeure',
+      academicTitle: 'Professeur',
       specialty: 'Apprentissage automatique',
       city: 'Rabat',
       country: 'Maroc',

@@ -5,7 +5,7 @@
 | Espace    | Nom               | Email                         | Mot de passe         |
 | --------- | ----------------- | ----------------------------- | -------------------- |
 | Doctorant | Youssef El Amrani | `demo.doctorant@example.test` | `ThesisPartner2026!` |
-| Encadrant | Nora Bernard      | `demo.encadrant@example.test` | `ThesisPartner2026!` |
+| Encadrant | Karim El Mansouri | `demo.encadrant@example.test` | `ThesisPartner2026!` |
 
 Après installation et application des migrations, `npm run db:seed:demo` crée les deux comptes et leur thèse de démonstration. Les identifiants sont réservés aux données fictives. Suivre le [guide de démonstration client](docs/demo-client.md) pour installer et tester les deux espaces.
 

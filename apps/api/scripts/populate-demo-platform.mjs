@@ -1,5 +1,6 @@
 /** Populate the two fictional demo users through the deployed application's normal API. */
 import { setTimeout as delay } from 'node:timers/promises';
+import { pathToFileURL } from 'node:url';
 
 const origin = new URL(process.argv[2] ?? process.env.DEMO_APP_URL).origin;
 const password = process.env.DEMO_PASSWORD ?? 'ThesisPartner2026!';
@@ -45,7 +46,7 @@ async function api(who, endpoint, method = 'GET', body) {
     const data = await response.json();
     if (!response.ok)
       throw new Error(`${method} ${endpoint}: ${response.status} ${JSON.stringify(data)}`);
-    if (endpoint === '/auth/login') {
+    if (endpoint === '/auth/login' || endpoint === '/auth/register') {
       const pairs = response.headers.getSetCookie().map((cookie) => cookie.split(';')[0]);
       sessions[who] = {
         Cookie: pairs.join('; '),
@@ -69,7 +70,7 @@ async function optional(label, task) {
 }
 
 // One-page downloadable research fixture. Results are explicitly synthetic.
-function pdf(title, paragraphs, author = 'Youssef El Amrani | Encadrante : Nora Bernard') {
+function pdf(title, paragraphs, author = 'Youssef El Amrani | Encadrant : Karim El Mansouri') {
   const lines = [
     'THESISPARTNER - DEMONSTRATION CLIENT',
     title,
@@ -126,7 +127,7 @@ async function main() {
     await optional(`demo CV ${who}`, async () => {
       const profile = await api(who, '/profile');
       if (!profile.cvUrl) {
-        const name = who === 0 ? 'Youssef El Amrani' : 'Nora Bernard';
+        const name = who === 0 ? 'Youssef El Amrani' : 'Karim El Mansouri';
         const form = new FormData();
         form.append(
           'file',
@@ -136,7 +137,7 @@ async function main() {
               'IDENTITE DE DEMONSTRATION - ce CV ne represente pas une personne reelle.',
               who === 0
                 ? 'Doctorant en informatique - intelligence artificielle et series temporelles.'
-                : 'Encadrante fictive - apprentissage automatique et methodologie experimentale.',
+                : 'Encadrant fictif - apprentissage automatique et methodologie experimentale.',
               'Institution du scenario : Universite Mohammed V de Rabat ; laboratoire LRIT.',
               'THEMES : detection d anomalies, reseaux electriques intelligents, reproductibilite.',
               'COMPETENCES : Python, analyse de donnees, experimentation et redaction scientifique.',
@@ -147,7 +148,7 @@ async function main() {
             ],
             name,
           ),
-          `cv-demo-${who === 0 ? 'youssef' : 'nora'}.pdf`,
+          `cv-demo-${who === 0 ? 'youssef' : 'karim'}.pdf`,
         );
         await api(who, '/profile/cv', 'POST', form);
       }
@@ -314,7 +315,7 @@ async function main() {
       target: 'CHANGES_REQUESTED',
       offset: 30,
       summary:
-        'Plan des six chapitres et répartition des contributions ; retour de l’encadrante sur la discussion et les limites.',
+        'Plan des six chapitres et répartition des contributions ; retour de l’encadrant sur la discussion et les limites.',
       sections: [
         'PLAN DE MANUSCRIT - DEMONSTRATION',
         'Chapitre 1 : Contexte, problématique et contributions.',
@@ -496,7 +497,7 @@ async function main() {
       if (status === 'HELD')
         await api(1, `${base}/meetings/${meeting.id}/hold`, 'POST', {
           minutes:
-            'Bilan : protocole et comparaison des méthodes examinés. Décisions : conserver la partition chronologique, documenter les graines et ajouter les intervalles de confiance. Youssef prépare les corrections ; Nora relit le rapport lors du prochain point. Compte rendu fictif de démonstration.',
+            'Bilan : protocole et comparaison des méthodes examinés. Décisions : conserver la partition chronologique, documenter les graines et ajouter les intervalles de confiance. Youssef prépare les corrections ; Karim relit le rapport lors du prochain point. Compte rendu fictif de démonstration.',
         });
     });
   log('Meeting history, upcoming appointments and a pending request populated.');
@@ -620,7 +621,7 @@ async function main() {
       ],
       [
         0,
-        'Bonjour Professeure, les résultats préliminaires sont déposés. J’ai conservé la partition chronologique et documenté les paramètres des expériences.',
+        'Bonjour Professeur, les résultats préliminaires sont déposés. J’ai conservé la partition chronologique et documenté les paramètres des expériences.',
       ],
       [
         1,
@@ -666,13 +667,21 @@ async function main() {
   if (failures.length) process.exitCode = 1;
 }
 
-try {
-  await main();
-} catch (error) {
-  process.stderr.write(`${error.message}\n`);
-  process.exitCode = 1;
-} finally {
+async function closeSessions() {
   for (let who = 0; who < sessions.length; who++)
     if (sessions[who])
       await api(who, '/auth/logout', 'POST').catch((error) => log(`Logout: ${error.message}`));
+}
+
+export { api, pdf, day, key, log, closeSessions, origin };
+
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  try {
+    await main();
+  } catch (error) {
+    process.stderr.write(`${error.message}\n`);
+    process.exitCode = 1;
+  } finally {
+    await closeSessions();
+  }
 }

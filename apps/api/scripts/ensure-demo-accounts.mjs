@@ -23,9 +23,9 @@ async function main() {
     },
     {
       email: supervisorEmail,
-      givenName: 'Nora',
-      familyName: 'Bernard',
-      academicTitle: 'Professeure',
+      givenName: 'Karim',
+      familyName: 'El Mansouri',
+      academicTitle: 'Professeur',
     },
   ];
   const hashes = await Promise.all(
