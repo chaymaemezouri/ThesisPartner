@@ -25,6 +25,8 @@ const paths: Record<IconName, string> = {
   trash: 'M5 7h14M9 7V5h6v2M8 7l1 12h6l1-12',
   close: 'M6 6l12 12M18 6L6 18',
   back: 'M15 6l-6 6 6 6',
+  eye: 'M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12zM12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z',
+  download: 'M12 4v10M8 10l4 4 4-4M5 19h14',
 };
 
 export function Icon({ name, ...props }: SVGProps<SVGSVGElement> & { name: IconName }) {

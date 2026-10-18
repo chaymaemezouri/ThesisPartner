@@ -24,6 +24,8 @@ model User {
   authTokens           AuthToken[]
   auditLogs            AuditLog[]
   objectivesCreated    Objective[]        @relation("ObjectiveCreator")
+  stepTasksCreated     StepTask[]         @relation("StepTaskCreator")
+  stepTasksReviewed    StepTask[]         @relation("StepTaskReviewer")
   objectivesAssigned   Objective[]        @relation("ObjectiveResponsible")
   tasksCreated         Task[]             @relation("TaskCreator")
   completionRequests   Objective[]        @relation("ObjectiveCompletionRequester")
@@ -43,6 +45,9 @@ model User {
   conversationMemberships    ConversationMember[]
   messagesAuthored           Message[]            @relation("MessageAuthor")
   sharedResources            SharedResource[]
+  thesisDocumentsCreated     ThesisDocument[]     @relation("ThesisDocumentCreator")
+  documentStudies            DocumentStudy[]      @relation("DocumentStudyStudent")
+  documentStudiesReviewed    DocumentStudy[]      @relation("DocumentStudyReviewer")
 
   @@map("users")
 }
@@ -177,6 +182,7 @@ model Thesis {
   remarks       Remark[]
   evaluations   PeriodicEvaluation[]
   conversations Conversation[]
+  documents     ThesisDocument[]
 
   @@index([status])
   @@map("theses")
@@ -356,6 +362,7 @@ model Objective {
   tasks        Task[]
   deliverables Deliverable[]
   remarks      Remark[]
+  documents    ThesisDocument[]
 
   @@unique([thesisId, templateCode])
   @@index([thesisId, status])
@@ -391,11 +398,49 @@ model Task {
   createdBy    User          @relation("TaskCreator", fields: [createdById], references: [id], onDelete: Restrict)
   deliverables Deliverable[]
   remarks      Remark[]
+  stepTasks    StepTask[]
+  documents    ThesisDocument[]
 
   @@index([objectiveId, position])
   @@index([objectiveId, status])
   @@index([dueDate])
   @@map("tasks")
+}
+
+enum StepTaskStatus {
+  DRAFT
+  SUBMITTED
+  IN_REVIEW
+  CHANGES_REQUESTED
+  VALIDATED
+  REJECTED
+}
+
+/// Work recorded inside one objective step. One deliverable, several remarks.
+model StepTask {
+  id            String         @id @default(uuid()) @db.Uuid
+  taskId        String         @map("task_id") @db.Uuid
+  title         String         @db.VarChar(200)
+  description   String?        @db.VarChar(4000)
+  status        StepTaskStatus @default(DRAFT)
+  position      Int
+  reviewMessage String?        @map("review_message") @db.VarChar(500)
+  submittedAt   DateTime?      @map("submitted_at")
+  reviewedAt    DateTime?      @map("reviewed_at")
+  reviewedById  String?        @map("reviewed_by_id") @db.Uuid
+  createdById   String         @map("created_by_id") @db.Uuid
+  createdAt     DateTime       @default(now()) @map("created_at")
+  updatedAt     DateTime       @updatedAt @map("updated_at")
+
+  task        Task         @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  createdBy   User         @relation("StepTaskCreator", fields: [createdById], references: [id], onDelete: Restrict)
+  reviewedBy  User?        @relation("StepTaskReviewer", fields: [reviewedById], references: [id], onDelete: SetNull)
+  deliverable Deliverable?
+  remarks     Remark[]
+
+  @@index([taskId, position])
+  @@index([taskId, status])
+  @@map("step_tasks")
 }
 
 enum DeliverableType {
@@ -426,6 +471,7 @@ model Deliverable {
   thesisId      String             @map("thesis_id") @db.Uuid
   objectiveId   String?            @map("objective_id") @db.Uuid
   taskId        String?            @unique @map("task_id") @db.Uuid
+  stepTaskId    String?            @unique @map("step_task_id") @db.Uuid
   title         String             @db.VarChar(200)
   description   String?            @db.VarChar(4000)
   type          DeliverableType
@@ -442,6 +488,7 @@ model Deliverable {
   thesis     Thesis               @relation(fields: [thesisId], references: [id], onDelete: Cascade)
   objective  Objective?           @relation(fields: [objectiveId], references: [id], onDelete: SetNull)
   task       Task?                @relation(fields: [taskId], references: [id], onDelete: SetNull)
+  stepTask   StepTask?            @relation(fields: [stepTaskId], references: [id], onDelete: SetNull)
   createdBy  User                 @relation("DeliverableCreator", fields: [createdById], references: [id], onDelete: Restrict)
   reviewedBy User?                @relation("DeliverableReviewer", fields: [reviewedById], references: [id], onDelete: SetNull)
   versions   DeliverableVersion[]
@@ -541,6 +588,7 @@ model Remark {
   priority             RemarkPriority @default(MEDIUM)
   objectiveId          String?        @map("objective_id") @db.Uuid
   taskId               String?        @map("task_id") @db.Uuid
+  stepTaskId           String?        @map("step_task_id") @db.Uuid
   deliverableId        String?        @map("deliverable_id") @db.Uuid
   deliverableVersionId String?        @map("deliverable_version_id") @db.Uuid
   correctionVersionId  String?        @map("correction_version_id") @db.Uuid
@@ -554,6 +602,7 @@ model Remark {
   author             User               @relation("RemarkAuthor", fields: [authorId], references: [id], onDelete: Restrict)
   objective          Objective?         @relation(fields: [objectiveId], references: [id], onDelete: SetNull)
   task               Task?              @relation(fields: [taskId], references: [id], onDelete: SetNull)
+  stepTask           StepTask?          @relation(fields: [stepTaskId], references: [id], onDelete: SetNull)
   deliverable        Deliverable?       @relation(fields: [deliverableId], references: [id], onDelete: SetNull)
   deliverableVersion DeliverableVersion? @relation("RemarkTargetVersion", fields: [deliverableVersionId], references: [id], onDelete: SetNull)
   correctionVersion  DeliverableVersion? @relation("RemarkCorrectionVersion", fields: [correctionVersionId], references: [id], onDelete: SetNull)
@@ -564,6 +613,7 @@ model Remark {
   @@index([thesisId, updatedAt])
   @@index([objectiveId])
   @@index([deliverableId])
+  @@index([stepTaskId])
   @@map("remarks")
 }
 
@@ -684,4 +734,104 @@ model SharedResource {
 
   @@index([authorId, createdAt])
   @@map("shared_resources")
+}
+
+enum ThesisDocumentKind {
+  ARTICLE
+  BOOK
+  CHAPTER
+  THESIS
+  REPORT
+  REFERENCE
+  LINK
+}
+
+enum DocumentImportance {
+  LOW
+  MEDIUM
+  HIGH
+  ESSENTIAL
+}
+
+enum DocumentPriority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+}
+
+enum DocumentAccess {
+  SHARED
+  PROTECTED
+}
+
+enum DocumentFollowUp {
+  TO_READ
+  READ
+  SYNTHESIS_DRAFT
+  SUBMITTED
+  CHANGES_REQUESTED
+  VALIDATED
+}
+
+/// A document the supervisor recommends for one thesis. A protected item keeps its file and URL for the supervisor.
+model ThesisDocument {
+  id           String              @id @default(uuid()) @db.Uuid
+  thesisId     String              @map("thesis_id") @db.Uuid
+  objectiveId  String?             @map("objective_id") @db.Uuid
+  taskId       String?             @map("task_id") @db.Uuid
+  createdById  String              @map("created_by_id") @db.Uuid
+  title        String              @db.VarChar(200)
+  kind         ThesisDocumentKind
+  authors      String?             @db.VarChar(300)
+  reference    String?             @db.VarChar(500)
+  url          String?             @db.VarChar(500)
+  fileKey      String?             @map("file_key") @db.VarChar(500)
+  fileName     String?             @map("file_name") @db.VarChar(180)
+  fileMime     String?             @map("file_mime") @db.VarChar(160)
+  importance   DocumentImportance  @default(MEDIUM)
+  priority     DocumentPriority    @default(NORMAL)
+  access       DocumentAccess      @default(SHARED)
+  dueDate      DateTime?           @map("due_date") @db.Date
+  instructions String?             @db.VarChar(2000)
+  createdAt    DateTime            @default(now()) @map("created_at")
+  updatedAt    DateTime            @updatedAt @map("updated_at")
+
+  thesis    Thesis         @relation(fields: [thesisId], references: [id], onDelete: Cascade)
+  objective Objective?     @relation(fields: [objectiveId], references: [id], onDelete: SetNull)
+  task      Task?          @relation(fields: [taskId], references: [id], onDelete: SetNull)
+  createdBy User           @relation("ThesisDocumentCreator", fields: [createdById], references: [id], onDelete: Restrict)
+  study     DocumentStudy?
+
+  @@index([thesisId, priority])
+  @@index([thesisId, kind])
+  @@map("thesis_documents")
+}
+
+/// The doctoral student's reading and personal synthesis for one recommended document.
+model DocumentStudy {
+  id            String           @id @default(uuid()) @db.Uuid
+  documentId    String           @unique @map("document_id") @db.Uuid
+  studentId     String           @map("student_id") @db.Uuid
+  status        DocumentFollowUp @default(TO_READ)
+  consultedAt   DateTime?        @map("consulted_at")
+  summary       String?          @db.VarChar(4000)
+  methodology   String?          @db.VarChar(4000)
+  results       String?          @db.VarChar(4000)
+  limits        String?          @db.VarChar(4000)
+  thesisLink    String?          @map("thesis_link") @db.VarChar(4000)
+  exploitation  String?          @db.VarChar(4000)
+  reviewMessage String?          @map("review_message") @db.VarChar(500)
+  submittedAt   DateTime?        @map("submitted_at")
+  reviewedAt    DateTime?        @map("reviewed_at")
+  reviewedById  String?          @map("reviewed_by_id") @db.Uuid
+  createdAt     DateTime         @default(now()) @map("created_at")
+  updatedAt     DateTime         @updatedAt @map("updated_at")
+
+  document   ThesisDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  student    User           @relation("DocumentStudyStudent", fields: [studentId], references: [id], onDelete: Restrict)
+  reviewedBy User?          @relation("DocumentStudyReviewer", fields: [reviewedById], references: [id], onDelete: SetNull)
+
+  @@index([status])
+  @@map("document_studies")
 }

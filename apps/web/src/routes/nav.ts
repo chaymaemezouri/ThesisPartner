@@ -22,7 +22,9 @@ export type IconName =
   | 'pencil'
   | 'trash'
   | 'close'
-  | 'back';
+  | 'back'
+  | 'eye'
+  | 'download';
 
 export type NavItem = {
   to: string;

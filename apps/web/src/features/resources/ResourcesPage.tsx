@@ -14,6 +14,7 @@ import {
   type ResourceDraft,
   type SharedResource,
 } from './hooks/use-resources';
+import { ThesisDocuments } from './ThesisDocuments';
 
 const KINDS = ['COURSE', 'ARTICLE', 'DOCUMENT'] as const;
 type Kind = (typeof KINDS)[number];
@@ -55,7 +56,7 @@ export function ResourcesPage() {
   const create = useCreateResource();
   const update = useUpdateResource();
   const remove = useRemoveResource();
-  const [kind, setKind] = useState<Kind>('COURSE');
+  const [kind, setKind] = useState<Kind | 'PROPOSED'>('COURSE');
   const [search, setSearch] = useState('');
   const [creating, setCreating] = useState(false);
   const [editing, setEditing] = useState<SharedResource | null>(null);
@@ -88,6 +89,29 @@ export function ResourcesPage() {
           className="flex gap-1 overflow-x-auto rounded-md border border-line bg-surface p-1.5 shadow-control md:sticky md:top-20 md:flex-col md:overflow-visible"
           aria-label={t('resources.title')}
         >
+          <button
+            type="button"
+            aria-current={kind === 'PROPOSED' ? 'true' : undefined}
+            onClick={() => setKind('PROPOSED')}
+            className={
+              kind === 'PROPOSED'
+                ? 'flex min-w-44 items-center gap-2.5 rounded-md bg-brand-soft px-2.5 py-2.5 text-left md:min-w-0'
+                : 'flex min-w-44 items-center gap-2.5 rounded-md px-2.5 py-2.5 text-left text-muted hover:bg-brand-soft md:min-w-0'
+            }
+          >
+            <span
+              className={
+                kind === 'PROPOSED'
+                  ? 'grid h-9 w-9 shrink-0 place-items-center rounded-md bg-surface text-brand'
+                  : 'grid h-9 w-9 shrink-0 place-items-center rounded-md bg-brand-soft text-brand'
+              }
+            >
+              <Icon name="library" className="h-4 w-4" />
+            </span>
+            <span className={kind === 'PROPOSED' ? 'text-sm font-semibold text-brand' : 'text-sm font-semibold text-ink'}>
+              {t('resources.proposed.title')}
+            </span>
+          </button>
           {KINDS.map((id) => {
             const selected = id === kind;
             const count = resources.filter((item) => item.kind === id).length;
@@ -136,6 +160,15 @@ export function ResourcesPage() {
         </nav>
 
         <section className="min-w-0">
+          {kind === 'PROPOSED' ? (
+            <div>
+              <h2 className="text-base font-semibold text-ink">{t('resources.proposed.title')}</h2>
+              <p className="mt-0.5 mb-4 text-sm text-muted">{t('resources.proposed.shelf')}</p>
+              <ThesisDocuments canManage={canShare} />
+            </div>
+          ) : null}
+          {kind !== 'PROPOSED' ? (
+          <>
           <div className="mb-3 flex flex-wrap items-end justify-between gap-3">
             <div className="min-w-0">
               <h2 className="text-base font-semibold text-ink">{t(KIND_KEY[kind])}</h2>
@@ -231,12 +264,20 @@ export function ResourcesPage() {
               ))}
             </ul>
           ) : null}
+          </>
+          ) : null}
         </section>
       </div>
 
       <Modal
         open={creating || editing !== null}
-        title={editing ? t('resources.edit') : t(ADD_KEY[kind])}
+        title={
+          editing
+            ? t('resources.edit')
+            : kind === 'PROPOSED'
+              ? t('resources.proposed.add')
+              : t(ADD_KEY[kind])
+        }
         closeLabel={t('common.close')}
         onClose={() => {
           setCreating(false);
@@ -246,7 +287,7 @@ export function ResourcesPage() {
         <ResourceForm
           key={editing?.id ?? kind}
           initial={editing}
-          lockedKind={editing ? undefined : kind}
+          lockedKind={editing || kind === 'PROPOSED' ? undefined : kind}
           pending={create.isPending || update.isPending}
           error={editing ? update.error : create.error}
           submitLabel={editing ? t('resources.form.save') : t('resources.form.share')}

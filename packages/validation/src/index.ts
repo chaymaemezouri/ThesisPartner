@@ -547,6 +547,7 @@ export const taskSchema = z
     position: z.number().int().min(1),
     origin: contributionOriginSchema,
     completedAt: z.string().datetime().nullable(),
+    workCount: z.number().int().min(0).max(10000).default(0),
     createdAt: z.string().datetime(),
     updatedAt: z.string().datetime(),
   })
@@ -555,6 +556,86 @@ export const taskSchema = z
 export const taskListSchema = z
   .object({
     tasks: z.array(taskSchema).max(200),
+  })
+  .strict();
+
+export const stepTaskStatusSchema = z.enum([
+  'DRAFT',
+  'SUBMITTED',
+  'IN_REVIEW',
+  'CHANGES_REQUESTED',
+  'VALIDATED',
+  'REJECTED',
+]);
+
+export const createStepTaskSchema = z
+  .object({
+    title: z.string().trim().min(1, 'Champ requis').max(200),
+    description: z.string().trim().max(4000).optional(),
+  })
+  .strict();
+
+export const updateStepTaskSchema = createStepTaskSchema
+  .partial()
+  .strict()
+  .refine((value) => Object.keys(value).length > 0, {
+    path: ['body'],
+    message: 'Aucune modification',
+  });
+
+export const reviewStepTaskSchema = z
+  .object({
+    decision: z.enum(['IN_REVIEW', 'VALIDATED', 'CHANGES_REQUESTED', 'REJECTED']),
+    message: z.string().trim().max(500).optional(),
+  })
+  .strict();
+
+export const stepTaskRemarkSchema = z
+  .object({
+    message: z.string().trim().min(1, 'Champ requis').max(4000),
+  })
+  .strict();
+
+const stepTaskFileSchema = z
+  .object({
+    versionId: uuidSchema,
+    versionNumber: z.number().int().min(1),
+    originalName: z.string().min(1).max(180),
+    mimeType: z.string().min(1).max(160),
+  })
+  .strict();
+
+const stepTaskRemarkViewSchema = z
+  .object({
+    id: uuidSchema,
+    title: boundedTextSchema(200),
+    message: z.string().max(4000),
+    authorName: boundedTextSchema(160),
+    createdAt: z.string().datetime(),
+  })
+  .strict();
+
+export const stepTaskSchema = z
+  .object({
+    id: uuidSchema,
+    taskId: uuidSchema,
+    title: boundedTextSchema(200),
+    description: z.string().max(4000).nullable(),
+    status: stepTaskStatusSchema,
+    position: z.number().int().min(1),
+    reviewMessage: z.string().max(500).nullable(),
+    deliverableId: uuidSchema.nullable(),
+    files: z.array(stepTaskFileSchema).max(50),
+    remarks: z.array(stepTaskRemarkViewSchema).max(100),
+    createdAt: z.string().datetime(),
+    updatedAt: z.string().datetime(),
+  })
+  .strict();
+
+export const stepTaskListSchema = z
+  .object({
+    tasks: z.array(stepTaskSchema).max(200),
+    remarks: z.array(stepTaskRemarkViewSchema).max(100),
   })
   .strict();
 
@@ -1239,6 +1320,131 @@ export const resourceLibrarySchema = z
   .object({
     canShare: z.boolean(),
     resources: z.array(sharedResourceSchema).max(200),
+  })
+  .strict();
+
+export const thesisDocumentKindSchema = z.enum([
+  'ARTICLE',
+  'BOOK',
+  'CHAPTER',
+  'THESIS',
+  'REPORT',
+  'REFERENCE',
+  'LINK',
+]);
+export const documentImportanceSchema = z.enum(['LOW', 'MEDIUM', 'HIGH', 'ESSENTIAL']);
+export const documentPrioritySchema = z.enum(['LOW', 'NORMAL', 'HIGH', 'URGENT']);
+export const documentAccessSchema = z.enum(['SHARED', 'PROTECTED']);
+export const documentFollowUpSchema = z.enum([
+  'TO_READ',
+  'READ',
+  'SYNTHESIS_DRAFT',
+  'SUBMITTED',
+  'CHANGES_REQUESTED',
+  'VALIDATED',
+]);
+
+const optionalText = (max: number) => z.union([z.string().trim().max(max), z.literal('')]).optional();
+
+export const thesisDocumentInputSchema = z
+  .object({
+    title: z.string().trim().min(1, 'Champ requis').max(200),
+    kind: thesisDocumentKindSchema,
+    authors: optionalText(300),
+    reference: optionalText(500),
+    url: z.union([httpUrlSchema, z.literal('')]).optional(),
+    objectiveId: z.union([uuidSchema, z.literal(''), z.null()]).optional(),
+    taskId: z.union([uuidSchema, z.literal(''), z.null()]).optional(),
+    importance: documentImportanceSchema.default('MEDIUM'),
+    priority: documentPrioritySchema.default('NORMAL'),
+    access: documentAccessSchema.default('SHARED'),
+    dueDate: z.union([daySchema, z.literal(''), z.null()]).optional(),
+    instructions: optionalText(2000),
+  })
+  .strict();
+
+export const documentSynthesisSchema = z
+  .object({
+    summary: optionalText(4000),
+    methodology: optionalText(4000),
+    results: optionalText(4000),
+    limits: optionalText(4000),
+    thesisLink: optionalText(4000),
+    exploitation: optionalText(4000),
+    objectiveId: z.union([uuidSchema, z.literal(''), z.null()]).optional(),
+    taskId: z.union([uuidSchema, z.literal(''), z.null()]).optional(),
+    submit: z.boolean().optional(),
+  })
+  .strict();
+
+export const documentReviewSchema = z
+  .object({
+    decision: z.enum(['VALIDATED', 'CHANGES_REQUESTED']),
+    message: z.string().trim().max(500).optional(),
+  })
+  .strict()
+  .refine((body) => body.decision !== 'CHANGES_REQUESTED' || (body.message ?? '').length > 0, {
+    path: ['message'],
+    message: 'Champ requis',
+  });
+
+export const thesisDocumentSchema = z
+  .object({
+    id: uuidSchema,
+    title: z.string().max(200),
+    kind: thesisDocumentKindSchema,
+    authors: z.string().max(300).nullable(),
+    reference: z.string().max(500).nullable(),
+    url: z.string().max(500).nullable(),
+    fileName: z.string().max(180).nullable(),
+    access: documentAccessSchema,
+    canOpen: z.boolean(),
+    importance: documentImportanceSchema,
+    priority: documentPrioritySchema,
+    dueDate: daySchema.nullable(),
+    overdue: z.boolean(),
+    instructions: z.string().max(2000).nullable(),
+    objectiveId: uuidSchema.nullable(),
+    objectiveTitle: z.string().max(200).nullable(),
+    taskId: uuidSchema.nullable(),
+    stepTitle: z.string().max(200).nullable(),
+    status: documentFollowUpSchema,
+    summary: z.string().max(4000).nullable(),
+    methodology: z.string().max(4000).nullable(),
+    results: z.string().max(4000).nullable(),
+    limits: z.string().max(4000).nullable(),
+    thesisLink: z.string().max(4000).nullable(),
+    exploitation: z.string().max(4000).nullable(),
+    reviewMessage: z.string().max(500).nullable(),
+  })
+  .strict();
+
+export const documentDeskSchema = z
+  .object({
+    canManage: z.boolean(),
+    objectives: z
+      .array(
+        z
+          .object({
+            id: uuidSchema,
+            title: z.string().max(200),
+            steps: z.array(z.object({ id: uuidSchema, title: z.string().max(200) }).strict()).max(200),
+          })
+          .strict(),
+      )
+      .max(200),
+    documents: z.array(thesisDocumentSchema).max(200),
+    summary: z
+      .object({
+        proposed: z.number().int().min(0),
+        consulted: z.number().int().min(0),
+        drafts: z.number().int().min(0),
+        submitted: z.number().int().min(0),
+        validated: z.number().int().min(0),
+        priorityOpen: z.number().int().min(0),
+        overdue: z.number().int().min(0),
+      })
+      .strict(),
   })
   .strict();
 

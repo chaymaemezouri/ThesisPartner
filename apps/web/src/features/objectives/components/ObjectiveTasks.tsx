@@ -30,6 +30,7 @@ import {
 } from '../hooks/use-tasks';
 import { TASK_STATUS_LABEL } from '../labels';
 import { QueryError, queryErrorMessage } from './QueryError';
+import { StepWorkPanel, WorkCount, WorkIcon, type StepPanel } from './StepWorkPanel';
 
 const STUDENT_STATUSES = ['TODO', 'IN_PROGRESS', 'DONE'] as const;
 
@@ -60,6 +61,7 @@ export function ObjectiveTasks({
   const [composer, setComposer] = useState<'create' | Task | null>(null);
   const [pendingDelete, setPendingDelete] = useState<Task | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [panel, setPanel] = useState<StepPanel>('tasks');
   const [reason, setReason] = useState('');
   const frozen = objective.status === 'COMPLETED' || objective.status === 'CANCELLED';
   const active = objective.taskSummary.total - objective.taskSummary.cancelled;
@@ -70,6 +72,10 @@ export function ObjectiveTasks({
     rows[0] ??
     null;
   const selectedIndex = selected ? rows.findIndex((task) => task.id === selected.id) : -1;
+  const openStep = (id: string, next: StepPanel) => {
+    setSelectedId(id);
+    setPanel(next);
+  };
 
   return (
     <div className="mt-4 grid min-w-0 items-start gap-4 lg:grid-cols-[minmax(0,1fr)_18rem]">
@@ -132,7 +138,7 @@ export function ObjectiveTasks({
                 <li key={task.id} className="relative min-w-0">
                   <StepNode status={task.status} />
                   <div
-                    className={`flex items-center gap-2 rounded-xl border px-3 py-2 ${
+                    className={`flex flex-wrap items-center gap-2 rounded-xl border px-3 py-2 ${
                       isSelected ? 'border-brand bg-brand-soft' : 'border-line bg-canvas'
                     }`}
                   >
@@ -140,8 +146,8 @@ export function ObjectiveTasks({
                       type="button"
                       aria-pressed={isSelected}
                       aria-label={task.title}
-                      onClick={() => setSelectedId(task.id)}
-                      className="min-w-0 flex-1 text-left"
+                      onClick={() => openStep(task.id, 'tasks')}
+                      className="min-w-0 max-w-full truncate text-left"
                     >
                       <span
                         className={`block break-words text-xs font-medium text-ink ${task.status === 'CANCELLED' ? 'text-muted line-through' : ''}`}
@@ -156,7 +162,31 @@ export function ObjectiveTasks({
                         </span>
                       ) : null}
                     </button>
-                    <span className="shrink-0 text-xs font-semibold tabular-nums text-warn">
+                    <WorkIcon
+                      label={t('objectives.work.stepDeliverable')}
+                      icon="deliverables"
+                      pressed={isSelected && panel === 'files'}
+                      onClick={() => openStep(task.id, 'files')}
+                    />
+                    <WorkIcon
+                      label={t('objectives.work.viewTasks')}
+                      icon="objectives"
+                      pressed={isSelected && panel === 'tasks'}
+                      onClick={() => openStep(task.id, 'tasks')}
+                    />
+                    <WorkIcon
+                      label={t('objectives.work.viewRemarks')}
+                      icon="remarks"
+                      pressed={isSelected && panel === 'remarks'}
+                      onClick={() => openStep(task.id, 'remarks')}
+                    />
+                    <WorkCount
+                      label={t('objectives.work.taskCount', { count: task.workCount })}
+                      count={task.workCount}
+                      pressed={isSelected && panel === 'tasks'}
+                      onClick={() => openStep(task.id, 'tasks')}
+                    />
+                    <span className="ml-auto shrink-0 text-xs font-semibold tabular-nums text-warn">
                       {stepProgress(task.status)} %
                     </span>
                     {canManage && !frozen ? (
@@ -180,6 +210,18 @@ export function ObjectiveTasks({
                       </>
                     ) : null}
                   </div>
+                  {isSelected && selected ? (
+                    <StepWorkPanel
+                      key={selected.id}
+                      thesisId={thesisId}
+                      objectiveId={objective.id}
+                      step={selected}
+                      panel={panel}
+                      canEditStep={canManage && !frozen}
+                      canEdit={canManage && !canReview && !frozen}
+                      canReview={canReview && !frozen}
+                    />
+                  ) : null}
                 </li>
               );
             })}

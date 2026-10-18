@@ -38,7 +38,18 @@ export class TasksService {
       where: { objectiveId },
       orderBy: taskOrder,
     });
-    return { tasks: tasks.map(toDto) };
+    const counts = await this.workCounts(tasks.map((task) => task.id));
+    return { tasks: tasks.map((task) => toDto(task, counts.get(task.id) ?? 0)) };
+  }
+
+  private async workCounts(taskIds: string[]): Promise<Map<string, number>> {
+    if (taskIds.length === 0) return new Map();
+    const rows = await this.prisma.stepTask.groupBy({
+      by: ['taskId'],
+      where: { taskId: { in: taskIds } },
+      _count: { _all: true },
+    });
+    return new Map(rows.map((row) => [row.taskId, row._count._all]));
   }
 
   async create(
@@ -239,7 +250,8 @@ export class TasksService {
       });
       return tx.task.findMany({ where: { objectiveId }, orderBy: taskOrder });
     });
-    return { tasks: tasks.map(toDto) };
+    const counts = await this.workCounts(tasks.map((task) => task.id));
+    return { tasks: tasks.map((task) => toDto(task, counts.get(task.id) ?? 0)) };
   }
 
   private async roleOf(actorId: string, thesisId: string): Promise<MembershipRole> {
@@ -327,19 +339,22 @@ function statusAudit(previous: TaskStatus | null, next: TaskStatus): string | nu
   return null;
 }
 
-function toDto(task: {
-  id: string;
-  objectiveId: string;
-  title: string;
-  description: string | null;
-  status: TaskStatus;
-  dueDate: Date | null;
-  position: number;
-  origin: 'STANDARD_TEMPLATE' | 'DOCTORAL_STUDENT' | 'SUPERVISOR';
-  completedAt: Date | null;
-  createdAt: Date;
-  updatedAt: Date;
-}) {
+function toDto(
+  task: {
+    id: string;
+    objectiveId: string;
+    title: string;
+    description: string | null;
+    status: TaskStatus;
+    dueDate: Date | null;
+    position: number;
+    origin: 'STANDARD_TEMPLATE' | 'DOCTORAL_STUDENT' | 'SUPERVISOR';
+    completedAt: Date | null;
+    createdAt: Date;
+    updatedAt: Date;
+  },
+  workCount = 0,
+) {
   return {
     id: task.id,
     objectiveId: task.objectiveId,
@@ -350,6 +365,7 @@ function toDto(task: {
     position: task.position,
     origin: task.origin,
     completedAt: task.completedAt ? task.completedAt.toISOString() : null,
+    workCount,
     createdAt: task.createdAt.toISOString(),
     updatedAt: task.updatedAt.toISOString(),
   };
