@@ -1,7 +1,7 @@
 import type { dashboardSchema } from '@thesispartner/validation';
 import type { z } from 'zod';
 
-export type DashboardData = z.infer<typeof dashboardSchema>;
+export type DashboardData = z.output<typeof dashboardSchema>;
 
 /** English fallbacks. Prefer `t('progressStatus.*')` / `t('activity.*')` / `t('dashboard.*')` in UI. */
 export const PROGRESS_LABEL = {

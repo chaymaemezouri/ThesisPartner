@@ -46,7 +46,8 @@ export function SupervisorDeskPage() {
   const t = useT();
   const desk = useSupervisorDesk();
   const [params, setParams] = useSearchParams();
-  const section: Section = isSection(params.get('vue')) ? params.get('vue')! : 'notifications';
+  const sectionParam = params.get('vue');
+  const section: Section = isSection(sectionParam) ? sectionParam : 'notifications';
 
   return (
     <div className="min-w-0">
@@ -109,7 +110,12 @@ function Notifications({ data }: { data: SupervisorDesk }) {
   const t = useT();
   const { dateLocale } = useLocale();
   if (data.notifications.length === 0) {
-    return <EmptyState title={t('followUp.noNotifications')} description={t('followUp.notificationsHelp')} />;
+    return (
+      <EmptyState
+        title={t('followUp.noNotifications')}
+        description={t('followUp.notificationsHelp')}
+      />
+    );
   }
   return (
     <ul className="overflow-hidden rounded-md border border-line bg-surface">
@@ -125,7 +131,9 @@ function Notifications({ data }: { data: SupervisorDesk }) {
                 <span aria-hidden="true"> · </span>
                 {item.studentName}
               </span>
-              <span className="mt-0.5 block truncate text-sm font-medium text-ink">{item.title}</span>
+              <span className="mt-0.5 block truncate text-sm font-medium text-ink">
+                {item.title}
+              </span>
             </span>
             {item.date ? (
               <time className="shrink-0 text-[11px] text-muted" dateTime={item.date}>
@@ -170,7 +178,9 @@ function Schedule({ data }: { data: SupervisorDesk }) {
                   <span className="mt-0.5 block truncate text-[11px] text-muted">
                     {item.studentName}
                     <span aria-hidden="true"> · </span>
-                    {item.kind === 'DELIVERABLE' ? t('followUp.deliverableDue') : t(`followUp.kind.${item.kind}`)}
+                    {item.kind === 'DELIVERABLE'
+                      ? t('followUp.deliverableDue')
+                      : t(`followUp.kind.${item.kind}`)}
                   </span>
                 </span>
                 <time className="shrink-0 text-[11px] text-muted" dateTime={item.date}>
@@ -193,7 +203,10 @@ function Reports({ data }: { data: SupervisorDesk }) {
   const [ready, setReady] = useState(false);
   const plan = data.plans.find((item) => item.thesisId === thesisId);
   const range = periodRange(period);
-  const phases = plan?.phases.filter((phase) => inRange(phase.dueDate, range) || inRange(phase.startDate, range)) ?? [];
+  const phases =
+    plan?.phases.filter(
+      (phase) => inRange(phase.dueDate, range) || inRange(phase.startDate, range),
+    ) ?? [];
   const meetings = data.schedule.filter(
     (item) => item.thesisId === thesisId && item.kind === 'MEETING' && inRange(item.date, range),
   );
@@ -249,7 +262,10 @@ function Reports({ data }: { data: SupervisorDesk }) {
               {evaluations.map((item) => (
                 <li key={item.id}>
                   {t('followUp.evaluations')}
-                  <span className="text-muted"> · {formatShortDay(item.evaluatedOn, dateLocale)}</span>
+                  <span className="text-muted">
+                    {' '}
+                    · {formatShortDay(item.evaluatedOn, dateLocale)}
+                  </span>
                 </li>
               ))}
             </ul>
@@ -271,17 +287,22 @@ function Evaluations({ data }: { data: SupervisorDesk }) {
       <StudentSelect plans={data.plans} value={thesisId} onChange={setThesisId} />
       {thesisId ? <EvaluationForm thesisId={thesisId} /> : null}
       {rows.length === 0 ? (
-        <EmptyState title={t('followUp.noEvaluations')} description={t('followUp.evaluationsHelp')} />
+        <EmptyState
+          title={t('followUp.noEvaluations')}
+          description={t('followUp.evaluationsHelp')}
+        />
       ) : (
         <ul className="overflow-hidden rounded-md border border-line bg-surface">
           {rows.map((item) => (
             <li key={item.id} className="border-b border-line px-3 py-2.5 last:border-b-0">
               <p className="text-sm font-medium text-ink">
-                <time dateTime={item.evaluatedOn}>{formatShortDay(item.evaluatedOn, dateLocale)}</time>
+                <time dateTime={item.evaluatedOn}>
+                  {formatShortDay(item.evaluatedOn, dateLocale)}
+                </time>
               </p>
               <p className="mt-1 text-[11px] text-muted">
-                {t('followUp.quality')} {item.quality}/5 · {t('followUp.autonomy')} {item.autonomy}/5 ·{' '}
-                {t('followUp.methodology')} {item.methodology}/5 · {t('followUp.advancement')}{' '}
+                {t('followUp.quality')} {item.quality}/5 · {t('followUp.autonomy')} {item.autonomy}
+                /5 · {t('followUp.methodology')} {item.methodology}/5 · {t('followUp.advancement')}{' '}
                 {item.advancement}/5
               </p>
               {item.comment ? <p className="mt-1 text-sm text-ink">{item.comment}</p> : null}
@@ -360,7 +381,12 @@ function EvaluationForm({ thesisId }: { thesisId: string }) {
 function Publications({ data }: { data: SupervisorDesk }) {
   const t = useT();
   if (data.publications.length === 0) {
-    return <EmptyState title={t('followUp.noPublications')} description={t('followUp.publicationsHelp')} />;
+    return (
+      <EmptyState
+        title={t('followUp.noPublications')}
+        description={t('followUp.publicationsHelp')}
+      />
+    );
   }
   return (
     <ul className="overflow-hidden rounded-md border border-line bg-surface">
@@ -405,7 +431,9 @@ function Decisions({ data }: { data: SupervisorDesk }) {
   const t = useT();
   const { dateLocale } = useLocale();
   if (data.decisions.length === 0) {
-    return <EmptyState title={t('followUp.noDecisions')} description={t('followUp.decisionsHelp')} />;
+    return (
+      <EmptyState title={t('followUp.noDecisions')} description={t('followUp.decisionsHelp')} />
+    );
   }
   return (
     <ul className="overflow-hidden rounded-md border border-line bg-surface">
@@ -422,7 +450,9 @@ function Decisions({ data }: { data: SupervisorDesk }) {
                 <span className="block truncate text-sm font-medium text-ink">
                   {key ? t(key) : item.action}
                 </span>
-                <span className="mt-0.5 block truncate text-[11px] text-muted">{item.studentName}</span>
+                <span className="mt-0.5 block truncate text-[11px] text-muted">
+                  {item.studentName}
+                </span>
               </span>
               <time className="shrink-0 text-[11px] text-muted" dateTime={day}>
                 {formatShortDay(day, dateLocale)}
@@ -441,7 +471,9 @@ function Plan({ data }: { data: SupervisorDesk }) {
   const [thesisId, setThesisId] = useState(data.plans[0]?.thesisId ?? '');
   const plan = data.plans.find((item) => item.thesisId === thesisId);
   const phases = [...(plan?.phases ?? [])].sort((left, right) =>
-    (left.dueDate ?? left.startDate ?? '9999').localeCompare(right.dueDate ?? right.startDate ?? '9999'),
+    (left.dueDate ?? left.startDate ?? '9999').localeCompare(
+      right.dueDate ?? right.startDate ?? '9999',
+    ),
   );
 
   return (
@@ -463,7 +495,9 @@ function Plan({ data }: { data: SupervisorDesk }) {
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-sm font-medium text-ink">{phase.title}</span>
                   <span className="mt-0.5 block text-[11px] text-muted">
-                    {phase.dueDate ? formatShortDay(phase.dueDate, dateLocale) : t('common.notProvided')}
+                    {phase.dueDate
+                      ? formatShortDay(phase.dueDate, dateLocale)
+                      : t('common.notProvided')}
                     <span aria-hidden="true"> · </span>
                     {t(`objectives.status.${phase.status}`)}
                     <span aria-hidden="true"> · </span>

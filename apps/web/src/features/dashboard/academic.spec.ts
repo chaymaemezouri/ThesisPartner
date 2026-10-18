@@ -45,9 +45,6 @@ describe('academic dashboard helpers', () => {
       ],
       '2026-09-30',
     );
-    expect(lines.map((line) => line.text)).toEqual([
-      '2 updates today',
-      'Thesis created',
-    ]);
+    expect(lines.map((line) => line.text)).toEqual(['2 updates today', 'Thesis created']);
   });
 });

@@ -200,10 +200,7 @@ export function useDeliverableFilePreview(
   versionId: string | null,
 ) {
   return useQuery({
-    queryKey: [
-      ...deliverableKeys.version(thesisId, deliverableId, versionId ?? 'none'),
-      'preview',
-    ],
+    queryKey: [...deliverableKeys.version(thesisId, deliverableId, versionId ?? 'none'), 'preview'],
     enabled: Boolean(versionId),
     retry: false,
     staleTime: 4 * 60 * 1000,

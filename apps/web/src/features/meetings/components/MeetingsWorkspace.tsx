@@ -65,32 +65,32 @@ export function MeetingsWorkspace({
             />
           ) : (
             <div className="overflow-hidden rounded-md border border-line bg-surface">
-          <section aria-labelledby="meetings-upcoming">
-            <h2
-              id="meetings-upcoming"
-              className="border-b border-line px-3 py-2 text-[11px] font-medium tracking-wide text-muted uppercase"
-            >
-              {t('meetings.upcoming')}
-            </h2>
-            {upcoming.length === 0 ? (
-              <p className="px-3 py-2.5 text-xs text-muted">{t('meetings.emptyUpcoming')}</p>
-            ) : (
-              <MeetingList meetings={upcoming} detailPath={detailPath} />
-            )}
-          </section>
-          <section className="border-t border-line" aria-labelledby="meetings-history">
-            <h2
-              id="meetings-history"
-              className="border-b border-line px-3 py-2 text-[11px] font-medium tracking-wide text-muted uppercase"
-            >
-              {t('meetings.history')}
-            </h2>
-            {history.length === 0 ? (
-              <p className="px-3 py-2.5 text-xs text-muted">{t('meetings.emptyHistory')}</p>
-            ) : (
-              <MeetingList meetings={history} detailPath={detailPath} />
-            )}
-          </section>
+              <section aria-labelledby="meetings-upcoming">
+                <h2
+                  id="meetings-upcoming"
+                  className="border-b border-line px-3 py-2 text-[11px] font-medium tracking-wide text-muted uppercase"
+                >
+                  {t('meetings.upcoming')}
+                </h2>
+                {upcoming.length === 0 ? (
+                  <p className="px-3 py-2.5 text-xs text-muted">{t('meetings.emptyUpcoming')}</p>
+                ) : (
+                  <MeetingList meetings={upcoming} detailPath={detailPath} />
+                )}
+              </section>
+              <section className="border-t border-line" aria-labelledby="meetings-history">
+                <h2
+                  id="meetings-history"
+                  className="border-b border-line px-3 py-2 text-[11px] font-medium tracking-wide text-muted uppercase"
+                >
+                  {t('meetings.history')}
+                </h2>
+                {history.length === 0 ? (
+                  <p className="px-3 py-2.5 text-xs text-muted">{t('meetings.emptyHistory')}</p>
+                ) : (
+                  <MeetingList meetings={history} detailPath={detailPath} />
+                )}
+              </section>
             </div>
           )}
         </div>

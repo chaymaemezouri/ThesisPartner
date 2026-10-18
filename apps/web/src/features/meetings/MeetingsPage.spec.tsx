@@ -57,7 +57,10 @@ function dashboard() {
 
 function meeting(title: string, status: 'PLANNED' | 'HELD') {
   return {
-    id: status === 'PLANNED' ? 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa' : 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',
+    id:
+      status === 'PLANNED'
+        ? 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'
+        : 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',
     thesisId,
     title,
     scheduledOn: status === 'PLANNED' ? '2026-11-02' : '2026-09-01',

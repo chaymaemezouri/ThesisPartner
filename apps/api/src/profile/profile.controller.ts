@@ -12,7 +12,11 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
-import { academicProfileSchema, fileDownloadSchema, updateProfileSchema } from '@thesispartner/validation';
+import {
+  academicProfileSchema,
+  fileDownloadSchema,
+  updateProfileSchema,
+} from '@thesispartner/validation';
 import { unlink } from 'node:fs/promises';
 import type { Request, Response } from 'express';
 import { AppException } from '../common/errors/app.exception';

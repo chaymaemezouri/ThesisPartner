@@ -21,7 +21,9 @@ export function StudentSpaceNav({ thesisId }: { thesisId: string }) {
   const roster = useSupervisedTheses();
   const student = thesis.data?.members.find((member) => member.role === 'DOCTORAL_STUDENT');
   const name = student?.displayName;
-  const progress = roster.data?.theses.find((item) => item.thesisId === thesisId)?.progressPercentage;
+  const progress = roster.data?.theses.find(
+    (item) => item.thesisId === thesisId,
+  )?.progressPercentage;
 
   return (
     <div className="mb-4 flex items-center gap-2">
@@ -58,7 +60,9 @@ export function StudentSpaceNav({ thesisId }: { thesisId: string }) {
               </span>
             ) : null}
           </span>
-          <span className="max-w-36 truncate text-sm font-semibold text-ink sm:max-w-44">{name}</span>
+          <span className="max-w-36 truncate text-sm font-semibold text-ink sm:max-w-44">
+            {name}
+          </span>
         </div>
       ) : null}
       <nav

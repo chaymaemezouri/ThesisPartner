@@ -679,7 +679,8 @@ export const fr: Messages = {
   },
   followUp: {
     notifications: 'Centre de notifications',
-    notificationsHelp: 'Alertes sur les nouveaux livrables, retards, réunions et réponses aux remarques.',
+    notificationsHelp:
+      'Alertes sur les nouveaux livrables, retards, réunions et réponses aux remarques.',
     schedule: 'Échéancier académique',
     scheduleHelp: 'Visualiser les dates importantes de toutes les thèses.',
     reports: 'Rapports de progression',

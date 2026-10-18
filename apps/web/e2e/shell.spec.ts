@@ -106,7 +106,7 @@ test('navigates from the dashboard to a module', async ({ page }) => {
   await page.goto('/');
   await expect(page.getByRole('heading', { name: 'Bonjour, Camille' })).toBeVisible();
   await page
-    .getByRole('navigation', { name: 'Navigation principale' })
+    .getByRole('navigation', { name: 'Main navigation' })
     .getByRole('link', { name: 'Objectifs' })
     .click();
   await expect(page.getByRole('heading', { name: 'Objectifs' })).toBeVisible();

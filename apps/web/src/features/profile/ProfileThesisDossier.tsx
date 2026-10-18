@@ -36,7 +36,9 @@ export function ProfileThesisDossier() {
         </p>
       ) : null}
       {list.data && !thesis ? <CreateThesis /> : null}
-      {thesis ? <Dossier thesisId={thesis.id} canDelete={thesis.role === 'DOCTORAL_STUDENT'} /> : null}
+      {thesis ? (
+        <Dossier thesisId={thesis.id} canDelete={thesis.role === 'DOCTORAL_STUDENT'} />
+      ) : null}
     </section>
   );
 }
@@ -110,7 +112,8 @@ function Dossier({ thesisId, canDelete }: { thesisId: string; canDelete: boolean
     },
   });
 
-  if (detail.isLoading) return <p className="mt-2 text-sm text-muted">{t('profile.loadingDossier')}</p>;
+  if (detail.isLoading)
+    return <p className="mt-2 text-sm text-muted">{t('profile.loadingDossier')}</p>;
   if (detail.isError || !detail.data) {
     return (
       <p className="mt-2 text-sm text-danger" role="alert">
@@ -131,7 +134,10 @@ function Dossier({ thesisId, canDelete }: { thesisId: string; canDelete: boolean
           <p className="mt-1 truncate text-sm text-muted">
             {t('profile.supervisorLabel')} ·{' '}
             {supervisor?.email ? (
-              <a className="font-medium text-brand hover:underline" href={`mailto:${supervisor.email}`}>
+              <a
+                className="font-medium text-brand hover:underline"
+                href={`mailto:${supervisor.email}`}
+              >
                 {supervisor.email}
               </a>
             ) : (
@@ -159,20 +165,34 @@ function Dossier({ thesisId, canDelete }: { thesisId: string; canDelete: boolean
         ) : null}
       </div>
       {canEdit ? <InviteForm thesisId={thesis.id} /> : null}
-      <Modal open={editing} title={t('profile.editThesis')}
-        closeLabel={t('common.close')} onClose={() => setEditing(false)}>
+      <Modal
+        open={editing}
+        title={t('profile.editThesis')}
+        closeLabel={t('common.close')}
+        onClose={() => setEditing(false)}
+      >
         <ThesisEditForm thesisId={thesis.id} initial={thesis} onSaved={() => setEditing(false)} />
       </Modal>
-      <Modal open={confirmDelete} title={t('profile.deleteThesis')}
-        closeLabel={t('common.close')} onClose={() => setConfirmDelete(false)}>
-        <p className="text-sm text-ink">{t('profile.deleteThesisConfirm', { title: thesis.title })}</p>
+      <Modal
+        open={confirmDelete}
+        title={t('profile.deleteThesis')}
+        closeLabel={t('common.close')}
+        onClose={() => setConfirmDelete(false)}
+      >
+        <p className="text-sm text-ink">
+          {t('profile.deleteThesisConfirm', { title: thesis.title })}
+        </p>
         {remove.error ? (
           <p className="mt-3 text-sm text-danger" role="alert">
             {formErrorMessage(remove.error, t)}
           </p>
         ) : null}
         <div className="mt-4 flex flex-wrap gap-2">
-          <Button type="button" disabled={remove.isPending} onClick={() => void remove.mutateAsync()}>
+          <Button
+            type="button"
+            disabled={remove.isPending}
+            onClick={() => void remove.mutateAsync()}
+          >
             {t('common.delete')}
           </Button>
           <Button type="button" variant="secondary" onClick={() => setConfirmDelete(false)}>

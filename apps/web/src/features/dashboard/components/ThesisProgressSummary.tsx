@@ -130,7 +130,9 @@ function ProgressRing({ percentage }: { percentage: number }) {
       }}
     >
       <div className="grid h-[4.75rem] w-[4.75rem] place-items-center rounded-full bg-surface sm:h-[5.5rem] sm:w-[5.5rem]">
-        <span className="text-lg font-semibold tabular-nums text-brand sm:text-xl">{percentage} %</span>
+        <span className="text-lg font-semibold tabular-nums text-brand sm:text-xl">
+          {percentage} %
+        </span>
       </div>
     </div>
   );

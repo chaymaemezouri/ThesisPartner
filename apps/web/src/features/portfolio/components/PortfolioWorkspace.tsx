@@ -26,7 +26,10 @@ export function PortfolioWorkspace() {
   return (
     <div className="min-w-0">
       <h1 className="sr-only">{t('portfolio.title')}</h1>
-      <div className="mb-4 flex gap-1 overflow-x-auto rounded-md bg-canvas p-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" role="tablist">
+      <div
+        className="mb-4 flex gap-1 overflow-x-auto rounded-md bg-canvas p-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        role="tablist"
+      >
         {tabs.map((id) => (
           <button
             key={id}
@@ -51,7 +54,9 @@ export function PortfolioWorkspace() {
       ) : null}
       {portfolio.isError ? <QueryError error={portfolio.error} /> : null}
       {portfolio.data && tab === 'cv' ? <CvPanel data={portfolio.data} /> : null}
-      {portfolio.data && tab === 'publications' ? <PublicationsPanel data={portfolio.data} /> : null}
+      {portfolio.data && tab === 'publications' ? (
+        <PublicationsPanel data={portfolio.data} />
+      ) : null}
       {portfolio.data && tab === 'projects' ? <ProjectsPanel data={portfolio.data} /> : null}
       {portfolio.data && tab === 'skills' ? <SkillsPanel data={portfolio.data} /> : null}
     </div>
@@ -106,7 +111,10 @@ function PublicationsPanel({ data }: { data: Portfolio }) {
         />
       </div>
       {data.publications.length === 0 ? (
-        <EmptyState title={t('portfolio.emptyPublications')} description={t('portfolio.subtitle')} />
+        <EmptyState
+          title={t('portfolio.emptyPublications')}
+          description={t('portfolio.subtitle')}
+        />
       ) : (
         <div className="overflow-hidden rounded-md border border-line bg-surface">
           <PublicationRows items={data.publications} removable />
@@ -256,7 +264,9 @@ function PublicationRows({
               {t(`portfolio.kindLabel.${item.kind}`)}
             </span>
           </span>
-          {removable ? <RemoveButton label={item.title} onClick={() => remove.mutate(item.id)} /> : null}
+          {removable ? (
+            <RemoveButton label={item.title} onClick={() => remove.mutate(item.id)} />
+          ) : null}
         </li>
       ))}
     </ul>
@@ -354,7 +364,11 @@ function PublicationForm({
         </div>
       </fieldset>
       <FormError error={error} />
-      <FormActions pending={pending} submitLabel={t('portfolio.savePublication')} onCancel={onCancel} />
+      <FormActions
+        pending={pending}
+        submitLabel={t('portfolio.savePublication')}
+        onCancel={onCancel}
+      />
     </form>
   );
 }
@@ -399,7 +413,11 @@ function ProjectForm({
         onChange={(event) => setSummary(event.target.value)}
       />
       <FormError error={error} />
-      <FormActions pending={pending} submitLabel={t('portfolio.savePublication')} onCancel={onCancel} />
+      <FormActions
+        pending={pending}
+        submitLabel={t('portfolio.savePublication')}
+        onCancel={onCancel}
+      />
     </form>
   );
 }
@@ -434,7 +452,11 @@ function SkillForm({
         onChange={(event) => setLabel(event.target.value)}
       />
       <FormError error={error} />
-      <FormActions pending={pending} submitLabel={t('portfolio.savePublication')} onCancel={onCancel} />
+      <FormActions
+        pending={pending}
+        submitLabel={t('portfolio.savePublication')}
+        onCancel={onCancel}
+      />
     </form>
   );
 }

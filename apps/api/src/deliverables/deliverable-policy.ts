@@ -7,9 +7,7 @@ export function canCreateDeliverable(role: MembershipRole): boolean {
 
 /** Metadata edits stay open in draft and after changes are requested. */
 export function canEditDeliverable(role: MembershipRole, status: DeliverableStatus): boolean {
-  return (
-    role === 'DOCTORAL_STUDENT' && (status === 'DRAFT' || status === 'CHANGES_REQUESTED')
-  );
+  return role === 'DOCTORAL_STUDENT' && (status === 'DRAFT' || status === 'CHANGES_REQUESTED');
 }
 
 export function canCancelDeliverable(role: MembershipRole, status: DeliverableStatus): boolean {
@@ -45,9 +43,7 @@ export function canCancel(role: MembershipRole, status: DeliverableStatus): bool
 
 /** Doctoral student submits a draft or a corrected deliverable. */
 export function canSubmit(role: MembershipRole, status: DeliverableStatus): boolean {
-  return (
-    role === 'DOCTORAL_STUDENT' && (status === 'DRAFT' || status === 'CHANGES_REQUESTED')
-  );
+  return role === 'DOCTORAL_STUDENT' && (status === 'DRAFT' || status === 'CHANGES_REQUESTED');
 }
 
 /** Supervisor asks for corrections on a submitted deliverable. */

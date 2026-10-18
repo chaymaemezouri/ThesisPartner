@@ -40,11 +40,9 @@ export function usePublicationStatus(publicationId: string) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (status: PublicationStatus) =>
-      apiSend(
-        `/api/v1/supervision/desk/publications/${publicationId}/status`,
-        statusResultSchema,
-        { status },
-      ),
+      apiSend(`/api/v1/supervision/desk/publications/${publicationId}/status`, statusResultSchema, {
+        status,
+      }),
     onSuccess: () => refreshDesk(queryClient),
   });
 }

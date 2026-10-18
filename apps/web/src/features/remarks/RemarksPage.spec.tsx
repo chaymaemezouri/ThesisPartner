@@ -240,10 +240,7 @@ describe('remarks pages', () => {
         return json({});
       }),
     );
-    renderAt(
-      `/encadrement/${thesisId}/remarques/${remarkId}`,
-      <SupervisorRemarkDetailPage />,
-    );
+    renderAt(`/encadrement/${thesisId}/remarques/${remarkId}`, <SupervisorRemarkDetailPage />);
     expect(await screen.findByRole('button', { name: 'Close remark' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Reopen remark' })).toBeInTheDocument();
   });

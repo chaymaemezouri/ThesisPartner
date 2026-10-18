@@ -4,9 +4,9 @@ export type RemarkStatus = (typeof REMARK_STATUSES)[number];
 export const REMARK_PRIORITIES = ['LOW', 'MEDIUM', 'HIGH'] as const;
 export type RemarkPriority = (typeof REMARK_PRIORITIES)[number];
 
-export function sortRemarks<
-  T extends { status: RemarkStatus; updatedAt: Date; createdAt: Date },
->(items: readonly T[]): T[] {
+export function sortRemarks<T extends { status: RemarkStatus; updatedAt: Date; createdAt: Date }>(
+  items: readonly T[],
+): T[] {
   return [...items].sort((left, right) => {
     const byStatus = statusGroup(left.status) - statusGroup(right.status);
     if (byStatus !== 0) return byStatus;

@@ -171,7 +171,9 @@ export class PortfolioService {
 
   async removeSkill(actorId: string, skillId: string, requestId?: string) {
     await this.prisma.$transaction(async (tx) => {
-      const current = await tx.portfolioSkill.findFirst({ where: { id: skillId, userId: actorId } });
+      const current = await tx.portfolioSkill.findFirst({
+        where: { id: skillId, userId: actorId },
+      });
       if (!current) throw new AppException(404, 'NOT_FOUND', 'Resource not found');
       await tx.portfolioSkill.delete({ where: { id: skillId } });
       await this.audit.record(tx, {

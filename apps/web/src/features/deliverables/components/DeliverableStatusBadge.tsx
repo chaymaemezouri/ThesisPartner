@@ -12,7 +12,9 @@ const STYLE = {
 export function DeliverableStatusBadge({ status }: { status: DeliverableListItem['status'] }) {
   const t = useT();
   return (
-    <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${STYLE[status]}`}>
+    <span
+      className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${STYLE[status]}`}
+    >
       {t(`deliverables.status.${status}`)}
     </span>
   );

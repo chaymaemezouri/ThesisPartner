@@ -235,9 +235,7 @@ describe('doctoral objectives', () => {
     );
     const view = renderAt(`/objectifs/${objectiveId}`, <DoctoralObjectiveDetailPage />);
     expect(await screen.findByText('Validation requested')).toBeInTheDocument();
-    expect(
-      screen.queryByRole('button', { name: 'Request validation' }),
-    ).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Request validation' })).not.toBeInTheDocument();
     view.unmount();
 
     vi.stubGlobal(
@@ -328,9 +326,7 @@ describe('supervisor objectives', () => {
       <SupervisorObjectiveDetailPage />,
     );
     expect(await screen.findByRole('button', { name: 'New step' })).toBeInTheDocument();
-    await user.click(
-      await screen.findByRole('button', { name: 'Rechercher les articles' }),
-    );
+    await user.click(await screen.findByRole('button', { name: 'Rechercher les articles' }));
     expect(
       await screen.findByRole('button', { name: 'Move down Rechercher les articles' }),
     ).toBeEnabled();
@@ -345,9 +341,7 @@ describe('supervisor objectives', () => {
     expect(screen.getByLabelText('Status of Rechercher les articles')).toHaveTextContent(
       'Cancelled',
     );
-    expect(
-      screen.queryByRole('button', { name: 'Request validation' }),
-    ).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Request validation' })).not.toBeInTheDocument();
   });
 });
 

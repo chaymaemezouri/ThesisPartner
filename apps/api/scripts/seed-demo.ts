@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 /**
  * Opt-in demo seed for a doctoral dashboard (~52% work progress).
  * Usage from repo root: npm run db:seed:demo
@@ -7,10 +8,17 @@
  * DEMO_PASSWORD (default ThesisPartner2026!)
  */
 import { Algorithm, hash } from '@node-rs/argon2';
-import { PrismaClient, type DeliverableStatus, type RemarkPriority, type RemarkStatus } from '@prisma/client';
+import {
+  PrismaClient,
+  type DeliverableStatus,
+  type RemarkPriority,
+  type RemarkStatus,
+} from '@prisma/client';
 import { STANDARD_OBJECTIVES } from '../src/objectives/standard-path.catalog';
 
-const STUDENT_EMAIL = (process.env.DEMO_STUDENT_EMAIL ?? 'demo.doctorant@example.test').toLowerCase();
+const STUDENT_EMAIL = (
+  process.env.DEMO_STUDENT_EMAIL ?? 'demo.doctorant@example.test'
+).toLowerCase();
 const SUPERVISOR_EMAIL = (
   process.env.DEMO_SUPERVISOR_EMAIL ?? 'demo.encadrant@example.test'
 ).toLowerCase();
@@ -468,7 +476,8 @@ async function seedDeliverablesAndRemarks(
         },
         {
           author: 'supervisor',
-          message: 'La légende est claire. Ajoutez encore le jeu de données utilisé pour l’exemple.',
+          message:
+            'La légende est claire. Ajoutez encore le jeu de données utilisé pour l’exemple.',
         },
       ],
     },
@@ -512,7 +521,8 @@ async function seedDeliverablesAndRemarks(
     },
     {
       title: 'Alléger les slides de mi-parcours',
-      message: 'La présentation était claire. Gardez une slide de méthode et une slide de résultats.',
+      message:
+        'La présentation était claire. Gardez une slide de méthode et une slide de résultats.',
       status: 'CLOSED',
       priority: 'LOW',
       objectiveId: byCode.ETAT_ART,
@@ -523,7 +533,8 @@ async function seedDeliverablesAndRemarks(
       replies: [
         {
           author: 'student',
-          message: 'Slides réduites à 12. La méthode et les premiers résultats tiennent chacun sur une slide.',
+          message:
+            'Slides réduites à 12. La méthode et les premiers résultats tiennent chacun sur une slide.',
         },
         {
           author: 'supervisor',

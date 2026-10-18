@@ -7,7 +7,8 @@ export type RemarkFilters = {
 export const remarkKeys = {
   list: (thesisId: string, filters: RemarkFilters) =>
     ['remarks', 'list', thesisId, filters] as const,
-  detail: (thesisId: string, remarkId: string) => ['remarks', 'detail', thesisId, remarkId] as const,
+  detail: (thesisId: string, remarkId: string) =>
+    ['remarks', 'detail', thesisId, remarkId] as const,
 };
 
 export function filtersFromSearch(params: URLSearchParams): RemarkFilters {
@@ -16,13 +17,11 @@ export function filtersFromSearch(params: URLSearchParams): RemarkFilters {
   const search = params.get('search')?.trim();
   return {
     status:
-      status === 'OPEN' ||
-      status === 'IN_PROGRESS' ||
-      status === 'RESOLVED' ||
-      status === 'CLOSED'
+      status === 'OPEN' || status === 'IN_PROGRESS' || status === 'RESOLVED' || status === 'CLOSED'
         ? status
         : undefined,
-    priority: priority === 'LOW' || priority === 'MEDIUM' || priority === 'HIGH' ? priority : undefined,
+    priority:
+      priority === 'LOW' || priority === 'MEDIUM' || priority === 'HIGH' ? priority : undefined,
     search: search || undefined,
   };
 }

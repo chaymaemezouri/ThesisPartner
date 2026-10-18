@@ -178,7 +178,9 @@ export function MeetingDetailView({
           </div>
         ) : null}
         {studentRequest ? (
-          <p className="border-t border-line px-4 py-3 text-xs text-muted">{t('meetings.waiting')}</p>
+          <p className="border-t border-line px-4 py-3 text-xs text-muted">
+            {t('meetings.waiting')}
+          </p>
         ) : null}
         {supervisorRequest ? (
           <div className="border-t border-line px-4 py-3">

@@ -130,9 +130,7 @@ describe('remarks', () => {
     expect(seenByStudent.remarks.map((item) => item.id)).toEqual([remark.id]);
     expect((await studentB.agent.get(`/api/v1/theses/${thesisA}/remarks`)).status).toBe(404);
     expect((await outsider.agent.get(`/api/v1/theses/${thesisA}/remarks`)).status).toBe(404);
-    expect((await otherSupervisor.agent.get(`/api/v1/theses/${thesisA}/remarks`)).status).toBe(
-      404,
-    );
+    expect((await otherSupervisor.agent.get(`/api/v1/theses/${thesisA}/remarks`)).status).toBe(404);
 
     const path = `/api/v1/theses/${thesisA}/remarks/${remark.id}`;
     const replied = await studentA.agent
@@ -159,12 +157,8 @@ describe('remarks', () => {
     expect(afterResolve.correctionVersion?.versionNumber).toBe(2);
 
     expect(
-      (
-        await studentA.agent
-          .post(`${path}/close`)
-          .set('x-csrf-token', studentA.csrf)
-          .send({})
-      ).status,
+      (await studentA.agent.post(`${path}/close`).set('x-csrf-token', studentA.csrf).send({}))
+        .status,
     ).toBe(403);
 
     const closed = await supervisor.agent

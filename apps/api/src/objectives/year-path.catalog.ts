@@ -171,7 +171,11 @@ export function yearObjectives(year: DoctoralYear): readonly YearObjective[] {
 
 /** Year used when an older template is copied. Unknown codes stay on year 1. */
 export function legacyDoctoralYear(templateCode: string): DoctoralYear {
-  if (templateCode === 'EXPERIMENTATION' || templateCode === 'ANALYSE' || templateCode === 'PUBLICATION') {
+  if (
+    templateCode === 'EXPERIMENTATION' ||
+    templateCode === 'ANALYSE' ||
+    templateCode === 'PUBLICATION'
+  ) {
     return 2;
   }
   if (templateCode === 'REDACTION' || templateCode === 'SOUTENANCE') return 3;
@@ -187,13 +191,9 @@ export function missingYearObjectives(
   year: DoctoralYear,
   existing: readonly ExistingObjectiveRef[],
 ): YearObjective[] {
-  const codes = new Set(
-    existing.flatMap((row) => (row.templateCode ? [row.templateCode] : [])),
-  );
+  const codes = new Set(existing.flatMap((row) => (row.templateCode ? [row.templateCode] : [])));
   const titles = new Set(
-    existing
-      .filter((row) => row.doctoralYear === year)
-      .map((row) => normalizeTitle(row.title)),
+    existing.filter((row) => row.doctoralYear === year).map((row) => normalizeTitle(row.title)),
   );
   return yearObjectives(year).filter((item) => {
     if (codes.has(item.code)) return false;

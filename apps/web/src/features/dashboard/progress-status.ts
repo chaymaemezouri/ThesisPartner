@@ -8,10 +8,7 @@ function defaultT(key: MessageKey, params?: Record<string, string | number>): st
   return formatMessage(getMessage(en, key), params);
 }
 
-export function computeProgressStatus(
-  overdueObjectives: number,
-  t: Translate = defaultT,
-): string {
+export function computeProgressStatus(overdueObjectives: number, t: Translate = defaultT): string {
   if (overdueObjectives > 0) {
     return overdueObjectives === 1
       ? t('dashboard.lateOneObjective')

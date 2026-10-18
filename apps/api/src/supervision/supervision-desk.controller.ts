@@ -12,7 +12,9 @@ export class SupervisionDeskController {
   constructor(private readonly desk: SupervisionDeskService) {}
 
   @Get()
-  @ApiOperation({ summary: 'Alerts, dates, reports, evaluations and decisions for supervised theses' })
+  @ApiOperation({
+    summary: 'Alerts, dates, reports, evaluations and decisions for supervised theses',
+  })
   get(@Req() request: Request) {
     return this.desk.desk(actorId(request));
   }

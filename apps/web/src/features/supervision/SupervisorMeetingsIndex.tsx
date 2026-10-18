@@ -48,7 +48,8 @@ export function SupervisorMeetingsIndex() {
     })),
   });
 
-  const view: DeskView = isView(params.get('vue')) ? params.get('vue')! : 'all';
+  const viewParam = params.get('vue');
+  const view: DeskView = isView(viewParam) ? viewParam : 'all';
   const studentFilter = params.get('student') ?? 'all';
   const openThesisId = params.get('thesis');
   const openMeetingId = params.get('meeting');
@@ -75,7 +76,9 @@ export function SupervisorMeetingsIndex() {
     .filter((meeting) => {
       if (!needle) return true;
       const mode = meeting.mode ? t(`meetings.modeLabel.${meeting.mode}`) : '';
-      return `${meeting.title} ${meeting.studentName} ${mode}`.toLocaleLowerCase('fr').includes(needle);
+      return `${meeting.title} ${meeting.studentName} ${mode}`
+        .toLocaleLowerCase('fr')
+        .includes(needle);
     })
     .sort(compareMeetings);
 
@@ -244,7 +247,10 @@ export function SupervisorMeetingsIndex() {
                       }
                     />
                   ) : (
-                    <ul className="overflow-hidden rounded-md border border-line bg-surface" aria-label={t('meetings.listAria')}>
+                    <ul
+                      className="overflow-hidden rounded-md border border-line bg-surface"
+                      aria-label={t('meetings.listAria')}
+                    >
                       {visible.map((meeting) => (
                         <li key={meeting.id} className="border-b border-line last:border-b-0">
                           <div className="flex flex-wrap items-center gap-3 px-3 py-2.5">

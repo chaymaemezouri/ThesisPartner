@@ -20,7 +20,10 @@ export function MeetingCalendar({
   const t = useT();
   const { dateLocale } = useLocale();
   const dated = useMemo(
-    () => meetings.filter((meeting): meeting is Meeting & { scheduledOn: string } => Boolean(meeting.scheduledOn)),
+    () =>
+      meetings.filter((meeting): meeting is Meeting & { scheduledOn: string } =>
+        Boolean(meeting.scheduledOn),
+      ),
     [meetings],
   );
   const byDay = useMemo(() => {
@@ -35,11 +38,14 @@ export function MeetingCalendar({
   const [cursor, setCursor] = useState(() => openingMonth(dated));
   const [selected, setSelected] = useState<string | null>(null);
   const cells = monthCells(cursor.year, cursor.month);
-  const monthLabel = new Date(Date.UTC(cursor.year, cursor.month, 1)).toLocaleDateString(dateLocale, {
-    month: 'long',
-    year: 'numeric',
-    timeZone: 'UTC',
-  });
+  const monthLabel = new Date(Date.UTC(cursor.year, cursor.month, 1)).toLocaleDateString(
+    dateLocale,
+    {
+      month: 'long',
+      year: 'numeric',
+      timeZone: 'UTC',
+    },
+  );
   const weekdays = weekdayLabels(dateLocale);
   const today = new Date().toISOString().slice(0, 10);
   const selectedMeetings = selected ? (byDay.get(selected) ?? []) : [];
@@ -76,7 +82,10 @@ export function MeetingCalendar({
       <div className="px-2 py-2">
         <div className="grid grid-cols-7" aria-hidden="true">
           {weekdays.map((label, index) => (
-            <span key={index} className="py-1 text-center text-[10px] font-medium text-muted uppercase">
+            <span
+              key={index}
+              className="py-1 text-center text-[10px] font-medium text-muted uppercase"
+            >
               {label}
             </span>
           ))}
@@ -159,13 +168,22 @@ export function MeetingCalendar({
   );
 }
 
-function openingMonth(meetings: Array<Meeting & { scheduledOn: string }>): { year: number; month: number } {
+function openingMonth(meetings: Array<Meeting & { scheduledOn: string }>): {
+  year: number;
+  month: number;
+} {
   const today = new Date().toISOString().slice(0, 10);
   const upcoming = meetings
     .map((meeting) => meeting.scheduledOn)
     .filter((day) => day >= today)
     .sort();
-  const anchor = upcoming[0] ?? meetings.map((meeting) => meeting.scheduledOn).sort().at(-1) ?? today;
+  const anchor =
+    upcoming[0] ??
+    meetings
+      .map((meeting) => meeting.scheduledOn)
+      .sort()
+      .at(-1) ??
+    today;
   return { year: Number(anchor.slice(0, 4)), month: Number(anchor.slice(5, 7)) - 1 };
 }
 

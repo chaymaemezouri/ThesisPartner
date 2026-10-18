@@ -1,7 +1,7 @@
 import type { ApiErrorBody } from '@thesispartner/types';
 import { CSRF_COOKIE_NAME, CSRF_HEADER_NAME } from '@thesispartner/types';
 import { apiErrorBodySchema } from '@thesispartner/validation';
-import type { ZodType } from 'zod';
+import type { z } from 'zod';
 
 export class ApiClientError extends Error {
   readonly body: ApiErrorBody;
@@ -19,30 +19,30 @@ type Method = 'GET' | 'POST' | 'PATCH' | 'DELETE';
  * Session cookies travel with credentials. The CSRF value is read from the
  * non-HttpOnly cookie and sent as a header. Nothing is written to localStorage.
  */
-export async function apiGet<T>(
+export async function apiGet<S extends z.ZodTypeAny>(
   path: string,
-  schema: ZodType<T>,
+  schema: S,
   fetchImpl: typeof fetch = fetch,
-): Promise<T> {
+): Promise<z.output<S>> {
   return request(path, schema, { method: 'GET' }, fetchImpl);
 }
 
-export async function apiSend<T>(
+export async function apiSend<S extends z.ZodTypeAny>(
   path: string,
-  schema: ZodType<T>,
+  schema: S,
   body: unknown,
   method: 'POST' | 'PATCH' | 'DELETE' = 'POST',
   fetchImpl: typeof fetch = fetch,
-): Promise<T> {
+): Promise<z.output<S>> {
   return request(path, schema, { method, body }, fetchImpl);
 }
 
-async function request<T>(
+async function request<S extends z.ZodTypeAny>(
   path: string,
-  schema: ZodType<T>,
+  schema: S,
   options: { method: Method; body?: unknown },
   fetchImpl: typeof fetch,
-): Promise<T> {
+): Promise<z.output<S>> {
   const headers: Record<string, string> = { Accept: 'application/json' };
   if (options.body !== undefined) {
     headers['Content-Type'] = 'application/json';
@@ -77,13 +77,13 @@ async function request<T>(
   return schema.parse(payload);
 }
 
-export function apiUpload<T>(
+export function apiUpload<S extends z.ZodTypeAny>(
   path: string,
-  schema: ZodType<T>,
+  schema: S,
   file: File,
   onProgress?: (loaded: number, total: number) => void,
-): Promise<T> {
-  return new Promise((resolve, reject) => {
+): Promise<z.output<S>> {
+  return new Promise<z.output<S>>((resolve, reject) => {
     const xhr = new XMLHttpRequest();
     const base = import.meta.env.VITE_API_URL ?? '';
     xhr.open('POST', `${base}${path}`);

@@ -35,10 +35,7 @@ export function RemarkDetailView({
   const reopen = useReopenRemark(thesisId, remarkId);
   const [message, setMessage] = useState('');
   const [correctionVersionId, setCorrectionVersionId] = useState('');
-  const versions = useDeliverableVersions(
-    thesisId,
-    remark.data?.deliverableId ?? null,
-  );
+  const versions = useDeliverableVersions(thesisId, remark.data?.deliverableId ?? null);
 
   if (remark.isLoading) {
     return (
@@ -52,11 +49,9 @@ export function RemarkDetailView({
   const data = remark.data;
   const crumbs = trail ?? [{ label: t('remarks.title'), to: backTo }];
   const canReplyAction = data.status !== 'CLOSED';
-  const canResolveAction =
-    !canCreate && (data.status === 'OPEN' || data.status === 'IN_PROGRESS');
+  const canResolveAction = !canCreate && (data.status === 'OPEN' || data.status === 'IN_PROGRESS');
   const canCloseAction = canCreate && data.status === 'RESOLVED';
-  const canReopenAction =
-    canCreate && (data.status === 'RESOLVED' || data.status === 'CLOSED');
+  const canReopenAction = canCreate && (data.status === 'RESOLVED' || data.status === 'CLOSED');
   const versionOptions = versions.data?.versions ?? [];
   const audience = canCreate ? 'supervisor' : 'student';
 
@@ -122,7 +117,10 @@ export function RemarkDetailView({
         </div>
 
         <section className="border-t border-line px-4 py-3" aria-labelledby="remark-thread">
-          <h2 id="remark-thread" className="text-[11px] font-medium tracking-wide text-muted uppercase">
+          <h2
+            id="remark-thread"
+            className="text-[11px] font-medium tracking-wide text-muted uppercase"
+          >
             {t('remarks.exchanges')}
           </h2>
           {data.replies.length === 0 ? (
@@ -192,7 +190,9 @@ export function RemarkDetailView({
           >
             <div className="min-w-0 flex-1">
               <p className="text-xs font-medium text-ink">{t('remarks.correctionDone')}</p>
-              <p className="mt-0.5 text-[11px] leading-snug text-muted">{t('remarks.correctionHelp')}</p>
+              <p className="mt-0.5 text-[11px] leading-snug text-muted">
+                {t('remarks.correctionHelp')}
+              </p>
               {data.deliverableId && versionOptions.length > 0 ? (
                 <div className="mt-2 max-w-sm">
                   <Select
@@ -233,7 +233,11 @@ export function RemarkDetailView({
             aria-label={t('remarks.supervisorActionsAria')}
           >
             {canCloseAction ? (
-              <Button className="h-8 px-3 text-xs" disabled={close.isPending} onClick={() => close.mutate()}>
+              <Button
+                className="h-8 px-3 text-xs"
+                disabled={close.isPending}
+                onClick={() => close.mutate()}
+              >
                 {t('remarks.close')}
               </Button>
             ) : null}

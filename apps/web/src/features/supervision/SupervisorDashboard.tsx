@@ -26,7 +26,7 @@ export function SupervisorDashboard({ layout = 'cards' }: { layout?: 'cards' | '
   const [filter, setFilter] = useState<RosterFilter>('all');
   const [sort, setSort] = useState<RosterSort>('name');
 
-  const theses = supervised.data?.theses ?? [];
+  const theses = useMemo(() => supervised.data?.theses ?? [], [supervised.data?.theses]);
   const stats = layout === 'cards' ? rosterStats(theses) : null;
   const reviewQueue =
     layout === 'cards'
@@ -76,7 +76,11 @@ export function SupervisorDashboard({ layout = 'cards' }: { layout?: 'cards' | '
                 : 'grid shrink-0 gap-3 sm:grid-cols-2 xl:grid-cols-4'
             }
           >
-            <Stat icon="supervision" label={t('supervision.statsStudents')} value={String(stats.students)} />
+            <Stat
+              icon="supervision"
+              label={t('supervision.statsStudents')}
+              value={String(stats.students)}
+            />
             <Stat
               icon="dashboard"
               label={t('supervision.statsProgress')}
@@ -114,7 +118,9 @@ export function SupervisorDashboard({ layout = 'cards' }: { layout?: 'cards' | '
                     className="flex items-center justify-between gap-3 px-3 py-2 hover:bg-canvas"
                   >
                     <span className="min-w-0">
-                      <span className="block truncate text-sm font-medium text-ink">{item.title}</span>
+                      <span className="block truncate text-sm font-medium text-ink">
+                        {item.title}
+                      </span>
                       <span className="block truncate text-xs text-muted">{item.student}</span>
                     </span>
                     <span className="shrink-0 rounded-full bg-warn-soft px-2 py-0.5 text-xs font-medium text-warn">

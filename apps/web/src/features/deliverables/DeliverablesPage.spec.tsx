@@ -258,9 +258,7 @@ describe('deliverables', () => {
       }),
     );
     renderAt(`/encadrement/${thesisId}/livrables`, <SupervisorDeliverablesPage />);
-    expect(
-      await screen.findByText('No deliverables yet'),
-    ).toBeInTheDocument();
+    expect(await screen.findByText('No deliverables yet')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'New deliverable' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Create deliverable' })).not.toBeInTheDocument();
   });
@@ -289,9 +287,7 @@ describe('deliverables', () => {
     expect(items[0]).toHaveTextContent('chapitre-v2.pdf');
     expect(items[0]).toHaveTextContent('PDF');
     expect(items[1]).toHaveTextContent('No file');
-    expect(
-      screen.getByRole('button', { name: 'Add a new version' }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Add a new version' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Add a file' })).toBeInTheDocument();
     const documentPanel = screen.getByRole('region', { name: 'Document' });
     expect(documentPanel).toHaveTextContent('chapitre-v2.pdf');
@@ -322,9 +318,7 @@ describe('deliverables', () => {
     );
     renderAt(`/livrables/${deliverableId}`, <DoctoralDeliverableDetailPage />);
     expect(await screen.findByText('No version yet.')).toBeInTheDocument();
-    expect(screen.getByRole('region', { name: 'Document' })).toHaveTextContent(
-      'No file attached.',
-    );
+    expect(screen.getByRole('region', { name: 'Document' })).toHaveTextContent('No file attached.');
     expect(screen.getByRole('button', { name: 'Create first version' })).toBeInTheDocument();
   });
 
@@ -359,27 +353,19 @@ describe('deliverables', () => {
       `/encadrement/${thesisId}/livrables/${deliverableId}`,
       <SupervisorDeliverableDetailPage />,
     );
-    expect(
-      await screen.findByRole('list', { name: 'Version history' }),
-    ).toBeInTheDocument();
+    expect(await screen.findByRole('list', { name: 'Version history' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'My students' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Ada Martin' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Edit' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Cancel deliverable' })).not.toBeInTheDocument();
-    expect(
-      screen.queryByRole('button', { name: 'Add a new version' }),
-    ).not.toBeInTheDocument();
-    expect(
-      screen.queryByRole('button', { name: 'Create first version' }),
-    ).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Add a new version' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Create first version' })).not.toBeInTheDocument();
     expect(screen.getAllByText('chapitre-v2.pdf')).toHaveLength(2);
     expect(screen.getByRole('region', { name: 'Document' })).toHaveTextContent('chapitre-v2.pdf');
     expect(screen.getAllByRole('button', { name: 'Download' })).toHaveLength(2);
     expect(screen.queryByRole('button', { name: 'Add a file' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Delete' })).not.toBeInTheDocument();
-    expect(
-      screen.queryByRole('button', { name: 'Request changes' }),
-    ).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Request changes' })).not.toBeInTheDocument();
   });
 
   it('lets the doctoral student submit a draft with versions', async () => {
@@ -394,9 +380,7 @@ describe('deliverables', () => {
       }),
     );
     renderAt(`/livrables/${deliverableId}`, <DoctoralDeliverableDetailPage />);
-    expect(
-      await screen.findByRole('button', { name: 'Submit to supervisor' }),
-    ).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'Submit to supervisor' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Edit' })).toBeInTheDocument();
   });
 
@@ -438,14 +422,10 @@ describe('deliverables', () => {
       <SupervisorDeliverableDetailPage />,
     );
     expect(await screen.findByText('Submitted')).toBeInTheDocument();
-    expect(
-      screen.getByRole('button', { name: 'Request changes' }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Request changes' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Validate deliverable' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Edit' })).not.toBeInTheDocument();
-    expect(
-      screen.queryByRole('button', { name: 'Add a new version' }),
-    ).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Add a new version' })).not.toBeInTheDocument();
   });
 });
 

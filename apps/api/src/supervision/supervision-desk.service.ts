@@ -131,12 +131,7 @@ export class SupervisionDeskService {
 
       for (const item of thesis.objectives) {
         const due = formatDay(item.dueDate);
-        if (
-          due &&
-          due < today &&
-          item.status !== 'COMPLETED' &&
-          item.status !== 'CANCELLED'
-        ) {
+        if (due && due < today && item.status !== 'COMPLETED' && item.status !== 'CANCELLED') {
           notifications.push({
             id: `overdue-${item.id}`,
             kind: 'OVERDUE',
@@ -256,7 +251,9 @@ export class SupervisionDeskService {
     notifications.sort((left, right) => (right.date ?? '').localeCompare(left.date ?? ''));
     schedule.sort((left, right) => left.date.localeCompare(right.date));
     decisions.sort((left, right) => right.createdAt.localeCompare(left.createdAt));
-    publications.sort((left, right) => right.year - left.year || left.studentName.localeCompare(right.studentName));
+    publications.sort(
+      (left, right) => right.year - left.year || left.studentName.localeCompare(right.studentName),
+    );
 
     return {
       notifications: notifications.slice(0, 80),
@@ -311,7 +308,8 @@ export class SupervisionDeskService {
         thesis: { memberships: { some: { userId: actorId, role: 'SUPERVISOR' } } },
       },
     });
-    if (!link) throw new AppException(403, 'FORBIDDEN', 'Seul l’encadrant peut suivre cette publication');
+    if (!link)
+      throw new AppException(403, 'FORBIDDEN', 'Seul l’encadrant peut suivre cette publication');
     await this.prisma.$transaction(async (tx) => {
       await tx.publication.update({ where: { id: publicationId }, data: { status } });
       await this.audit.record(tx, {

@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 /**
  * Adds ten Moroccan doctoral students supervised by demo.encadrant@example.test.
  * Idempotent: an email that already has a thesis with that supervisor is left as-is.
@@ -58,14 +59,54 @@ const STUDENTS: StudentSeed[] = [
     startedOn: day(2022, 10, 1),
     expectedDefenseOn: day(2026, 12, 15),
     objectives: [
-      { title: 'Revue des modèles de dépistage', status: 'COMPLETED', progress: 100, dueDate: day(2023, 6, 30) },
-      { title: 'Constitution de la cohorte hospitalière', status: 'COMPLETED', progress: 100, dueDate: day(2024, 3, 1) },
-      { title: 'Protocole éthique et anonymisation', status: 'COMPLETED', progress: 100, dueDate: day(2024, 9, 15) },
-      { title: 'Entraînement du modèle multimodal', status: 'COMPLETED', progress: 100, dueDate: day(2025, 6, 1) },
-      { title: 'Validation clinique à Rabat', status: 'COMPLETED', progress: 100, dueDate: day(2025, 12, 1) },
-      { title: 'Article de méthode', status: 'IN_PROGRESS', progress: 60, dueDate: day(2026, 11, 20) },
-      { title: 'Rédaction du manuscrit', status: 'PLANNED', progress: 0, dueDate: day(2026, 10, 1) },
-      { title: 'Préparation de la soutenance', status: 'PLANNED', progress: 0, dueDate: day(2026, 12, 1) },
+      {
+        title: 'Revue des modèles de dépistage',
+        status: 'COMPLETED',
+        progress: 100,
+        dueDate: day(2023, 6, 30),
+      },
+      {
+        title: 'Constitution de la cohorte hospitalière',
+        status: 'COMPLETED',
+        progress: 100,
+        dueDate: day(2024, 3, 1),
+      },
+      {
+        title: 'Protocole éthique et anonymisation',
+        status: 'COMPLETED',
+        progress: 100,
+        dueDate: day(2024, 9, 15),
+      },
+      {
+        title: 'Entraînement du modèle multimodal',
+        status: 'COMPLETED',
+        progress: 100,
+        dueDate: day(2025, 6, 1),
+      },
+      {
+        title: 'Validation clinique à Rabat',
+        status: 'COMPLETED',
+        progress: 100,
+        dueDate: day(2025, 12, 1),
+      },
+      {
+        title: 'Article de méthode',
+        status: 'IN_PROGRESS',
+        progress: 60,
+        dueDate: day(2026, 11, 20),
+      },
+      {
+        title: 'Rédaction du manuscrit',
+        status: 'PLANNED',
+        progress: 0,
+        dueDate: day(2026, 10, 1),
+      },
+      {
+        title: 'Préparation de la soutenance',
+        status: 'PLANNED',
+        progress: 0,
+        dueDate: day(2026, 12, 1),
+      },
     ],
     deliverables: [
       { title: 'Article — dépistage multimodal', status: 'SUBMITTED', dueDate: day(2026, 11, 20) },
@@ -87,10 +128,30 @@ const STUDENTS: StudentSeed[] = [
     startedOn: day(2023, 1, 15),
     expectedDefenseOn: day(2027, 6, 30),
     objectives: [
-      { title: 'Cartographier les toitures', status: 'COMPLETED', progress: 100, dueDate: day(2024, 1, 15) },
-      { title: 'Collecte des mesures d’irradiance', status: 'IN_PROGRESS', progress: 35, dueDate: day(2026, 2, 1) },
-      { title: 'Modèle de prévision horaire', status: 'PLANNED', progress: 0, dueDate: day(2026, 9, 1) },
-      { title: 'Comparaison avec les données ONEE', status: 'PLANNED', progress: 0, dueDate: day(2027, 1, 15) },
+      {
+        title: 'Cartographier les toitures',
+        status: 'COMPLETED',
+        progress: 100,
+        dueDate: day(2024, 1, 15),
+      },
+      {
+        title: 'Collecte des mesures d’irradiance',
+        status: 'IN_PROGRESS',
+        progress: 35,
+        dueDate: day(2026, 2, 1),
+      },
+      {
+        title: 'Modèle de prévision horaire',
+        status: 'PLANNED',
+        progress: 0,
+        dueDate: day(2026, 9, 1),
+      },
+      {
+        title: 'Comparaison avec les données ONEE',
+        status: 'PLANNED',
+        progress: 0,
+        dueDate: day(2027, 1, 15),
+      },
       { title: 'Rédaction', status: 'PLANNED', progress: 0, dueDate: day(2027, 5, 1) },
       { title: 'Soutenance', status: 'PLANNED', progress: 0, dueDate: day(2027, 6, 20) },
     ],
@@ -113,10 +174,30 @@ const STUDENTS: StudentSeed[] = [
     startedOn: day(2022, 11, 1),
     expectedDefenseOn: day(2026, 11, 30),
     objectives: [
-      { title: 'Corpus darija annoté', status: 'COMPLETED', progress: 100, dueDate: day(2023, 12, 1) },
-      { title: 'État de l’art des modèles multilingues', status: 'COMPLETED', progress: 100, dueDate: day(2024, 6, 1) },
-      { title: 'Adaptation du modèle', status: 'COMPLETED', progress: 100, dueDate: day(2025, 3, 1) },
-      { title: 'Évaluation sur les démarches administratives', status: 'COMPLETED', progress: 100, dueDate: day(2025, 11, 1) },
+      {
+        title: 'Corpus darija annoté',
+        status: 'COMPLETED',
+        progress: 100,
+        dueDate: day(2023, 12, 1),
+      },
+      {
+        title: 'État de l’art des modèles multilingues',
+        status: 'COMPLETED',
+        progress: 100,
+        dueDate: day(2024, 6, 1),
+      },
+      {
+        title: 'Adaptation du modèle',
+        status: 'COMPLETED',
+        progress: 100,
+        dueDate: day(2025, 3, 1),
+      },
+      {
+        title: 'Évaluation sur les démarches administratives',
+        status: 'COMPLETED',
+        progress: 100,
+        dueDate: day(2025, 11, 1),
+      },
       { title: 'Article ACL', status: 'IN_PROGRESS', progress: 45, dueDate: day(2026, 12, 1) },
       { title: 'Chapitre résultats', status: 'PLANNED', progress: 0, dueDate: day(2026, 9, 1) },
       { title: 'Soutenance', status: 'PLANNED', progress: 0, dueDate: day(2026, 11, 15) },
@@ -141,10 +222,25 @@ const STUDENTS: StudentSeed[] = [
     startedOn: day(2024, 10, 1),
     expectedDefenseOn: day(2028, 9, 30),
     objectives: [
-      { title: 'Choix des sites et autorisations', status: 'IN_PROGRESS', progress: 70, dueDate: day(2026, 12, 1) },
-      { title: 'Protocole de prise de vue', status: 'PLANNED', progress: 0, dueDate: day(2027, 3, 1) },
+      {
+        title: 'Choix des sites et autorisations',
+        status: 'IN_PROGRESS',
+        progress: 70,
+        dueDate: day(2026, 12, 1),
+      },
+      {
+        title: 'Protocole de prise de vue',
+        status: 'PLANNED',
+        progress: 0,
+        dueDate: day(2027, 3, 1),
+      },
       { title: 'Base d’images', status: 'PLANNED', progress: 0, dueDate: day(2027, 9, 1) },
-      { title: 'Modèle de reconnaissance', status: 'PLANNED', progress: 0, dueDate: day(2028, 3, 1) },
+      {
+        title: 'Modèle de reconnaissance',
+        status: 'PLANNED',
+        progress: 0,
+        dueDate: day(2028, 3, 1),
+      },
       { title: 'Rédaction', status: 'PLANNED', progress: 0, dueDate: day(2028, 8, 1) },
     ],
     deliverables: [{ title: 'Note de cadrage', status: 'DRAFT', dueDate: day(2026, 12, 15) }],
@@ -165,8 +261,18 @@ const STUDENTS: StudentSeed[] = [
     objectives: [
       { title: 'Parcelles pilotes', status: 'COMPLETED', progress: 100, dueDate: day(2022, 6, 1) },
       { title: 'Séries Sentinel-2', status: 'COMPLETED', progress: 100, dueDate: day(2023, 6, 1) },
-      { title: 'Indice de stress hydrique', status: 'IN_PROGRESS', progress: 25, dueDate: day(2026, 4, 1) },
-      { title: 'Essai chez les coopératives', status: 'PLANNED', progress: 0, dueDate: day(2026, 5, 15) },
+      {
+        title: 'Indice de stress hydrique',
+        status: 'IN_PROGRESS',
+        progress: 25,
+        dueDate: day(2026, 4, 1),
+      },
+      {
+        title: 'Essai chez les coopératives',
+        status: 'PLANNED',
+        progress: 0,
+        dueDate: day(2026, 5, 15),
+      },
       { title: 'Article', status: 'PLANNED', progress: 0, dueDate: day(2026, 6, 1) },
       { title: 'Manuscrit', status: 'PLANNED', progress: 0, dueDate: day(2026, 6, 20) },
     ],
@@ -189,12 +295,37 @@ const STUDENTS: StudentSeed[] = [
     startedOn: day(2022, 9, 1),
     expectedDefenseOn: day(2026, 9, 30),
     objectives: [
-      { title: 'Cartographie du réseau portuaire', status: 'COMPLETED', progress: 100, dueDate: day(2023, 3, 1) },
-      { title: 'Jeu d’attaques réalistes', status: 'COMPLETED', progress: 100, dueDate: day(2023, 12, 1) },
-      { title: 'Détecteur temps réel', status: 'COMPLETED', progress: 100, dueDate: day(2024, 12, 1) },
-      { title: 'Évaluation sur six mois', status: 'COMPLETED', progress: 100, dueDate: day(2025, 8, 1) },
+      {
+        title: 'Cartographie du réseau portuaire',
+        status: 'COMPLETED',
+        progress: 100,
+        dueDate: day(2023, 3, 1),
+      },
+      {
+        title: 'Jeu d’attaques réalistes',
+        status: 'COMPLETED',
+        progress: 100,
+        dueDate: day(2023, 12, 1),
+      },
+      {
+        title: 'Détecteur temps réel',
+        status: 'COMPLETED',
+        progress: 100,
+        dueDate: day(2024, 12, 1),
+      },
+      {
+        title: 'Évaluation sur six mois',
+        status: 'COMPLETED',
+        progress: 100,
+        dueDate: day(2025, 8, 1),
+      },
       { title: 'Article IEEE', status: 'COMPLETED', progress: 100, dueDate: day(2026, 2, 1) },
-      { title: 'Chapitre déploiement', status: 'IN_PROGRESS', progress: 80, dueDate: day(2026, 11, 1) },
+      {
+        title: 'Chapitre déploiement',
+        status: 'IN_PROGRESS',
+        progress: 80,
+        dueDate: day(2026, 11, 1),
+      },
       { title: 'Soutenance', status: 'PLANNED', progress: 0, dueDate: day(2026, 9, 15) },
     ],
     deliverables: [
@@ -217,14 +348,44 @@ const STUDENTS: StudentSeed[] = [
     startedOn: day(2021, 10, 1),
     expectedDefenseOn: day(2026, 7, 15),
     objectives: [
-      { title: 'Enquête auprès des encadrants', status: 'COMPLETED', progress: 100, dueDate: day(2022, 6, 1) },
-      { title: 'Grille d’intégrité académique', status: 'COMPLETED', progress: 100, dueDate: day(2023, 1, 15) },
-      { title: 'Expérimentation dans trois facultés', status: 'COMPLETED', progress: 100, dueDate: day(2024, 6, 1) },
-      { title: 'Analyse des entretiens', status: 'COMPLETED', progress: 100, dueDate: day(2025, 1, 15) },
+      {
+        title: 'Enquête auprès des encadrants',
+        status: 'COMPLETED',
+        progress: 100,
+        dueDate: day(2022, 6, 1),
+      },
+      {
+        title: 'Grille d’intégrité académique',
+        status: 'COMPLETED',
+        progress: 100,
+        dueDate: day(2023, 1, 15),
+      },
+      {
+        title: 'Expérimentation dans trois facultés',
+        status: 'COMPLETED',
+        progress: 100,
+        dueDate: day(2024, 6, 1),
+      },
+      {
+        title: 'Analyse des entretiens',
+        status: 'COMPLETED',
+        progress: 100,
+        dueDate: day(2025, 1, 15),
+      },
       { title: 'Article', status: 'COMPLETED', progress: 100, dueDate: day(2025, 9, 1) },
       { title: 'Chapitres 1 à 4', status: 'COMPLETED', progress: 100, dueDate: day(2026, 1, 15) },
-      { title: 'Conclusion et recommandations', status: 'COMPLETED', progress: 100, dueDate: day(2026, 4, 1) },
-      { title: 'Dépôt du manuscrit', status: 'IN_PROGRESS', progress: 40, dueDate: day(2026, 11, 30) },
+      {
+        title: 'Conclusion et recommandations',
+        status: 'COMPLETED',
+        progress: 100,
+        dueDate: day(2026, 4, 1),
+      },
+      {
+        title: 'Dépôt du manuscrit',
+        status: 'IN_PROGRESS',
+        progress: 40,
+        dueDate: day(2026, 11, 30),
+      },
     ],
     deliverables: [
       { title: 'Manuscrit — version comité', status: 'SUBMITTED', dueDate: day(2026, 10, 25) },
@@ -248,9 +409,19 @@ const STUDENTS: StudentSeed[] = [
       { title: 'Prototype de bouée', status: 'COMPLETED', progress: 100, dueDate: day(2024, 6, 1) },
       { title: 'Campagne en mer', status: 'IN_PROGRESS', progress: 15, dueDate: day(2026, 5, 1) },
       { title: 'Calibration des sondes', status: 'PLANNED', progress: 0, dueDate: day(2026, 8, 1) },
-      { title: 'Comparaison avec l’INRH', status: 'PLANNED', progress: 0, dueDate: day(2026, 12, 1) },
+      {
+        title: 'Comparaison avec l’INRH',
+        status: 'PLANNED',
+        progress: 0,
+        dueDate: day(2026, 12, 1),
+      },
       { title: 'Article', status: 'PLANNED', progress: 0, dueDate: day(2027, 4, 1) },
-      { title: 'Chapitre instrumentation', status: 'PLANNED', progress: 0, dueDate: day(2027, 6, 1) },
+      {
+        title: 'Chapitre instrumentation',
+        status: 'PLANNED',
+        progress: 0,
+        dueDate: day(2027, 6, 1),
+      },
       { title: 'Rédaction', status: 'PLANNED', progress: 0, dueDate: day(2027, 8, 1) },
       { title: 'Soutenance', status: 'PLANNED', progress: 0, dueDate: day(2027, 10, 1) },
     ],
@@ -273,10 +444,25 @@ const STUDENTS: StudentSeed[] = [
     startedOn: day(2022, 12, 1),
     expectedDefenseOn: day(2027, 1, 31),
     objectives: [
-      { title: 'Caractérisation des argiles locales', status: 'COMPLETED', progress: 100, dueDate: day(2023, 9, 1) },
-      { title: 'Formulations à base de paille', status: 'COMPLETED', progress: 100, dueDate: day(2024, 6, 1) },
+      {
+        title: 'Caractérisation des argiles locales',
+        status: 'COMPLETED',
+        progress: 100,
+        dueDate: day(2023, 9, 1),
+      },
+      {
+        title: 'Formulations à base de paille',
+        status: 'COMPLETED',
+        progress: 100,
+        dueDate: day(2024, 6, 1),
+      },
       { title: 'Essais thermiques', status: 'COMPLETED', progress: 100, dueDate: day(2025, 6, 1) },
-      { title: 'Vieillissement accéléré', status: 'IN_PROGRESS', progress: 50, dueDate: day(2026, 12, 15) },
+      {
+        title: 'Vieillissement accéléré',
+        status: 'IN_PROGRESS',
+        progress: 50,
+        dueDate: day(2026, 12, 15),
+      },
       { title: 'Article', status: 'PLANNED', progress: 0, dueDate: day(2026, 11, 1) },
       { title: 'Manuscrit', status: 'PLANNED', progress: 0, dueDate: day(2027, 1, 15) },
     ],
@@ -301,8 +487,18 @@ const STUDENTS: StudentSeed[] = [
     expectedDefenseOn: day(2028, 1, 31),
     objectives: [
       { title: 'Enquête ménages', status: 'IN_PROGRESS', progress: 20, dueDate: day(2026, 3, 1) },
-      { title: 'Relevés de température de rue', status: 'PLANNED', progress: 0, dueDate: day(2026, 9, 1) },
-      { title: 'Cartographie des parcours', status: 'PLANNED', progress: 0, dueDate: day(2027, 3, 1) },
+      {
+        title: 'Relevés de température de rue',
+        status: 'PLANNED',
+        progress: 0,
+        dueDate: day(2026, 9, 1),
+      },
+      {
+        title: 'Cartographie des parcours',
+        status: 'PLANNED',
+        progress: 0,
+        dueDate: day(2027, 3, 1),
+      },
       { title: 'Rédaction', status: 'PLANNED', progress: 0, dueDate: day(2027, 12, 1) },
     ],
     deliverables: [{ title: 'Questionnaire ménages', status: 'DRAFT', dueDate: day(2026, 4, 1) }],
@@ -404,10 +600,14 @@ async function main() {
           status: item.status,
           dueDate: item.dueDate,
           createdById: user.id,
-          submittedAt: item.status === 'SUBMITTED' || item.status === 'VALIDATED' ? new Date() : null,
-          reviewedAt: item.status === 'VALIDATED' || item.status === 'CHANGES_REQUESTED' ? new Date() : null,
+          submittedAt:
+            item.status === 'SUBMITTED' || item.status === 'VALIDATED' ? new Date() : null,
+          reviewedAt:
+            item.status === 'VALIDATED' || item.status === 'CHANGES_REQUESTED' ? new Date() : null,
           reviewedById:
-            item.status === 'VALIDATED' || item.status === 'CHANGES_REQUESTED' ? supervisor.id : null,
+            item.status === 'VALIDATED' || item.status === 'CHANGES_REQUESTED'
+              ? supervisor.id
+              : null,
         })),
       });
     }

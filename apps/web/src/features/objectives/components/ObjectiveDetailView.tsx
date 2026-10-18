@@ -4,11 +4,7 @@ import { IconAction } from '../../../components/IconAction';
 import { useState } from 'react';
 import { useLocale, useT } from '../../../i18n/LocaleContext';
 import { formatShortDay } from '../../dashboard/labels';
-import {
-  useDeleteObjective,
-  useUpdateObjective,
-  useObjective,
-} from '../hooks/use-objectives';
+import { useDeleteObjective, useUpdateObjective, useObjective } from '../hooks/use-objectives';
 import { LinkedRemarkButton } from '../../remarks/components/LinkedRemarkButton';
 import { ObjectiveForm } from './ObjectiveForm';
 import { ObjectiveStatusBadge } from './ObjectiveStatusBadge';

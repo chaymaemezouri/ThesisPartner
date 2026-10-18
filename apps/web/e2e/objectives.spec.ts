@@ -100,10 +100,19 @@ function csrf(cookie: string): string {
 
 async function login(page: Page, email: string) {
   await page.goto('/connexion');
-  await page.getByLabel('Adresse e-mail').fill(email);
+  await page.getByLabel('E-mail', { exact: true }).fill(email);
   await page.getByLabel('Mot de passe').fill(password);
   await page.getByRole('button', { name: 'Se connecter' }).click();
-  await expect(page.getByRole('heading', { name: /Bonjour/ })).toBeVisible();
+  try {
+    await expect(page.getByRole('heading', { name: /Bonjour/ })).toBeVisible();
+  } catch (error) {
+    const diagnostic = [
+      `E2E current URL: ${page.url()}`,
+      `E2E alerts: ${JSON.stringify(await page.getByRole('alert').allTextContents())}`,
+      `E2E page text: ${(await page.locator('body').innerText()).slice(0, 1500)}`,
+    ].join('\n');
+    throw new Error(diagnostic, { cause: error });
+  }
 }
 
 async function logout(page: Page, displayName: string) {

@@ -10,7 +10,10 @@ export function SettingsPage() {
   return (
     <div className="min-w-0 max-w-xl">
       <h1 className="sr-only">{t('settings.title')}</h1>
-      <section className="rounded-md border border-line bg-surface px-4 py-4" aria-labelledby="language-title">
+      <section
+        className="rounded-md border border-line bg-surface px-4 py-4"
+        aria-labelledby="language-title"
+      >
         <h2 id="language-title" className="text-sm font-medium text-ink">
           {t('settings.language')}
         </h2>

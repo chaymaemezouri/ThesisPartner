@@ -225,7 +225,11 @@ export class SupervisionService {
     const defenseOn = formatDay(thesis.expectedDefenseOn);
 
     return {
-      profile: presentAcademicProfile(toAcademicProfile(student.user.profile), student.userId, false),
+      profile: presentAcademicProfile(
+        toAcademicProfile(student.user.profile),
+        student.userId,
+        false,
+      ),
       thesis: {
         id: thesis.id,
         title: thesis.title,

@@ -213,7 +213,9 @@ export class MessagesService {
     }
   }
 
-  private async placement(actorId: string): Promise<
+  private async placement(
+    actorId: string,
+  ): Promise<
     | { kind: 'student'; thesisId: string; supervisorId: string | null }
     | { kind: 'supervisor' }
     | { kind: 'none' }
@@ -269,7 +271,10 @@ export class MessagesService {
     return this.prisma.conversation.findFirst({
       where: {
         kind: 'DIRECT',
-        AND: [{ members: { some: { userId: actorId } } }, { members: { some: { userId: otherId } } }],
+        AND: [
+          { members: { some: { userId: actorId } } },
+          { members: { some: { userId: otherId } } },
+        ],
       },
       orderBy: { updatedAt: 'desc' },
     });

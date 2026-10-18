@@ -11,7 +11,7 @@ import {
 import { apiGet, apiSend } from '../../../api/client';
 import { objectiveKeys, toQuery, type ObjectiveFilters } from '../keys';
 
-export type Objective = z.infer<typeof objectiveSchema>;
+export type Objective = z.output<typeof objectiveSchema>;
 export type ObjectiveBody = z.infer<typeof createObjectiveSchema>;
 
 export function useObjectives(thesisId: string | null, filters: ObjectiveFilters) {

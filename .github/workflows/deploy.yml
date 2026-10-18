@@ -1,0 +1,76 @@
+name: Deploy ThesisPartner
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: thesispartner-production
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    name: Validate before deployment
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+      - run: npm run build:packages
+      - run: npm exec -w @thesispartner/api -- prisma generate
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm run test
+      - run: npm run build
+
+  deploy:
+    name: Deploy to Hostinger
+    needs: validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: production
+
+    steps:
+      - name: Configure secure SSH
+        env:
+          DEPLOY_HOST: ${{ secrets.THESIS_DEPLOY_HOST }}
+          HOST_PUBLIC_KEY: ${{ secrets.THESIS_DEPLOY_HOST_PUBLIC_KEY }}
+          SSH_PRIVATE_KEY: ${{ secrets.THESIS_DEPLOY_SSH_KEY }}
+        run: |
+          set -euo pipefail
+
+          install -d -m 700 ~/.ssh
+
+          printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/thesispartner_deploy
+          chmod 600 ~/.ssh/thesispartner_deploy
+
+          printf '%s %s\n' "$DEPLOY_HOST" "$HOST_PUBLIC_KEY" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
+
+          ssh-keygen -y -f ~/.ssh/thesispartner_deploy > /dev/null
+          ssh-keygen -F "$DEPLOY_HOST" -f ~/.ssh/known_hosts
+
+      - name: Deploy exact commit
+        env:
+          DEPLOY_HOST: ${{ secrets.THESIS_DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.THESIS_DEPLOY_USER }}
+          DEPLOY_SHA: ${{ github.sha }}
+        run: |
+          ssh -i ~/.ssh/thesispartner_deploy \
+            -o IdentitiesOnly=yes \
+            -o StrictHostKeyChecking=yes \
+            -o BatchMode=yes \
+            "$DEPLOY_USER@$DEPLOY_HOST" "deploy $DEPLOY_SHA"
+
+      - name: Remove temporary SSH key
+        if: always()
+        run: rm -f ~/.ssh/thesispartner_deploy

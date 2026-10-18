@@ -16,7 +16,6 @@ import {
 } from './hooks/use-messages';
 
 export function MessagesPage() {
-  const t = useT();
   const { conversationId } = useParams();
   const navigate = useNavigate();
   const mailbox = useConversations();
@@ -198,7 +197,11 @@ function Thread({
   return (
     <section className="flex min-h-0 min-w-0 flex-1 flex-col bg-canvas">
       <header className="flex items-center gap-3 border-b border-line bg-surface px-3 py-2.5">
-        <Link to="/messagerie" className="text-sm text-brand lg:hidden" aria-label={t('messages.back')}>
+        <Link
+          to="/messagerie"
+          className="text-sm text-brand lg:hidden"
+          aria-label={t('messages.back')}
+        >
           ‹
         </Link>
         {conversation.isLoading ? <Skeleton className="h-8 flex-1" /> : null}
@@ -247,10 +250,16 @@ function Thread({
                 {!own && data.kind === 'GROUP' ? (
                   <p className="mb-0.5 text-[11px] font-medium text-brand">{message.authorName}</p>
                 ) : null}
-                <p className="whitespace-pre-wrap break-words text-sm leading-relaxed">{message.body}</p>
+                <p className="whitespace-pre-wrap break-words text-sm leading-relaxed">
+                  {message.body}
+                </p>
                 <time
                   dateTime={message.createdAt}
-                  className={own ? 'mt-1 block text-[10px] text-white/75' : 'mt-1 block text-[10px] text-muted'}
+                  className={
+                    own
+                      ? 'mt-1 block text-[10px] text-white/75'
+                      : 'mt-1 block text-[10px] text-muted'
+                  }
                 >
                   {formatClock(message.createdAt, dateLocale)}
                 </time>

@@ -8,7 +8,7 @@ import {
 import type { z } from 'zod';
 import { apiGet, apiSend } from '../../../api/client';
 
-export type Portfolio = z.infer<typeof portfolioSchema>;
+export type Portfolio = z.output<typeof portfolioSchema>;
 export type PublicationDraft = z.infer<typeof publicationInputSchema>;
 export type ProjectDraft = z.infer<typeof portfolioProjectInputSchema>;
 export type SkillDraft = z.infer<typeof portfolioSkillInputSchema>;
@@ -47,7 +47,8 @@ export function useRemovePublication() {
 export function useAddProject() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (body: ProjectDraft) => apiSend('/api/v1/portfolio/projects', portfolioSchema, body),
+    mutationFn: (body: ProjectDraft) =>
+      apiSend('/api/v1/portfolio/projects', portfolioSchema, body),
     onSuccess: () => refresh(queryClient),
   });
 }
@@ -72,7 +73,8 @@ export function useAddSkill() {
 export function useRemoveSkill() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) => apiSend(`/api/v1/portfolio/skills/${id}/remove`, portfolioSchema, {}),
+    mutationFn: (id: string) =>
+      apiSend(`/api/v1/portfolio/skills/${id}/remove`, portfolioSchema, {}),
     onSuccess: () => refresh(queryClient),
   });
 }

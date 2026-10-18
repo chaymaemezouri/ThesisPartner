@@ -184,7 +184,11 @@ export function ResourcesPage() {
                 className="h-9 min-w-0 flex-1 rounded-md border border-line bg-surface px-3 text-sm text-ink shadow-control outline-none placeholder:text-muted focus:border-brand sm:w-56"
               />
               {canShare ? (
-                <IconAction label={t(ADD_KEY[kind])} icon="plus" onClick={() => setCreating(true)} />
+                <IconAction
+                  label={t(ADD_KEY[kind])}
+                  icon="plus"
+                  onClick={() => setCreating(true)}
+                />
               ) : null}
             </div>
           </div>
@@ -219,7 +223,9 @@ export function ResourcesPage() {
                   </span>
                   <div className="min-w-0 flex-1">
                     <h3 className="text-sm font-semibold text-ink">{item.title}</h3>
-                    {item.source ? <p className="mt-0.5 text-xs font-medium text-brand">{item.source}</p> : null}
+                    {item.source ? (
+                      <p className="mt-0.5 text-xs font-medium text-brand">{item.source}</p>
+                    ) : null}
                     {item.summary ? (
                       <p className="mt-1 text-sm leading-relaxed text-muted">{item.summary}</p>
                     ) : null}

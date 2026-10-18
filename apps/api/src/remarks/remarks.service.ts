@@ -325,7 +325,7 @@ export class RemarksService {
     let objectiveId = body.objectiveId ?? null;
     let taskId = body.taskId ?? null;
     let deliverableId = body.deliverableId ?? null;
-    let deliverableVersionId = body.deliverableVersionId ?? null;
+    const deliverableVersionId = body.deliverableVersionId ?? null;
 
     if (taskId) {
       const task = await this.prisma.task.findFirst({
@@ -500,10 +500,7 @@ export class RemarksService {
   }
 }
 
-function toAuthor(user: {
-  id: string;
-  profile: { givenName: string; familyName: string } | null;
-}) {
+function toAuthor(user: { id: string; profile: { givenName: string; familyName: string } | null }) {
   if (!user.profile) throw new AppException(500, 'INTERNAL_ERROR', 'Internal server error');
   return {
     id: user.id,

@@ -116,11 +116,7 @@ export function RemarksWorkspace({
           <div className="flex items-center gap-2">
             {tabsAside ? null : statusTabs}
             {canCreate ? (
-              <IconAction
-                label={t('remarks.new')}
-                icon="plus"
-                onClick={() => setCreating(true)}
-              />
+              <IconAction label={t('remarks.new')} icon="plus" onClick={() => setCreating(true)} />
             ) : null}
           </div>
           <label className="min-w-0 text-xs">
