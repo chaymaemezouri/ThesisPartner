@@ -1,5 +1,4 @@
 import { Modal, Skeleton } from '@thesispartner/ui';
-import { IconAction } from '../../../components/IconAction';
 import { useState } from 'react';
 import { useLocale, useT } from '../../../i18n/LocaleContext';
 import { QueryError } from '../../objectives/components/QueryError';
@@ -17,17 +16,21 @@ export function DeliverableVersionHistory({
   thesisId,
   deliverableId,
   canCreate,
+  open,
+  onOpenChange: setOpen,
 }: {
   thesisId: string;
   deliverableId: string;
   canCreate: boolean;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
 }) {
   const t = useT();
   const versions = useDeliverableVersions(thesisId, deliverableId);
   const create = useCreateDeliverableVersion(thesisId, deliverableId);
   const upload = useUploadDeliverableFile(thesisId, deliverableId);
   const download = useDownloadDeliverableFile(thesisId, deliverableId);
-  const [open, setOpen] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
   const [progress, setProgress] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const rows = versions.data?.versions ?? [];
@@ -58,84 +61,75 @@ export function DeliverableVersionHistory({
   }
 
   return (
-    <section
-      className="mt-3 min-w-0 overflow-hidden rounded-md border border-line bg-surface"
-      aria-labelledby="versions-titre"
-    >
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-line px-3 py-2">
-        <div className="min-w-0">
-          <h2 id="versions-titre" className="text-sm font-semibold text-ink">
-            {t('deliverables.versions')}
-            {hasVersions ? (
-              <span className="ml-2 text-[11px] font-normal text-muted">
-                {rows.length === 1
-                  ? t('deliverables.versionCountOne')
-                  : t('deliverables.versionCountMany', { count: rows.length })}
-              </span>
-            ) : null}
-          </h2>
-        </div>
-        {canCreate && hasVersions ? (
-          <IconAction
-            label={t('deliverables.addVersion')}
-            icon="plus"
-            onClick={() => setOpen(true)}
-          />
+    <section className="mt-4 min-w-0 border-t border-line pt-2" aria-labelledby="versions-titre">
+      <h2 id="versions-titre" className="text-sm font-semibold text-ink">
+        {hasVersions ? (
+          <button
+            type="button"
+            className="flex w-full items-center gap-2 py-2 text-left text-xs font-medium text-muted hover:text-ink"
+            aria-label={t('deliverables.historyAria')}
+            aria-expanded={historyOpen}
+            aria-controls="deliverable-version-history"
+            onClick={() => setHistoryOpen((value) => !value)}
+          >
+            <span>{t('deliverables.historyAria')}</span>
+            <span aria-hidden="true" className="text-[11px] font-normal">
+              ({rows.length})
+            </span>
+            <span aria-hidden="true" className="ml-auto">
+              {historyOpen ? '−' : '+'}
+            </span>
+          </button>
+        ) : (
+          t('deliverables.versions')
+        )}
+      </h2>
+
+      <div id="deliverable-version-history" hidden={hasVersions && !historyOpen}>
+        {notice ? (
+          <p className="border-b border-line px-3 py-2 text-xs text-danger" role="alert">
+            {notice}
+          </p>
+        ) : null}
+
+        {versions.isLoading ? (
+          <div className="space-y-2 px-3 py-2.5" aria-busy="true">
+            <Skeleton className="h-10" />
+          </div>
+        ) : null}
+
+        {versions.isError ? (
+          <div className="py-2">
+            <QueryError error={versions.error} />
+          </div>
+        ) : null}
+
+        {versions.data && !hasVersions ? (
+          <div className="py-2">
+            <p className="text-xs text-ink">{t('deliverables.noVersions')}</p>
+            <p className="mt-0.5 text-[11px] text-muted">{t('deliverables.versionHint')}</p>
+          </div>
+        ) : null}
+
+        {hasVersions ? (
+          <ol className="divide-y divide-line" aria-label={t('deliverables.historyAria')}>
+            {rows.map((row) => (
+              <VersionRow
+                key={row.id}
+                version={row}
+                latest={row.versionNumber === latest}
+                canUpload={canCreate}
+                progress={
+                  upload.isPending && upload.variables?.versionId === row.id ? progress : null
+                }
+                downloading={download.isPending && download.variables === row.id}
+                onDownload={() => download.mutate(row.id)}
+                onUpload={(file) => attach(row.id, file).catch(() => undefined)}
+              />
+            ))}
+          </ol>
         ) : null}
       </div>
-
-      {notice ? (
-        <p className="border-b border-line px-3 py-2 text-xs text-danger" role="alert">
-          {notice}
-        </p>
-      ) : null}
-
-      {versions.isLoading ? (
-        <div className="space-y-2 px-3 py-2.5" aria-busy="true">
-          <Skeleton className="h-10" />
-        </div>
-      ) : null}
-
-      {versions.isError ? (
-        <div className="px-3 py-2.5">
-          <QueryError error={versions.error} />
-        </div>
-      ) : null}
-
-      {versions.data && !hasVersions ? (
-        <div className="px-3 py-2.5">
-          <p className="text-xs text-ink">{t('deliverables.noVersions')}</p>
-          <p className="mt-0.5 text-[11px] text-muted">{t('deliverables.versionHint')}</p>
-          {canCreate ? (
-            <div className="mt-2">
-              <IconAction
-                label={t('deliverables.firstVersion')}
-                icon="plus"
-                onClick={() => setOpen(true)}
-              />
-            </div>
-          ) : null}
-        </div>
-      ) : null}
-
-      {hasVersions ? (
-        <ol className="divide-y divide-line" aria-label={t('deliverables.historyAria')}>
-          {rows.map((row) => (
-            <VersionRow
-              key={row.id}
-              version={row}
-              latest={row.versionNumber === latest}
-              canUpload={canCreate}
-              progress={
-                upload.isPending && upload.variables?.versionId === row.id ? progress : null
-              }
-              downloading={download.isPending && download.variables === row.id}
-              onDownload={() => download.mutate(row.id)}
-              onUpload={(file) => attach(row.id, file).catch(() => undefined)}
-            />
-          ))}
-        </ol>
-      ) : null}
 
       <Modal
         open={open}
@@ -154,6 +148,7 @@ export function DeliverableVersionHistory({
           onCancel={() => setOpen(false)}
           onSubmit={async (body, file) => {
             const created = await create.mutateAsync(body);
+            setHistoryOpen(true);
             setOpen(false);
             if (!file) return;
             await attach(created.id, file).catch(() => undefined);

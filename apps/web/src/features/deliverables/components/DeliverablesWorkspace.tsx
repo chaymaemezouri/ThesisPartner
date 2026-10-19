@@ -1,13 +1,20 @@
 import { EmptyState, Modal, Skeleton } from '@thesispartner/ui';
 import { IconAction } from '../../../components/IconAction';
+import { Icon } from '../../../components/Icon';
+import { STATUS_PRESENTATION } from '../presentation';
 import { useRef, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
-import { deliverableVersionSchema, storedFileSchema } from '@thesispartner/validation';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
+import {
+  deliverableSchema,
+  deliverableVersionSchema,
+  storedFileSchema,
+} from '@thesispartner/validation';
 import { apiSend, apiUpload } from '../../../api/client';
 import { useT } from '../../../i18n/LocaleContext';
 import { useObjectives } from '../../objectives/hooks/use-objectives';
 import { QueryError } from '../../objectives/components/QueryError';
-import { useCreateDeliverable, useDeliverables } from '../hooks/use-deliverables';
+import { useCreateDeliverable, useDeliverables, type Deliverable } from '../hooks/use-deliverables';
 import { filtersFromSearch } from '../keys';
 import { DELIVERABLE_TAB_IDS, DELIVERABLE_TYPE_LABEL, type DeliverableTab } from '../labels';
 import { DeliverableForm } from './DeliverableForm';
@@ -20,15 +27,18 @@ export function DeliverablesWorkspace({
   canCreate,
   canRemark = false,
   detailPath,
-  tabsAside = false,
 }: {
   thesisId: string;
   canCreate: boolean;
   canRemark?: boolean;
   detailPath: (deliverableId: string) => string;
-  tabsAside?: boolean;
 }) {
   const t = useT();
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const [savedDraft, setSavedDraft] = useState<Deliverable | null>(null);
+  const savedVersion = useRef<string | null>(null);
+  const uploadedFile = useRef<File | null>(null);
   const [params, setParams] = useSearchParams();
   const paramsRef = useRef(params);
   const pendingSearch = useRef<string | null>(null);
@@ -39,6 +49,22 @@ export function DeliverablesWorkspace({
   }
   const filters = filtersFromSearch(params);
   const deliverables = useDeliverables(thesisId, filters);
+  const overview = useDeliverables(thesisId, {});
+  const onlyOverdue = params.get('late') === '1';
+  const view = params.get('view') === 'cards' ? 'cards' : 'list';
+  const rows = deliverables.data?.deliverables ?? [];
+  const visibleRows = rows.filter((item) => !onlyOverdue || item.isOverdue);
+  const counts = overview.data
+    ? Object.fromEntries(
+        FILTER_TABS.map((status) => [
+          status,
+          status === 'all'
+            ? overview.data.deliverables.length
+            : overview.data.deliverables.filter((item) => item.status === status).length,
+        ]),
+      )
+    : null;
+  const overdueCount = overview.data?.deliverables.filter((item) => item.isOverdue).length;
   const objectives = useObjectives(thesisId, {});
   const create = useCreateDeliverable(thesisId);
   const [creating, setCreating] = useState(false);
@@ -47,6 +73,7 @@ export function DeliverablesWorkspace({
     filters.objectiveId,
     filters.sort && filters.sort !== 'due' ? filters.sort : null,
     params.get('search'),
+    onlyOverdue || null,
   ].filter(Boolean).length;
   const [filtersOpen, setFiltersOpen] = useState(activeFilterCount > 0);
   const tab = tabFromStatus(filters.status);
@@ -62,40 +89,89 @@ export function DeliverablesWorkspace({
     setParams(copy);
   }
 
+  function closeCreation() {
+    setCreating(false);
+    setSavedDraft(null);
+    savedVersion.current = null;
+    uploadedFile.current = null;
+    if (params.has('create')) update({ create: null });
+  }
+
+  const appliedFilters = [
+    ...(filters.search ? [{ key: 'search', label: filters.search }] : []),
+    ...(filters.type ? [{ key: 'type', label: t(`deliverables.type.${filters.type}`) }] : []),
+    ...(filters.objectiveId
+      ? [
+          {
+            key: 'objectiveId',
+            label:
+              objectives.data?.objectives.find((item) => item.id === filters.objectiveId)?.title ??
+              t('deliverables.linkedObjective'),
+          },
+        ]
+      : []),
+  ];
+  const filtered = Boolean(filters.status || activeFilterCount);
+  const clearFilters = () =>
+    update({ status: null, search: null, type: null, objectiveId: null, sort: null, late: null });
+  const selectStatus = (status: string) => update({ status: status === 'all' ? null : status });
+
   const statusTabs = (
     <div
-      className={
-        tabsAside
-          ? 'flex gap-0.5 overflow-x-auto rounded-md border border-line bg-surface p-1.5 shadow-control md:sticky md:top-20 md:flex-col md:overflow-visible [scrollbar-width:none] [&::-webkit-scrollbar]:hidden'
-          : 'flex min-w-0 flex-1 gap-1 overflow-x-auto rounded-md border border-line bg-canvas p-1 shadow-control [scrollbar-width:none] [&::-webkit-scrollbar]:hidden'
-      }
+      className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6"
       role="tablist"
       aria-label={t('deliverables.title')}
     >
-      {FILTER_TABS.map((id) => {
-        const selected = id === 'CANCELLED' ? filters.status === 'CANCELLED' : tab === id;
+      {FILTER_TABS.map((id, index) => {
+        const selected = id === tab;
+        const style = STATUS_PRESENTATION[id];
         return (
           <button
             key={id}
             type="button"
             role="tab"
+            aria-label={t(`deliverables.tabs.${id}`)}
+            aria-description={
+              counts ? t('deliverables.resultCount', { count: counts[id] ?? 0 }) : undefined
+            }
             aria-selected={selected}
-            className={
-              tabsAside
-                ? selected
-                  ? 'shrink-0 rounded-md bg-brand-soft px-3 py-2 text-left text-sm font-semibold text-brand md:w-full'
-                  : 'shrink-0 rounded-md px-3 py-2 text-left text-sm font-medium text-muted transition-colors hover:bg-brand-soft hover:text-brand md:w-full'
-                : selected
-                  ? 'shrink-0 whitespace-nowrap rounded-md bg-surface px-2.5 py-1 text-xs font-semibold text-brand shadow-control sm:text-sm'
-                  : 'shrink-0 whitespace-nowrap rounded-md px-2.5 py-1 text-xs text-muted transition-colors hover:bg-surface/70 hover:text-ink sm:text-sm'
-            }
-            onClick={() =>
-              update({
-                status: id === 'all' ? null : id === 'CANCELLED' ? 'CANCELLED' : id,
-              })
-            }
+            tabIndex={selected ? 0 : -1}
+            className={`group relative min-w-0 overflow-hidden rounded-[12px] border p-3 text-left transition-[background-color,border-color,box-shadow,transform] duration-200 motion-safe:hover:-translate-y-0.5 ${style.soft} ${style.ink} ${selected ? `${style.border} shadow-[0_3px_12px_rgba(36,87,167,0.12)] ring-1 ring-current/10` : 'border-transparent hover:border-current/20'}`}
+            onClick={() => selectStatus(id)}
+            onKeyDown={(event) => {
+              if (!['ArrowRight', 'ArrowLeft', 'Home', 'End'].includes(event.key)) return;
+              event.preventDefault();
+              const next =
+                event.key === 'Home'
+                  ? 0
+                  : event.key === 'End'
+                    ? FILTER_TABS.length - 1
+                    : (index + (event.key === 'ArrowRight' ? 1 : -1) + FILTER_TABS.length) %
+                      FILTER_TABS.length;
+              const status = FILTER_TABS[next];
+              if (status) selectStatus(status);
+              event.currentTarget.parentElement
+                ?.querySelectorAll<HTMLButtonElement>('[role="tab"]')
+                [next]?.focus();
+            }}
           >
-            {t(`deliverables.tabs.${id}`)}
+            <span className="flex items-center justify-between gap-2" aria-hidden="true">
+              <span className="grid h-8 w-8 shrink-0 place-items-center rounded-[9px] bg-surface/80">
+                <Icon name={style.icon} className="h-4 w-4" />
+              </span>
+              <span className="text-base font-semibold tabular-nums">
+                {counts ? counts[id] : '-'}
+              </span>
+            </span>
+            <span className="mt-2 block text-xs font-medium leading-snug">
+              {t(`deliverables.tabs.${id}`)}
+            </span>
+            {selected ? (
+              <span
+                aria-hidden="true"
+                className="absolute inset-x-3 bottom-0 h-0.5 rounded-full bg-current"
+              />
+            ) : null}
           </button>
         );
       })}
@@ -103,33 +179,71 @@ export function DeliverablesWorkspace({
   );
 
   return (
-    <div
-      className={
-        tabsAside
-          ? 'grid items-start gap-4 pb-20 sm:pb-0 md:grid-cols-[11rem_minmax(0,1fr)]'
-          : 'min-w-0 pb-20 sm:pb-0'
-      }
-    >
-      {tabsAside ? <div className="md:col-start-1 md:row-start-1">{statusTabs}</div> : null}
-      <div className={tabsAside ? 'min-w-0 md:col-start-2 md:row-start-1' : undefined}>
-        <div className="flex flex-col gap-2.5">
-          <div className="flex items-center gap-2">
-            {tabsAside ? null : statusTabs}
-            {canCreate ? (
-              <span className="hidden sm:inline-flex">
-                <IconAction
-                  label={t('deliverables.new')}
-                  icon="plus"
-                  onClick={() => setCreating(true)}
-                />
-              </span>
-            ) : null}
+    <div className="min-w-0">
+      <header className="mb-4 flex flex-wrap items-center justify-between gap-4 rounded-[14px] border border-brand/10 bg-linear-to-r from-brand-soft via-surface to-violet-soft/80 p-4 sm:p-5">
+        <div className="flex min-w-0 items-center gap-3">
+          <span
+            aria-hidden="true"
+            className="grid h-10 w-10 shrink-0 place-items-center rounded-[12px] bg-linear-to-br from-brand to-violet text-white shadow-[0_6px_16px_rgba(80,70,160,0.20)]"
+          >
+            <Icon name="deliverables" className="h-5 w-5" />
+          </span>
+          <div className="min-w-0">
+            <h2 className="text-base font-semibold text-ink">
+              {t(canCreate ? 'deliverables.myDeliverables' : 'deliverables.title')}
+            </h2>
+            <p className="mt-1 text-xs text-muted">{t('deliverables.workspaceCaption')}</p>
           </div>
-
-          <div className="sm:hidden">
+        </div>
+        {canCreate ? (
+          <IconAction
+            className="bg-linear-to-r from-brand to-violet shadow-[0_5px_14px_rgba(80,70,160,0.18)] transition-transform active:scale-[0.98]"
+            label={t('deliverables.new')}
+            icon="plus"
+            onClick={() => setCreating(true)}
+          />
+        ) : null}
+      </header>
+      {statusTabs}
+      <div className="mt-4 min-w-0 rounded-[14px] border border-line bg-surface p-3 shadow-[0_3px_18px_rgba(15,23,42,0.03)] sm:p-4">
+        <div className="flex flex-col gap-3">
+          <div className="flex flex-wrap items-center gap-3">
+            <label className="relative min-w-40 flex-1 text-[11px] sm:max-w-sm sm:text-xs">
+              <span className="sr-only">{t('common.search')}</span>
+              <svg
+                aria-hidden="true"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted"
+              >
+                <circle cx="10.5" cy="10.5" r="6.5" />
+                <path d="m16 16 4 4" />
+              </svg>
+              <input
+                type="search"
+                value={params.get('search') ?? ''}
+                placeholder={t('common.search')}
+                className="h-10 w-full rounded-[10px] border border-line bg-canvas/70 pr-9 pl-9 text-xs text-ink outline-none transition-[background-color,border-color,box-shadow] focus:border-brand/50 focus:bg-surface focus:ring-2 focus:ring-brand/10 sm:text-sm"
+                onChange={(event) =>
+                  update({ search: event.target.value.trim() ? event.target.value : null })
+                }
+              />
+              {filters.search ? (
+                <button
+                  type="button"
+                  aria-label={t('deliverables.clearSearch')}
+                  className="absolute top-1/2 right-2 -translate-y-1/2 rounded p-1 text-muted hover:bg-brand-soft hover:text-brand"
+                  onClick={() => update({ search: null })}
+                >
+                  <Icon name="close" className="h-3 w-3" />
+                </button>
+              ) : null}
+            </label>
             <button
               type="button"
-              className="inline-flex w-full items-center justify-between rounded-md border border-line bg-surface px-3 py-2 text-xs font-semibold text-ink shadow-control"
+              className={`inline-flex min-h-10 shrink-0 items-center gap-2 rounded-[10px] border px-3 text-xs font-medium transition-colors ${filtersOpen ? 'border-brand/25 bg-brand-soft text-brand' : 'border-line bg-surface text-muted hover:border-brand/30 hover:text-brand'}`}
               aria-expanded={filtersOpen}
               onClick={() => setFiltersOpen((open) => !open)}
             >
@@ -141,26 +255,64 @@ export function DeliverablesWorkspace({
                 {filtersOpen ? '▴' : '▾'}
               </span>
             </button>
+            <button
+              type="button"
+              aria-label={t('deliverables.overdueOnly')}
+              aria-pressed={onlyOverdue}
+              onClick={() => update({ late: onlyOverdue ? null : '1' })}
+              className={`inline-flex min-h-10 items-center gap-2 rounded-[10px] border px-3 text-xs font-medium transition-colors ${onlyOverdue ? 'border-danger/30 bg-danger-soft text-danger' : 'border-line text-muted hover:border-danger/25 hover:bg-danger-soft/60 hover:text-danger'}`}
+            >
+              <Icon name="notice" className="h-4 w-4" />
+              {t('common.overdue')}
+              {overdueCount != null ? (
+                <span className="rounded-full bg-danger-soft px-1.5 py-0.5 text-[11px] tabular-nums text-danger">
+                  {overdueCount}
+                </span>
+              ) : null}
+            </button>
+            <div
+              role="group"
+              aria-label={t('deliverables.viewLabel')}
+              className="ml-auto flex shrink-0 gap-1 rounded-[10px] border border-line bg-canvas/70 p-1"
+            >
+              {(['list', 'cards'] as const).map((mode) => (
+                <button
+                  key={mode}
+                  type="button"
+                  aria-label={t(
+                    mode === 'list' ? 'deliverables.listView' : 'deliverables.cardView',
+                  )}
+                  aria-pressed={view === mode}
+                  onClick={() => update({ view: mode === 'cards' ? 'cards' : null })}
+                  className={`grid h-8 w-8 place-items-center rounded-[7px] transition-colors ${view === mode ? 'bg-surface text-brand shadow-control' : 'text-muted hover:bg-surface/70 hover:text-brand'}`}
+                >
+                  <Icon name={mode === 'list' ? 'menu' : 'dashboard'} className="h-4 w-4" />
+                </button>
+              ))}
+            </div>
           </div>
+          {appliedFilters.length > 0 ? (
+            <div className="flex flex-wrap gap-2">
+              {appliedFilters.map((filter) => (
+                <button
+                  key={filter.key}
+                  type="button"
+                  aria-label={t('deliverables.removeFilter', { label: filter.label })}
+                  onClick={() => update({ [filter.key]: null })}
+                  className="inline-flex max-w-full items-center gap-2 rounded-full border border-brand/15 bg-brand-soft/70 px-2.5 py-1 text-xs text-brand hover:bg-brand-soft"
+                >
+                  <span className="truncate">{filter.label}</span>
+                  <Icon name="close" className="h-3 w-3 shrink-0" />
+                </button>
+              ))}
+            </div>
+          ) : null}
 
           <div
-            className={`grid gap-2 rounded-md border border-line bg-surface p-2.5 shadow-control sm:grid-cols-2 sm:p-3 lg:grid-cols-4 ${
-              filtersOpen ? 'grid' : 'hidden sm:grid'
+            className={`grid gap-3 rounded-[10px] border border-brand/10 bg-brand-soft/30 p-3 sm:grid-cols-2 lg:grid-cols-3 ${
+              filtersOpen ? 'grid' : 'hidden'
             }`}
           >
-            <label className="min-w-0 text-[11px] sm:col-span-2 lg:col-span-1 sm:text-xs">
-              <span className="mb-1 block font-medium tracking-wide text-muted uppercase">
-                {t('common.search')}
-              </span>
-              <input
-                value={params.get('search') ?? ''}
-                placeholder={t('common.search')}
-                className="w-full rounded border border-line bg-canvas px-2.5 py-1.5 text-xs text-ink sm:text-sm"
-                onChange={(event) =>
-                  update({ search: event.target.value.trim() ? event.target.value : null })
-                }
-              />
-            </label>
             <label className="min-w-0 text-[11px] sm:text-xs">
               <span className="mb-1 block font-medium tracking-wide text-muted uppercase">
                 {t('deliverables.form.type')}
@@ -199,7 +351,7 @@ export function DeliverablesWorkspace({
                 ))}
               </select>
             </label>
-            <label className="min-w-0 text-[11px] sm:col-span-2 lg:col-span-1 sm:text-xs">
+            <label className="min-w-0 text-[11px] sm:text-xs">
               <span className="mb-1 block font-medium tracking-wide text-muted uppercase">
                 {t('deliverables.sortBy')}
               </span>
@@ -218,6 +370,23 @@ export function DeliverablesWorkspace({
           </div>
         </div>
 
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-2 border-t border-line pt-3 text-xs text-muted">
+          <p role="status">
+            {deliverables.data
+              ? t('deliverables.resultCount', { count: visibleRows.length })
+              : t('common.loading')}
+          </p>
+          {filtered ? (
+            <button
+              type="button"
+              className="font-medium text-brand hover:underline"
+              onClick={clearFilters}
+            >
+              {t('deliverables.clearFilters')}
+            </button>
+          ) : null}
+        </div>
+
         {deliverables.isLoading ? (
           <div className="mt-3 grid gap-2" aria-busy="true">
             <Skeleton className="h-14" />
@@ -225,48 +394,31 @@ export function DeliverablesWorkspace({
           </div>
         ) : null}
         {deliverables.isError ? <QueryError error={deliverables.error} /> : null}
-        {deliverables.data && deliverables.data.deliverables.length === 0 ? (
+        {deliverables.data && visibleRows.length === 0 ? (
           <div className="mt-3">
             <EmptyState
-              title={t('deliverables.emptyTitle')}
-              description={t('deliverables.emptyDescription')}
+              title={t(filtered ? 'deliverables.noMatches' : 'deliverables.emptyTitle')}
+              description={t(
+                filtered ? 'deliverables.noMatchesHelp' : 'deliverables.emptyDescription',
+              )}
             />
-            {canCreate ? (
-              <p className="mt-3">
-                <IconAction
-                  label={t('deliverables.create')}
-                  icon="plus"
-                  onClick={() => setCreating(true)}
-                />
-              </p>
-            ) : null}
           </div>
         ) : null}
-        {deliverables.data && deliverables.data.deliverables.length > 0 ? (
+        {deliverables.data && visibleRows.length > 0 ? (
           <DeliverableList
-            deliverables={deliverables.data.deliverables}
+            deliverables={visibleRows}
+            view={view}
             detailPath={detailPath}
             thesisId={thesisId}
             canRemark={canRemark}
           />
         ) : null}
 
-        {canCreate ? (
-          <div className="fixed inset-x-0 bottom-0 z-20 border-t border-line bg-surface/95 p-3 backdrop-blur-sm sm:hidden">
-            <IconAction
-              className="ml-auto"
-              label={t('deliverables.new')}
-              icon="plus"
-              onClick={() => setCreating(true)}
-            />
-          </div>
-        ) : null}
-
         <Modal
-          open={creating}
+          open={canCreate && (creating || params.get('create') === '1')}
           title={t('deliverables.new')}
           closeLabel={t('common.close')}
-          onClose={() => setCreating(false)}
+          onClose={closeCreation}
         >
           <DeliverableForm
             objectives={objectives.data?.objectives ?? []}
@@ -274,22 +426,52 @@ export function DeliverablesWorkspace({
             error={create.error}
             submitLabel={t('deliverables.form.create')}
             allowFile
-            onCancel={() => setCreating(false)}
-            onSubmit={async (body, file) => {
-              const created = await create.mutateAsync(body);
-              if (file) {
-                const version = await apiSend(
-                  `/api/v1/theses/${thesisId}/deliverables/${created.id}/versions`,
-                  deliverableVersionSchema,
-                  { changeSummary: 'Initial file' },
-                );
-                await apiUpload(
-                  `/api/v1/theses/${thesisId}/deliverables/${created.id}/versions/${version.id}/file`,
-                  storedFileSchema,
-                  file,
-                );
+            savedDraft={Boolean(savedDraft)}
+            onCancel={closeCreation}
+            onSubmit={async (body, file, intent = 'draft') => {
+              const created = savedDraft
+                ? await apiSend(
+                    `/api/v1/theses/${thesisId}/deliverables/${savedDraft.id}`,
+                    deliverableSchema,
+                    body,
+                    'PATCH',
+                  )
+                : await create.mutateAsync(body);
+              setSavedDraft(created);
+              try {
+                if (file && uploadedFile.current && uploadedFile.current !== file)
+                  savedVersion.current = null;
+                if ((file || intent === 'submit') && !savedVersion.current) {
+                  const version = await apiSend(
+                    `/api/v1/theses/${thesisId}/deliverables/${created.id}/versions`,
+                    deliverableVersionSchema,
+                    { changeSummary: t('deliverables.initialVersion') },
+                  );
+                  savedVersion.current = version.id;
+                }
+                if (file && savedVersion.current && uploadedFile.current !== file) {
+                  await apiUpload(
+                    `/api/v1/theses/${thesisId}/deliverables/${created.id}/versions/${savedVersion.current}/file`,
+                    storedFileSchema,
+                    file,
+                  );
+                  uploadedFile.current = file;
+                }
+                if (intent === 'submit')
+                  await apiSend(
+                    `/api/v1/theses/${thesisId}/deliverables/${created.id}/submit`,
+                    deliverableSchema,
+                    {},
+                  );
+              } finally {
+                await Promise.all([
+                  queryClient.invalidateQueries({ queryKey: ['deliverables'] }),
+                  queryClient.invalidateQueries({ queryKey: ['dashboard'] }),
+                  queryClient.invalidateQueries({ queryKey: ['supervision'] }),
+                ]);
               }
-              setCreating(false);
+              closeCreation();
+              void navigate(detailPath(created.id));
             }}
           />
         </Modal>

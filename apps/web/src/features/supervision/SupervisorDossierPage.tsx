@@ -1,6 +1,7 @@
 import { useParams } from 'react-router-dom';
 import { Skeleton } from '@thesispartner/ui';
 import { ActivityList } from '../dashboard/components/ActivityList';
+import { ThesisProgressSummary } from '../dashboard/components/ThesisProgressSummary';
 import { UpcomingDeadlines } from '../dashboard/components/UpcomingDeadlines';
 import { QueryError } from '../objectives/components/QueryError';
 import { useStudentSpace } from './hooks/use-supervised-theses';
@@ -25,7 +26,21 @@ export function SupervisorDossierPage() {
   return (
     <div className="min-w-0">
       <StudentSpaceNav thesisId={thesisId} />
-      <UpcomingDeadlines deadlines={data.upcomingDeadlines} scope={root} />
+      <div className="grid items-start gap-4 lg:grid-cols-2">
+        <ThesisProgressSummary
+          thesis={data.thesis}
+          progress={data.progress}
+          workProgress={data.workProgress}
+          objectives={data.objectives}
+          deliverables={data.deliverables}
+          showThesisLink={false}
+          paths={{
+            objectives: `${root}/objectifs`,
+            deliverables: `${root}/livrables`,
+          }}
+        />
+        <UpcomingDeadlines deadlines={data.upcomingDeadlines} scope={root} />
+      </div>
       <div className="mt-4">
         <ActivityList activity={data.recentActivity} scope={root} />
       </div>

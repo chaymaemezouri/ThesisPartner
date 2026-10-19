@@ -707,8 +707,28 @@ export const supervisedThesisSchema = z
     progressPercentage: z.number().int().min(0).max(100),
     deliverableCount: z.number().int().min(0),
     pendingValidationCount: z.number().int().min(0),
+    nextDeadline: z
+      .object({
+        id: uuidSchema,
+        title: boundedTextSchema(300),
+        occursOn: daySchema,
+        kind: z.enum(['OBJECTIVE', 'DELIVERABLE', 'MEETING', 'EXPECTED_DEFENSE']),
+      })
+      .strict()
+      .nullable()
+      .optional(),
+    lastActivityAt: z.string().datetime().nullable().optional(),
     pendingDeliverables: z
-      .array(z.object({ id: uuidSchema, title: boundedTextSchema(200) }).strict())
+      .array(
+        z
+          .object({
+            id: uuidSchema,
+            title: boundedTextSchema(200),
+            latestVersionNumber: z.number().int().min(1).nullable().optional(),
+            submittedAt: z.string().datetime().nullable().optional(),
+          })
+          .strict(),
+      )
       .max(20),
     supervisors: z.array(z.object({ displayName: boundedTextSchema(160) }).strict()).max(20),
     meetings: z

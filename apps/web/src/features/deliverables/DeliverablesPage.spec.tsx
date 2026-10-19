@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -13,6 +13,7 @@ import {
   SupervisorDeliverableDetailPage,
   SupervisorDeliverablesPage,
 } from './SupervisorDeliverablesPage';
+import { SupervisorDeliverablesIndex } from '../supervision/SupervisorDeliverablesIndex';
 
 const thesisId = '22222222-2222-4222-8222-222222222222';
 const objectiveId = '33333333-3333-4333-8333-333333333333';
@@ -215,7 +216,27 @@ describe('deliverables', () => {
     );
     renderAt('/livrables', <DoctoralDeliverablesPage />);
     expect(await screen.findByText('No deliverables yet')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Create deliverable' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'New deliverable' })).toBeInTheDocument();
+  });
+
+  it('opens the upload form from a dashboard link and keeps filters when cancelled', async () => {
+    const user = userEvent.setup();
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (input: RequestInfo | URL) => {
+        const url = String(input);
+        if (url.includes('/dashboard')) return json(dashboard());
+        if (url.includes('/objectives')) return json({ objectives: [] });
+        return json({ deliverables: [] });
+      }),
+    );
+    renderAt('/livrables?create=1&status=DRAFT', <DoctoralDeliverablesPage />);
+    expect(await screen.findByRole('dialog', { name: 'New deliverable' })).toBeInTheDocument();
+    const close = screen.getAllByRole('button', { name: 'Close' })[0];
+    expect(close).toBeDefined();
+    if (close) await user.click(close);
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'Drafts' })).toHaveAttribute('aria-selected', 'true');
   });
 
   it('shows the type and status in words and refetches from the tab', async () => {
@@ -228,7 +249,7 @@ describe('deliverables', () => {
     });
     vi.stubGlobal('fetch', fetchMock);
     renderAt('/livrables', <DoctoralDeliverablesPage />);
-    const row = await screen.findByRole('listitem');
+    const row = await screen.findByRole('row', { name: /Chapitre 2/ });
     expect(row).toHaveTextContent('Chapitre 2 — État de l’art');
     expect(row).toHaveTextContent('Thesis chapter');
     expect(row).toHaveTextContent('Draft');
@@ -245,6 +266,207 @@ describe('deliverables', () => {
     expect(urls.some((url) => url.includes('search=anomalie'))).toBe(true);
     expect(urls.some((url) => url.includes('type=ARTICLE'))).toBe(true);
     expect(urls.some((url) => url.includes(`objectiveId=${objectiveId}`))).toBe(true);
+  });
+
+  it('saves a draft without submitting or creating an empty version', async () => {
+    const user = userEvent.setup();
+    const writes: string[] = [];
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+        const url = String(input);
+        if (init?.method === 'POST') {
+          writes.push(url);
+          return json(deliverable);
+        }
+        if (url.includes('/dashboard')) return json(dashboard());
+        if (url.includes('/objectives')) return json({ objectives: [] });
+        return json({ deliverables: [] });
+      }),
+    );
+    renderAt('/livrables?create=1', <DoctoralDeliverablesPage />);
+    const dialog = await screen.findByRole('dialog');
+    await user.type(within(dialog).getByLabelText('Title'), 'Research report');
+    await user.click(within(dialog).getByRole('button', { name: 'Save draft' }));
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    expect(writes).toEqual([`/api/v1/theses/${thesisId}/deliverables`]);
+  });
+
+  it('switches views, filters overdue work and clears filters without losing the card view', async () => {
+    const user = userEvent.setup();
+    const items = [
+      { ...listedDeliverable(), isOverdue: true },
+      {
+        ...listedDeliverable(),
+        id: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+        title: 'Validated report',
+        status: 'VALIDATED',
+        isOverdue: false,
+      },
+    ];
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (input: RequestInfo | URL) => {
+        const url = String(input);
+        if (url.includes('/dashboard')) return json(dashboard());
+        if (url.includes('/objectives')) return json({ objectives: [] });
+        const status = new URL(url, 'http://localhost').searchParams.get('status');
+        return json({ deliverables: items.filter((item) => !status || item.status === status) });
+      }),
+    );
+    renderAt('/livrables', <DoctoralDeliverablesPage />);
+    expect(await screen.findByRole('row', { name: /Validated report/ })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'All' })).toHaveTextContent('2');
+    await user.click(screen.getByRole('button', { name: 'Card view' }));
+    expect(screen.getAllByRole('listitem')).toHaveLength(2);
+    await user.click(screen.getByRole('button', { name: 'Overdue only' }));
+    expect(screen.getAllByRole('listitem')).toHaveLength(1);
+    expect(screen.queryByRole('link', { name: 'Validated report' })).not.toBeInTheDocument();
+    await user.click(screen.getByRole('tab', { name: 'Drafts' }));
+    await user.click(await screen.findByRole('button', { name: 'Clear filters' }));
+    await waitFor(() => expect(screen.getAllByRole('listitem')).toHaveLength(2));
+    expect(screen.getByRole('button', { name: 'Card view' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+    expect(screen.getByRole('button', { name: 'Overdue only' })).toHaveAttribute(
+      'aria-pressed',
+      'false',
+    );
+    await user.click(screen.getByRole('button', { name: 'List view' }));
+    expect(screen.getByRole('row', { name: /Validated report/ })).toBeInTheDocument();
+  });
+
+  it('retries submission on the same draft and version after a server error', async () => {
+    const user = userEvent.setup();
+    const writes: string[] = [];
+    let submissions = 0;
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+        const url = String(input);
+        if (init?.method === 'POST' || init?.method === 'PATCH') {
+          writes.push(`${init.method} ${url}`);
+          if (url.endsWith('/submit')) {
+            submissions += 1;
+            if (submissions === 1)
+              return new Response(
+                JSON.stringify({
+                  statusCode: 503,
+                  code: 'INTERNAL_ERROR',
+                  message: 'Unavailable',
+                  errors: [],
+                  requestId: 'retry-test',
+                }),
+                { status: 503, headers: { 'content-type': 'application/json' } },
+              );
+            return json({ ...deliverable, status: 'SUBMITTED' });
+          }
+          if (url.endsWith('/versions')) return json({ ...versions.versions[0], file: null });
+          return json(deliverable);
+        }
+        if (url.includes('/dashboard')) return json(dashboard());
+        if (url.includes('/objectives')) return json({ objectives: [] });
+        return json({ deliverables: [] });
+      }),
+    );
+    renderAt('/livrables?create=1', <DoctoralDeliverablesPage />);
+    const dialog = await screen.findByRole('dialog');
+    await user.type(within(dialog).getByLabelText('Title'), 'Research report');
+    await user.click(within(dialog).getByRole('button', { name: 'Submit to supervisor' }));
+    expect(await screen.findByRole('alert')).toBeInTheDocument();
+    await waitFor(() =>
+      expect(within(dialog).getByRole('button', { name: 'Submit to supervisor' })).toBeEnabled(),
+    );
+    await user.click(within(dialog).getByRole('button', { name: 'Submit to supervisor' }));
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    expect(
+      writes.filter((url) => url === `POST /api/v1/theses/${thesisId}/deliverables`),
+    ).toHaveLength(1);
+    expect(writes.filter((url) => url.endsWith('/versions'))).toHaveLength(1);
+    expect(submissions).toBe(2);
+  });
+
+  it('does not present an older file as the current version', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (input: RequestInfo | URL) => {
+        const url = String(input);
+        if (url.includes('/dashboard')) return json(dashboard());
+        if (url.includes('/versions'))
+          return json({
+            versions: [
+              {
+                ...versions.versions[0],
+                id: '88888888-8888-4888-8888-888888888888',
+                versionNumber: 3,
+                file: null,
+              },
+              ...versions.versions,
+            ],
+          });
+        return json({ ...deliverable, versionCount: 3, latestVersionNumber: 3 });
+      }),
+    );
+    renderAt(`/livrables/${deliverableId}`, <DoctoralDeliverableDetailPage />);
+    const document = await screen.findByRole('region', { name: 'Document' });
+    expect(await within(document).findByText(/Version 3 has no file/)).toBeInTheDocument();
+    expect(within(document).queryByText('chapitre-v2.pdf')).not.toBeInTheDocument();
+    expect(screen.queryByRole('list', { name: 'Version history' })).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Version history' }));
+    expect(screen.getByText('chapitre-v2.pdf')).toBeInTheDocument();
+  });
+
+  it('opens submitted documents directly from the supervisor review queue', async () => {
+    const person = {
+      id: objectiveId,
+      givenName: 'Ada',
+      familyName: 'Martin',
+      avatarUrl: null,
+      institution: null,
+      specialty: null,
+    };
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () =>
+        json({
+          theses: [
+            {
+              thesisId,
+              title: 'Thesis A',
+              status: 'ACTIVE',
+              discipline: null,
+              institution: null,
+              startedOn: null,
+              expectedDefenseOn: null,
+              durationYears: null,
+              progressPercentage: 0,
+              deliverableCount: 1,
+              pendingValidationCount: 1,
+              pendingDeliverables: [
+                {
+                  id: deliverableId,
+                  title: deliverable.title,
+                  latestVersionNumber: 2,
+                  submittedAt: '2026-10-18T09:00:00.000Z',
+                },
+              ],
+              supervisors: [],
+              meetings: [],
+              doctoralStudent: person,
+              doctoralStudents: [person],
+              objectiveSummary: { total: 0, inProgress: 0, completed: 0, overdue: 0 },
+            },
+          ],
+        }),
+      ),
+    );
+    renderAt('/livrables', <SupervisorDeliverablesIndex />);
+    const link = await screen.findByRole('link', { name: deliverable.title });
+    expect(link).toHaveAttribute('href', `/encadrement/${thesisId}/livrables/${deliverableId}`);
+    expect(screen.getByText('V2')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('tab', { name: 'By student' }));
+    expect(screen.getByText('Thesis A')).toBeInTheDocument();
   });
 
   it('keeps the supervisor list read only', async () => {
@@ -277,6 +499,7 @@ describe('deliverables', () => {
     expect(
       await screen.findByRole('heading', { name: 'Chapitre 2 — État de l’art' }),
     ).toBeInTheDocument();
+    await userEvent.click(await screen.findByRole('button', { name: 'Version history' }));
     const history = await screen.findByRole('list', { name: 'Version history' });
     const items = history.querySelectorAll('li');
     expect(items[0]).toHaveTextContent('V2');
@@ -353,6 +576,7 @@ describe('deliverables', () => {
       `/encadrement/${thesisId}/livrables/${deliverableId}`,
       <SupervisorDeliverableDetailPage />,
     );
+    await userEvent.click(await screen.findByRole('button', { name: 'Version history' }));
     expect(await screen.findByRole('list', { name: 'Version history' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'My students' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Ada Martin' })).toBeInTheDocument();

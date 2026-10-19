@@ -43,10 +43,10 @@ test('a doctoral student creates a deliverable that only the thesis supervisor c
   await dialog.getByLabel('Échéance').fill('2026-10-12');
   await dialog.getByRole('button', { name: 'Créer le livrable' }).click();
   await expect(dialog).toBeHidden();
-  const created = page.getByRole('listitem').filter({ hasText: title });
+  const created = page.getByRole('row').filter({ hasText: title });
   await expect(created.getByText('Chapitre de thèse')).toBeVisible();
   await expect(created.getByText('Brouillon')).toBeVisible();
-  await created.getByRole('link', { name: 'Ouvrir' }).click();
+  await created.getByRole('link', { name: title, exact: true }).click();
   await expect(page.getByRole('heading', { name: title })).toBeVisible();
   await expect(page.getByText('Aucune version n’a encore été créée.')).toBeVisible();
 
@@ -66,7 +66,7 @@ test('a doctoral student creates a deliverable that only the thesis supervisor c
     .click();
   await expect(page.getByText(title)).toBeVisible();
   await expect(page.getByRole('button', { name: 'Nouveau livrable' })).toHaveCount(0);
-  await page.getByRole('link', { name: 'Ouvrir' }).click();
+  await page.getByRole('link', { name: title, exact: true }).click();
   await expect(page.getByRole('heading', { name: title })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Modifier' })).toHaveCount(0);
   await page.goto(`/encadrement/${thesisId}/objectifs`);
@@ -118,6 +118,7 @@ test('a doctoral student records versions that the supervisor can only read', as
   const first = await history.getByText('V1').boundingBox();
   expect(second && first && second.y < first.y).toBe(true);
   await page.reload();
+  await page.getByRole('button', { name: 'Historique des versions' }).click();
   await expect(history.getByText('V2')).toBeVisible();
   await expect(history.getByText('Première version du chapitre')).toBeVisible();
   await expect(page.getByText('Aucun fichier associé à cette version.')).toHaveCount(2);
@@ -130,8 +131,9 @@ test('a doctoral student records versions that the supervisor can only read', as
     .filter({ hasText: 'Ada Martin' })
     .getByRole('link', { name: 'Livrables' })
     .click();
-  await page.getByRole('link', { name: 'Ouvrir' }).click();
+  await page.getByRole('link', { name: title, exact: true }).click();
   await expect(page.getByRole('heading', { name: title })).toBeVisible();
+  await page.getByRole('button', { name: 'Historique des versions' }).click();
   await expect(page.getByText('V2')).toBeVisible();
   await expect(page.getByText('V1')).toBeVisible();
   await expect(page.getByRole('link', { name: 'Mes doctorants' })).toBeVisible();
@@ -181,7 +183,7 @@ test('a doctoral student uploads a file the supervisor can only download', async
     .filter({ hasText: 'Ada Martin' })
     .getByRole('link', { name: 'Livrables' })
     .click();
-  await page.getByRole('link', { name: 'Ouvrir' }).click();
+  await page.getByRole('link', { name: title, exact: true }).click();
   await expect(page.getByText('chapitre.pdf')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Télécharger' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Ajouter un fichier' })).toHaveCount(0);

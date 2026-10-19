@@ -27,7 +27,6 @@ export function SupervisorDeliverablesPage() {
           thesisId={thesisId}
           canCreate={thesis.data.role === 'DOCTORAL_STUDENT'}
           canRemark={thesis.data.role === 'SUPERVISOR'}
-          tabsAside
           detailPath={(deliverableId) => `/encadrement/${thesisId}/livrables/${deliverableId}`}
         />
       ) : null}

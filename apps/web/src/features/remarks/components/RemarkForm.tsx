@@ -19,7 +19,12 @@ export function RemarkForm({
   deliverables: Option[];
   pending: boolean;
   error: unknown;
-  fixed?: { objectiveId?: string | null; deliverableId?: string | null; label?: string };
+  fixed?: {
+    objectiveId?: string | null;
+    taskId?: string | null;
+    deliverableId?: string | null;
+    label?: string;
+  };
   onCancel: () => void;
   onSubmit: (body: RemarkDraft) => Promise<void>;
 }) {
@@ -43,6 +48,7 @@ export function RemarkForm({
             message,
             location: location.trim() || undefined,
             objectiveId: fixed ? (fixed.objectiveId ?? null) : objectiveId || null,
+            taskId: fixed?.taskId ?? null,
             deliverableId: fixed ? (fixed.deliverableId ?? null) : deliverableId || null,
           });
         } finally {

@@ -14,6 +14,8 @@ import { useT } from '../../../i18n/LocaleContext';
 import type { MessageKey } from '../../../i18n/translate';
 import { useDeliverableVersions, useDeliverables } from '../../deliverables/hooks/use-deliverables';
 import { fileErrorMessage } from '../../deliverables/components/VersionFile';
+import { RemarkForm } from '../../remarks/components/RemarkForm';
+import { useCreateRemark } from '../../remarks/hooks/use-remarks';
 import type { Task } from '../hooks/use-tasks';
 import { useStepTaskMutations, useStepTasks, type StepTask } from '../hooks/use-step-tasks';
 import { QueryError, queryErrorMessage } from './QueryError';
@@ -120,7 +122,14 @@ export function StepWorkPanel({
         />
       ) : null}
       {panel === 'remarks' ? (
-        <RemarkList remarks={work.data?.remarks ?? []} empty={t('objectives.work.emptyRemarks')} />
+        <StepRemarks
+          thesisId={thesisId}
+          objectiveId={objectiveId}
+          stepId={step.id}
+          subject={step.title}
+          canWrite={canReview}
+          remarks={work.data?.remarks ?? []}
+        />
       ) : null}
     </section>
   );
@@ -524,30 +533,32 @@ function FileList({
     <div className="mt-2">
       <ul className="grid gap-1">
         {files.map((item) => (
-          <li key={item.versionId} className="flex max-w-full items-center gap-1">
-            <span className="min-w-0 truncate text-sm text-ink">
+          <li key={item.versionId} className="flex max-w-full items-center gap-2">
+            <span className="min-w-0 flex-1 truncate text-sm text-ink">
               v{item.versionNumber} · {item.originalName}
             </span>
-            {canPreview(item.mimeType) ? (
+            <span className="flex shrink-0 items-center">
+              {canPreview(item.mimeType) ? (
+                <FileAction
+                  label={t('objectives.work.open')}
+                  icon="eye"
+                  onClick={() => void openFile(thesisId, deliverableId, item.versionId, true)}
+                />
+              ) : null}
               <FileAction
-                label={t('objectives.work.open')}
-                icon="eye"
-                onClick={() => void openFile(thesisId, deliverableId, item.versionId, true)}
+                label={t('objectives.work.download')}
+                icon="download"
+                onClick={() => void openFile(thesisId, deliverableId, item.versionId, false)}
               />
-            ) : null}
-            <FileAction
-              label={t('objectives.work.download')}
-              icon="download"
-              onClick={() => void openFile(thesisId, deliverableId, item.versionId, false)}
-            />
-            {canEdit ? (
-              <FileAction
-                label={t('objectives.work.removeFile')}
-                icon="trash"
-                tone="danger"
-                onClick={() => onRemove(item.versionId)}
-              />
-            ) : null}
+              {canEdit ? (
+                <FileAction
+                  label={t('objectives.work.removeFile')}
+                  icon="trash"
+                  tone="danger"
+                  onClick={() => onRemove(item.versionId)}
+                />
+              ) : null}
+            </span>
           </li>
         ))}
       </ul>
@@ -623,6 +634,54 @@ function FilePicker({ file, onFile }: { file: File | null; onFile: (file: File |
         {file ? t('common.changeFile') : t('common.attachFile')}
       </Button>
       <span className="truncate text-sm text-muted">{file?.name ?? t('common.noFile')}</span>
+    </div>
+  );
+}
+
+function StepRemarks({
+  thesisId,
+  objectiveId,
+  stepId,
+  subject,
+  canWrite,
+  remarks,
+}: {
+  thesisId: string;
+  objectiveId: string;
+  stepId: string;
+  subject: string;
+  canWrite: boolean;
+  remarks: Array<{ id: string; title: string; message: string; authorName: string }>;
+}) {
+  const t = useT();
+  const queryClient = useQueryClient();
+  const create = useCreateRemark(thesisId);
+  const [writing, setWriting] = useState(false);
+  return (
+    <div>
+      {canWrite && !writing ? (
+        <Button variant="secondary" onClick={() => setWriting(true)}>
+          {t('remarks.new')}
+        </Button>
+      ) : null}
+      {canWrite && writing ? (
+        <RemarkForm
+          objectives={[]}
+          deliverables={[]}
+          pending={create.isPending}
+          error={create.error}
+          fixed={{ objectiveId, taskId: stepId, label: subject }}
+          onCancel={() => setWriting(false)}
+          onSubmit={async (body) => {
+            await create.mutateAsync(body);
+            await queryClient.invalidateQueries({
+              queryKey: ['step-tasks', thesisId, objectiveId, stepId],
+            });
+            setWriting(false);
+          }}
+        />
+      ) : null}
+      <RemarkList remarks={remarks} empty={t('objectives.work.emptyRemarks')} />
     </div>
   );
 }

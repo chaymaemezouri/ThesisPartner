@@ -34,4 +34,78 @@ describe('SupervisionService access', () => {
       }),
     );
   });
+
+  it('prioritizes unfinished work and reports the recorded activity date', async () => {
+    const lastActivity = new Date('2026-10-18T10:30:00.000Z');
+    const findMany = jest.fn().mockResolvedValue([
+      {
+        thesis: {
+          id: thesisId,
+          title: 'Thesis',
+          status: 'ACTIVE',
+          discipline: null,
+          institution: null,
+          startedOn: null,
+          expectedDefenseOn: null,
+          memberships: [],
+          objectives: [
+            {
+              id: 'done',
+              title: 'Completed',
+              status: 'COMPLETED',
+              dueDate: new Date('2026-01-01'),
+              progress: 100,
+            },
+            {
+              id: 'work',
+              title: 'Pending chapter',
+              status: 'IN_PROGRESS',
+              dueDate: new Date('2026-10-20'),
+              progress: 30,
+            },
+          ],
+          deliverables: [
+            {
+              id: 'validated',
+              title: 'Validated',
+              status: 'VALIDATED',
+              submittedAt: null,
+              versions: [],
+              dueDate: new Date('2026-01-02'),
+            },
+            {
+              id: 'pending',
+              title: 'To review',
+              status: 'SUBMITTED',
+              submittedAt: new Date('2026-10-18T09:00:00.000Z'),
+              versions: [{ versionNumber: 2 }],
+              dueDate: new Date('2026-10-21'),
+            },
+          ],
+          meetings: [],
+          auditLogs: [{ createdAt: lastActivity }],
+        },
+      },
+    ]);
+    const service = new SupervisionService({ thesisMembership: { findMany } } as never);
+    const result = await service.list(actorId);
+    expect(result.theses[0]).toMatchObject({
+      nextDeadline: {
+        id: 'work',
+        title: 'Pending chapter',
+        occursOn: '2026-10-20',
+        kind: 'OBJECTIVE',
+      },
+      pendingValidationCount: 1,
+      pendingDeliverables: [
+        {
+          id: 'pending',
+          title: 'To review',
+          latestVersionNumber: 2,
+          submittedAt: '2026-10-18T09:00:00.000Z',
+        },
+      ],
+      lastActivityAt: lastActivity.toISOString(),
+    });
+  });
 });

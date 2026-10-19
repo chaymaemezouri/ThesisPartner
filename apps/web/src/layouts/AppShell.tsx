@@ -10,6 +10,7 @@ import {
   PRIMARY_NAV,
   SECONDARY_NAV,
   SUPERVISOR_NAV,
+  navigationGroups,
   type NavItem,
 } from '../routes/nav';
 
@@ -59,7 +60,7 @@ export function AppShell() {
                 ? 'flex min-h-0 w-full flex-1 flex-col px-4 py-2 lg:overflow-hidden lg:px-5 lg:py-1.5'
                 : chat
                   ? 'flex min-h-0 w-full flex-1 flex-col overflow-hidden'
-                  : 'w-full flex-1 px-4 py-4 md:px-6 lg:py-5'
+                  : 'w-full min-w-0 flex-1 px-4 py-5 md:px-6 lg:py-6'
             }
           >
             <Outlet />
@@ -199,11 +200,24 @@ function Sidebar({
         </Link>
       </div>
       <nav aria-label="Main navigation" className="flex flex-1 flex-col gap-1 overflow-y-auto p-2">
-        <div className="flex flex-col gap-1">
-          {primary.map((item) => (
-            <SidebarLink key={item.to} item={item} compact={compact} onNavigate={onNavigate} />
-          ))}
-        </div>
+        {navigationGroups(primary).map((group) => (
+          <div key={group.labelKey ?? 'home'} className="mb-3 flex flex-col gap-1">
+            {group.labelKey ? (
+              <p
+                className={
+                  compact
+                    ? 'sr-only px-2.5 pb-1 pt-2 text-xs font-medium tracking-wide text-muted uppercase xl:not-sr-only'
+                    : 'px-2.5 pb-1 pt-2 text-xs font-medium tracking-wide text-muted uppercase'
+                }
+              >
+                {t(group.labelKey)}
+              </p>
+            ) : null}
+            {group.items.map((item) => (
+              <SidebarLink key={item.to} item={item} compact={compact} onNavigate={onNavigate} />
+            ))}
+          </div>
+        ))}
         <div className="mt-auto flex flex-col gap-1 border-t border-line pt-2">
           {SECONDARY_NAV.map((item) => (
             <SidebarLink key={item.to} item={item} compact={compact} onNavigate={onNavigate} />

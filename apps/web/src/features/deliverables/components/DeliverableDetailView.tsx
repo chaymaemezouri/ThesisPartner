@@ -1,4 +1,5 @@
 import { Button, Modal, Skeleton, Textarea } from '@thesispartner/ui';
+import { Icon } from '../../../components/Icon';
 import { IconAction } from '../../../components/IconAction';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
@@ -10,14 +11,17 @@ import {
   useApproveDeliverable,
   useCancelDeliverable,
   useDeliverable,
+  useDeliverableVersions,
   useRequestDeliverableChanges,
   useSubmitDeliverable,
   useUpdateDeliverable,
   type Deliverable,
 } from '../hooks/use-deliverables';
 import { LinkedRemarkButton } from '../../remarks/components/LinkedRemarkButton';
+import { documentPresentation } from '../presentation';
 import { DeliverableDocument } from './DeliverableDocument';
 import { DeliverableForm } from './DeliverableForm';
+import { DeliverableStatusBadge } from './DeliverableStatusBadge';
 import { DeliverableVersionHistory } from './DeliverableVersionHistory';
 
 export function DeliverableDetailView({
@@ -40,6 +44,7 @@ export function DeliverableDetailView({
   const t = useT();
   const { dateLocale } = useLocale();
   const deliverable = useDeliverable(thesisId, deliverableId);
+  const versions = useDeliverableVersions(thesisId, deliverableId);
   const objectives = useObjectives(canEdit ? thesisId : null, {});
   const update = useUpdateDeliverable(thesisId, deliverableId);
   const cancel = useCancelDeliverable(thesisId, deliverableId);
@@ -49,6 +54,7 @@ export function DeliverableDetailView({
   const [editing, setEditing] = useState(false);
   const [confirming, setConfirming] = useState(false);
   const [reason, setReason] = useState('');
+  const [addingVersion, setAddingVersion] = useState(false);
 
   if (deliverable.isLoading) {
     return (
@@ -60,6 +66,10 @@ export function DeliverableDetailView({
   if (deliverable.isError || !deliverable.data) return <QueryError error={deliverable.error} />;
 
   const data = deliverable.data;
+  const latest = [...(versions.data?.versions ?? [])].sort(
+    (a, b) => b.versionNumber - a.versionNumber,
+  )[0];
+  const hasCurrentFile = Boolean(latest?.file);
   const editable = canEdit && (data.status === 'DRAFT' || data.status === 'CHANGES_REQUESTED');
   const canCancel = canEdit && data.status === 'DRAFT';
   const freshCorrection =
@@ -70,6 +80,7 @@ export function DeliverableDetailView({
     canEdit &&
     data.versionCount > 0 &&
     (data.status === 'DRAFT' || (data.status === 'CHANGES_REQUESTED' && freshCorrection));
+  const documentStyle = documentPresentation(data.type);
   const crumbs = trail ?? [{ label: t('deliverables.title'), to: backTo }];
   const overdueHint =
     data.isOverdue && data.status === 'SUBMITTED'
@@ -79,58 +90,55 @@ export function DeliverableDetailView({
         : null;
 
   return (
-    <article className="min-w-0">
-      <nav className="mb-2 text-[11px] text-muted" aria-label={t('common.breadcrumb')}>
+    <article className="min-w-0 rounded-md border border-line bg-surface p-4 sm:p-5">
+      <nav
+        className="mb-4 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-[11px] text-muted"
+        aria-label={t('common.breadcrumb')}
+      >
         {crumbs.map((crumb, index) => (
-          <span key={crumb.to}>
-            {index > 0 ? <span aria-hidden="true"> / </span> : null}
-            <Link to={crumb.to} className="text-brand hover:underline">
+          <span key={crumb.to} className="inline-flex items-center gap-1.5">
+            {index > 0 ? <Icon name="chevron" className="h-3 w-3" /> : null}
+            <Link to={crumb.to} className="rounded text-muted transition-colors hover:text-brand">
               {crumb.label}
             </Link>
           </span>
         ))}
-        <span aria-hidden="true"> / </span>
-        <span className="text-ink">{data.title}</span>
+        <Icon name="chevron" className="h-3 w-3 shrink-0" />
+        <span className="min-w-0 truncate text-ink" aria-current="page">
+          {data.title}
+        </span>
       </nav>
 
-      <section className="overflow-hidden rounded-md border border-line bg-surface">
-        <header className="flex flex-wrap items-start justify-between gap-2 border-b border-line px-3 py-2.5">
-          <div className="min-w-0">
-            <h1 className="break-words text-base font-semibold tracking-tight text-ink">
-              {data.title}
-            </h1>
-            <p className="mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[11px] text-muted">
-              <span>{t(`deliverables.type.${data.type}`)}</span>
-              <span aria-hidden="true">·</span>
-              <span className="font-medium text-ink">
-                {t(`deliverables.status.${data.status}`)}
-              </span>
-              {data.isOverdue ? (
-                <>
-                  <span aria-hidden="true">·</span>
-                  <span className="font-medium text-danger">{t('common.overdue')}</span>
-                </>
-              ) : null}
-              {data.versionCount > 0 ? (
-                <>
-                  <span aria-hidden="true">·</span>
-                  <span>
+      <section className="overflow-hidden rounded-[14px] border border-brand/15 bg-surface">
+        <header
+          className={`flex flex-wrap items-start justify-between gap-4 bg-gradient-to-r ${documentStyle.wash} via-surface to-surface p-4 sm:p-5`}
+        >
+          <div className="flex min-w-0 flex-1 basis-64 items-start gap-3">
+            <span
+              className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-[12px] ${documentStyle.tone}`}
+            >
+              <Icon name={documentStyle.icon} className="h-5 w-5" />
+            </span>
+            <div className="min-w-0">
+              <p className="mb-1 text-[11px] text-muted">{t(`deliverables.type.${data.type}`)}</p>
+              <h1 className="break-words text-base font-semibold tracking-tight text-ink">
+                {data.title}
+              </h1>
+              <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-muted">
+                <DeliverableStatusBadge status={data.status} />
+                {data.versionCount > 0 ? (
+                  <span className="inline-flex items-center gap-1 rounded-full border border-line bg-surface/80 px-2 py-0.5">
+                    <Icon name="library" className="h-3 w-3" />
                     {data.versionCount === 1
                       ? t('deliverables.versionCountOne')
                       : t('deliverables.versionCountMany', { count: data.versionCount })}
                   </span>
-                </>
-              ) : null}
-            </p>
-            {canReview ? null : (
-              <p className="mt-1.5 max-w-2xl text-[11px] leading-snug text-muted">
-                {t(`deliverables.statusHelp.${data.status}`)}
-                {overdueHint ? ` ${overdueHint}` : ''}
-              </p>
-            )}
+                ) : null}
+              </div>
+            </div>
           </div>
           {editable || canCancel || canReview ? (
-            <div className="flex shrink-0 flex-wrap items-center gap-1.5">
+            <div className="flex shrink-0 flex-wrap items-center gap-2">
               {canReview ? (
                 <LinkedRemarkButton
                   thesisId={thesisId}
@@ -142,6 +150,8 @@ export function DeliverableDetailView({
                 <IconAction
                   tone="neutral"
                   icon="pencil"
+                  showLabel
+                  className="rounded-lg text-xs shadow-none"
                   label={t('common.edit')}
                   onClick={() => setEditing(true)}
                 />
@@ -150,6 +160,8 @@ export function DeliverableDetailView({
                 <IconAction
                   tone="danger"
                   icon="close"
+                  showLabel
+                  className="rounded-lg border-transparent bg-transparent text-xs shadow-none"
                   label={t('deliverables.cancel')}
                   onClick={() => setConfirming(true)}
                 />
@@ -158,75 +170,124 @@ export function DeliverableDetailView({
           ) : null}
         </header>
 
-        <dl className="grid grid-cols-1 gap-x-4 gap-y-1.5 border-b border-line px-3 py-2.5 text-xs sm:grid-cols-3">
-          <div className="min-w-0">
-            <dt className="text-[10px] font-medium tracking-wide text-muted uppercase">
-              {t('deliverables.metaObjective')}
-            </dt>
-            <dd className="mt-0.5 break-words text-ink">
-              {data.objective ? (
-                <Link to={objectivePath(data.objective.id)} className="text-brand hover:underline">
-                  {data.objective.title}
-                </Link>
-              ) : (
-                t('common.none')
-              )}
-            </dd>
-          </div>
-          <div>
-            <dt className="text-[10px] font-medium tracking-wide text-muted uppercase">
-              {t('deliverables.metaDue')}
-            </dt>
-            <dd
-              className={`mt-0.5 tabular-nums ${data.isOverdue ? 'font-medium text-danger' : 'text-ink'}`}
+        <div className="px-4 pb-4 sm:px-5 sm:pb-5">
+          <dl className="grid grid-cols-2 gap-2.5 text-xs lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)_minmax(0,1fr)]">
+            <div className="col-span-2 flex min-w-0 items-start gap-2.5 rounded-[10px] bg-brand-soft/45 p-3 lg:col-span-1">
+              <Icon name="objectives" className="mt-0.5 h-4 w-4 shrink-0 text-brand" />
+              <div className="min-w-0">
+                <dt className="text-[10px] font-medium text-muted">
+                  {t('deliverables.metaObjective')}
+                </dt>
+                <dd className="mt-1 break-words text-ink">
+                  {data.objective ? (
+                    <Link
+                      to={objectivePath(data.objective.id)}
+                      className="group inline-flex items-center gap-1 text-brand hover:underline"
+                    >
+                      <span>{data.objective.title}</span>
+                      <Icon
+                        name="chevron"
+                        className="h-3 w-3 shrink-0 transition-transform group-hover:translate-x-0.5"
+                      />
+                    </Link>
+                  ) : (
+                    t('common.none')
+                  )}
+                </dd>
+              </div>
+            </div>
+            <div
+              className={`flex min-w-0 items-start gap-2.5 rounded-[10px] p-3 ${data.isOverdue ? 'bg-danger-soft/60' : 'bg-canvas/75'}`}
             >
-              {data.dueDate ? formatDay(data.dueDate, dateLocale) : t('common.notProvided')}
-            </dd>
-          </div>
-          <div>
-            <dt className="text-[10px] font-medium tracking-wide text-muted uppercase">
-              {t('deliverables.metaUpdated')}
-            </dt>
-            <dd className="mt-0.5 tabular-nums text-ink">
-              {new Date(data.updatedAt).toLocaleDateString(dateLocale, { timeZone: 'UTC' })}
-            </dd>
-          </div>
-        </dl>
-
-        {data.description ? (
-          <div className="border-b border-line px-3 py-2.5">
-            <h2 className="text-[10px] font-medium tracking-wide text-muted uppercase">
-              {t('deliverables.description')}
-            </h2>
-            <p className="mt-0.5 break-words text-xs leading-relaxed text-ink">
+              <Icon
+                name="meetings"
+                className={`mt-0.5 h-4 w-4 shrink-0 ${data.isOverdue ? 'text-danger' : 'text-muted'}`}
+              />
+              <div className="min-w-0">
+                <dt className="text-[10px] font-medium text-muted">{t('deliverables.metaDue')}</dt>
+                <dd
+                  className={`mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 tabular-nums ${data.isOverdue ? 'font-medium text-danger' : 'text-ink'}`}
+                >
+                  <span>
+                    {data.dueDate ? formatDay(data.dueDate, dateLocale) : t('common.notProvided')}
+                  </span>
+                  {data.isOverdue ? (
+                    <span className="rounded-full bg-surface/80 px-1.5 py-0.5 text-[10px]">
+                      {t('common.overdue')}
+                    </span>
+                  ) : null}
+                </dd>
+              </div>
+            </div>
+            <div className="flex min-w-0 items-start gap-2.5 rounded-[10px] bg-canvas/75 p-3">
+              <Icon name="watch" className="mt-0.5 h-4 w-4 shrink-0 text-muted" />
+              <div className="min-w-0">
+                <dt className="text-[10px] font-medium text-muted">
+                  {t('deliverables.metaUpdated')}
+                </dt>
+                <dd className="mt-1 tabular-nums text-ink">
+                  {new Date(data.updatedAt).toLocaleDateString(dateLocale, { timeZone: 'UTC' })}
+                </dd>
+              </div>
+            </div>
+          </dl>
+          {data.description ? (
+            <p className="mt-3 break-words border-t border-line/70 pt-3 text-xs leading-relaxed text-muted">
               {data.description}
             </p>
-          </div>
-        ) : null}
-
-        <ReviewPanel
-          deliverable={data}
-          canEdit={canEdit}
-          canReview={Boolean(canReview)}
-          canSubmit={canSubmitAction}
-          reason={reason}
-          onReason={setReason}
-          submitPending={submit.isPending}
-          approvePending={approve.isPending}
-          changesPending={requestChanges.isPending}
-          error={submit.error ?? approve.error ?? requestChanges.error}
-          onSubmit={() => submit.mutate()}
-          onApprove={() => approve.mutate()}
-          onChanges={() => requestChanges.mutate(reason)}
-        />
+          ) : null}
+        </div>
       </section>
 
-      <DeliverableDocument thesisId={thesisId} deliverableId={deliverableId} />
-
+      <div
+        className={
+          hasCurrentFile
+            ? 'mt-4 grid items-start gap-5 lg:grid-cols-[minmax(0,1.6fr)_minmax(18rem,0.8fr)]'
+            : 'mt-4 space-y-4'
+        }
+      >
+        <DeliverableDocument thesisId={thesisId} deliverableId={deliverableId} />
+        <aside className="min-w-0 border-t border-line pt-4 lg:border-t-0 lg:pt-0">
+          <div className="pb-3">
+            <h2 className="text-sm font-semibold text-ink">{t('deliverables.nextStep')}</h2>
+            <p className="mt-2 text-[11px] leading-relaxed text-muted">
+              {t(`deliverables.statusHelp.${data.status}`)}
+              {overdueHint ? ` ${overdueHint}` : ''}
+            </p>
+            {editable ? (
+              <Button
+                type="button"
+                variant="secondary"
+                className="mt-3 h-8 px-3 text-xs shadow-none"
+                onClick={() => setAddingVersion(true)}
+              >
+                {t(data.versionCount > 0 ? 'deliverables.addVersion' : 'deliverables.firstVersion')}
+              </Button>
+            ) : null}
+          </div>
+          <ReviewPanel
+            deliverable={data}
+            canEdit={canEdit}
+            canReview={Boolean(canReview)}
+            canSubmit={canSubmitAction}
+            reason={reason}
+            onReason={setReason}
+            submitPending={submit.isPending}
+            approvePending={approve.isPending}
+            changesPending={requestChanges.isPending}
+            error={submit.error ?? approve.error ?? requestChanges.error}
+            onSubmit={() => submit.mutate()}
+            onApprove={() => approve.mutate()}
+            onChanges={() => requestChanges.mutate(reason)}
+          />
+        </aside>
+      </div>
       <DeliverableVersionHistory
         thesisId={thesisId}
         deliverableId={deliverableId}
         canCreate={editable}
+        open={addingVersion}
+        onOpenChange={setAddingVersion}
       />
 
       <Modal
@@ -327,11 +388,11 @@ function ReviewPanel({
   }
 
   return (
-    <section className="bg-canvas/40 px-3 py-2.5" aria-label={t('deliverables.reviewAria')}>
+    <section className="space-y-3" aria-label={t('deliverables.reviewAria')}>
       {showDraft ? (
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-3">
           <p className="text-xs text-muted">{t('deliverables.submitHint')}</p>
-          <div className="flex flex-col items-start gap-1 sm:items-end">
+          <div className="flex flex-col items-start gap-1">
             <Button
               className="h-8 px-3 text-xs"
               disabled={!canSubmit || submitPending}
@@ -365,12 +426,16 @@ function ReviewPanel({
             <Button
               variant="secondary"
               className="h-8 px-3 text-xs"
-              disabled={changesPending}
+              disabled={changesPending || approvePending}
               onClick={onChanges}
             >
               {t('deliverables.requestChanges')}
             </Button>
-            <Button className="h-8 px-3 text-xs" disabled={approvePending} onClick={onApprove}>
+            <Button
+              className="h-8 px-3 text-xs"
+              disabled={approvePending || changesPending}
+              onClick={onApprove}
+            >
               {t('deliverables.approve')}
             </Button>
           </div>
@@ -382,11 +447,13 @@ function ReviewPanel({
       ) : null}
 
       {showChanges ? (
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+        <div className="flex flex-col gap-3">
           <div className="min-w-0">
-            <p className="text-xs font-medium text-ink">{t('deliverables.changesRequested')}</p>
+            <p className="text-xs font-medium text-ink">{t('deliverables.lastFeedback')}</p>
             {deliverable.reviewMessage ? (
-              <p className="mt-1 text-xs text-ink">{deliverable.reviewMessage}</p>
+              <p className="mt-1 break-words whitespace-pre-wrap text-xs text-ink">
+                {deliverable.reviewMessage}
+              </p>
             ) : null}
             {deliverable.reviewedBy ? (
               <p className="mt-1 text-[11px] text-muted">
@@ -395,13 +462,10 @@ function ReviewPanel({
                 })}
               </p>
             ) : null}
-            {canEdit ? (
-              <p className="mt-1 text-[11px] text-muted">{t('deliverables.addCorrectedVersion')}</p>
-            ) : null}
           </div>
           {canEdit ? (
             <Button
-              className="h-8 shrink-0 px-3 text-xs"
+              className="h-8 self-start px-3 text-xs"
               disabled={!canSubmit || submitPending}
               onClick={onSubmit}
             >

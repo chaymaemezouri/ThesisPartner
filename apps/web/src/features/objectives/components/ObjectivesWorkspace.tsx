@@ -63,7 +63,7 @@ export function ObjectivesWorkspace({
       }
     >
       {tabsAside ? (
-        <div className="md:col-start-1 md:row-start-1">
+        <div className="min-w-0 md:sticky md:top-20 md:col-start-1 md:row-start-1">
           <ObjectiveFilters
             tab={tab}
             search={search}
@@ -74,8 +74,8 @@ export function ObjectivesWorkspace({
         </div>
       ) : null}
       <div className={tabsAside ? 'min-w-0 md:col-start-2 md:row-start-1' : undefined}>
-        <div className="flex items-center gap-2">
-          <div className="min-w-0 flex-1">{filterBar}</div>
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="min-w-40 flex-1">{filterBar}</div>
           {canManage && (objectives.data?.objectives.length ?? 0) > 0 ? (
             <IconAction label={t('objectives.new')} icon="plus" onClick={() => setCreating(true)} />
           ) : null}

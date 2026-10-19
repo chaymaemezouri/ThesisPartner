@@ -27,6 +27,7 @@ export class SupervisionService {
   constructor(private readonly prisma: PrismaService) {}
 
   async list(actorId: string) {
+    const now = new Date();
     const memberships = await this.prisma.thesisMembership.findMany({
       where: { userId: actorId, role: 'SUPERVISOR' },
       include: {
@@ -36,16 +37,43 @@ export class SupervisionService {
               include: { user: { include: { profile: true } } },
               orderBy: [{ createdAt: 'asc' }, { userId: 'asc' }],
             },
-            objectives: { select: { status: true, dueDate: true, progress: true } },
-            deliverables: { select: { id: true, title: true, status: true } },
-            meetings: { orderBy: { scheduledOn: { sort: 'asc', nulls: 'last' } }, take: 20 },
+            objectives: {
+              select: { id: true, title: true, status: true, dueDate: true, progress: true },
+            },
+            deliverables: {
+              select: {
+                id: true,
+                title: true,
+                status: true,
+                dueDate: true,
+                submittedAt: true,
+                versions: {
+                  orderBy: { versionNumber: 'desc' },
+                  take: 1,
+                  select: { versionNumber: true },
+                },
+              },
+            },
+            meetings: {
+              where: {
+                status: 'PLANNED',
+                scheduledOn: { gte: new Date(now.toISOString().slice(0, 10)) },
+              },
+              orderBy: { scheduledOn: 'asc' },
+              take: 20,
+            },
+            auditLogs: {
+              where: { action: { in: [...ACTIVITY_ACTIONS] } },
+              orderBy: { createdAt: 'desc' },
+              take: 1,
+              select: { createdAt: true },
+            },
           },
         },
       },
       orderBy: { createdAt: 'asc' },
       take: 50,
     });
-    const now = new Date();
     return {
       theses: memberships.map((membership) => {
         const students = membership.thesis.memberships.flatMap((item) => {
@@ -70,6 +98,37 @@ export class SupervisionService {
         const openDeliverables = membership.thesis.deliverables.filter(
           (item) => item.status !== 'CANCELLED',
         );
+        const defenseOn = formatDay(membership.thesis.expectedDefenseOn);
+        const datedWork = [
+          ...membership.thesis.objectives.flatMap((item) => {
+            const occursOn = formatDay(item.dueDate);
+            return occursOn && item.status !== 'COMPLETED' && item.status !== 'CANCELLED'
+              ? [{ id: item.id, title: item.title, occursOn, kind: 'OBJECTIVE' as const }]
+              : [];
+          }),
+          ...openDeliverables.flatMap((item) => {
+            const occursOn = formatDay(item.dueDate);
+            return occursOn && item.status !== 'VALIDATED'
+              ? [{ id: item.id, title: item.title, occursOn, kind: 'DELIVERABLE' as const }]
+              : [];
+          }),
+          ...membership.thesis.meetings.flatMap((item) => {
+            const occursOn = formatDay(item.scheduledOn);
+            return occursOn && occursOn >= today && item.status === 'PLANNED'
+              ? [{ id: item.id, title: item.title, occursOn, kind: 'MEETING' as const }]
+              : [];
+          }),
+          ...(defenseOn
+            ? [
+                {
+                  id: membership.thesis.id,
+                  title: 'Soutenance prévue',
+                  occursOn: defenseOn,
+                  kind: 'EXPECTED_DEFENSE' as const,
+                },
+              ]
+            : []),
+        ].sort((left, right) => left.occursOn.localeCompare(right.occursOn));
         return {
           thesisId: membership.thesis.id,
           title: membership.thesis.title,
@@ -83,13 +142,20 @@ export class SupervisionService {
             membership.thesis.expectedDefenseOn,
           ),
           progressPercentage: workProgressPercentage(membership.thesis.objectives),
+          nextDeadline: datedWork[0] ?? null,
+          lastActivityAt: membership.thesis.auditLogs[0]?.createdAt.toISOString() ?? null,
           deliverableCount: openDeliverables.length,
           pendingValidationCount: openDeliverables.filter((item) => item.status === 'SUBMITTED')
             .length,
           pendingDeliverables: openDeliverables
             .filter((item) => item.status === 'SUBMITTED')
             .slice(0, 20)
-            .map((item) => ({ id: item.id, title: item.title })),
+            .map((item) => ({
+              id: item.id,
+              title: item.title,
+              latestVersionNumber: item.versions[0]?.versionNumber ?? null,
+              submittedAt: item.submittedAt?.toISOString() ?? null,
+            })),
           supervisors,
           meetings: membership.thesis.meetings
             .flatMap((meeting) => {

@@ -161,6 +161,27 @@ export const SECONDARY_NAV: NavItem[] = [
 
 export const NAV_ITEMS = [...PRIMARY_NAV, ...SECONDARY_NAV];
 
+export function navigationGroups(items: NavItem[]): { labelKey?: MessageKey; items: NavItem[] }[] {
+  const supervisor = items.some((item) => item.to === '/encadrement');
+  const groups: { labelKey?: MessageKey; paths: string[] }[] = [
+    { paths: ['/'] },
+    {
+      labelKey: supervisor ? 'nav.groupSupervision' : 'nav.groupThesis',
+      paths: supervisor
+        ? ['/encadrement', '/livrables', '/suivi']
+        : ['/objectifs', '/livrables', '/remarques'],
+    },
+    { labelKey: 'nav.groupExchanges', paths: ['/reunions', '/messagerie'] },
+    { labelKey: 'nav.groupResearch', paths: ['/ressources', '/veille', '/radar', '/portfolio'] },
+  ];
+  return groups
+    .map(({ labelKey, paths }) => ({
+      labelKey,
+      items: paths.flatMap((path) => items.filter((item) => item.to === path)),
+    }))
+    .filter((group) => group.items.length > 0);
+}
+
 export function navItemForPath(
   pathname: string,
   items: NavItem[] = NAV_ITEMS,

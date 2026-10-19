@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { cleanup, render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { LocaleProvider } from '../../i18n/LocaleContext';
@@ -186,6 +187,38 @@ describe('remarks pages', () => {
     expect(screen.getByText(/Student’s turn/)).toBeInTheDocument();
     expect(screen.queryByText('High')).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'New remark' })).not.toBeInTheDocument();
+  });
+
+  it('filters from the workflow and keyboard while keeping the search', async () => {
+    const user = userEvent.setup();
+    const urls: string[] = [];
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (input: RequestInfo | URL) => {
+        const url = String(input);
+        urls.push(url);
+        return json(url.includes('/dashboard') ? dashboard() : { remarks: [listedRemark()] });
+      }),
+    );
+    renderAt('/remarques?search=protocole', <DoctoralRemarksPage />);
+    await screen.findByText('Preciser la methodologie');
+    await user.click(screen.getByRole('button', { name: /^In progress/ }));
+    expect(screen.getByRole('tab', { name: 'In progress' })).toHaveAttribute(
+      'aria-selected',
+      'true',
+    );
+    expect(screen.getByRole('textbox', { name: /Search/ })).toHaveValue('protocole');
+    expect(
+      urls.some((url) => url.includes('status=IN_PROGRESS') && url.includes('search=protocole')),
+    ).toBe(true);
+    screen.getByRole('tab', { name: 'In progress' }).focus();
+    await user.keyboard('{End}');
+    expect(screen.getByRole('tab', { name: 'Closed' })).toHaveAttribute('aria-selected', 'true');
+    await user.keyboard('{Home}');
+    expect(screen.getByRole('tab', { name: 'All' })).toHaveAttribute('aria-selected', 'true');
+    const latest = urls.at(-1) ?? '';
+    expect(latest).toContain('search=protocole');
+    expect(latest).not.toContain('status=');
   });
 
   it('lets the doctoral student mark a correction', async () => {

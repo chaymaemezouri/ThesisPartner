@@ -38,7 +38,6 @@ export function DoctoralDeliverablesPage() {
         <DeliverablesWorkspace
           thesisId={dashboard.data.thesis.id}
           canCreate
-          tabsAside
           detailPath={(deliverableId) => `/livrables/${deliverableId}`}
         />
       ) : null}

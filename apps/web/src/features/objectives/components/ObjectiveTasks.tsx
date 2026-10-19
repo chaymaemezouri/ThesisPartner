@@ -147,7 +147,7 @@ export function ObjectiveTasks({
                       aria-pressed={isSelected}
                       aria-label={task.title}
                       onClick={() => openStep(task.id, 'tasks')}
-                      className="min-w-0 max-w-full truncate text-left"
+                      className="min-w-0 flex-1 truncate text-left"
                     >
                       <span
                         className={`block break-words text-xs font-medium text-ink ${task.status === 'CANCELLED' ? 'text-muted line-through' : ''}`}
@@ -162,31 +162,33 @@ export function ObjectiveTasks({
                         </span>
                       ) : null}
                     </button>
-                    <WorkIcon
-                      label={t('objectives.work.stepDeliverable')}
-                      icon="deliverables"
-                      pressed={isSelected && panel === 'files'}
-                      onClick={() => openStep(task.id, 'files')}
-                    />
-                    <WorkIcon
-                      label={t('objectives.work.viewTasks')}
-                      icon="objectives"
-                      pressed={isSelected && panel === 'tasks'}
-                      onClick={() => openStep(task.id, 'tasks')}
-                    />
-                    <WorkIcon
-                      label={t('objectives.work.viewRemarks')}
-                      icon="remarks"
-                      pressed={isSelected && panel === 'remarks'}
-                      onClick={() => openStep(task.id, 'remarks')}
-                    />
-                    <WorkCount
-                      label={t('objectives.work.taskCount', { count: task.workCount })}
-                      count={task.workCount}
-                      pressed={isSelected && panel === 'tasks'}
-                      onClick={() => openStep(task.id, 'tasks')}
-                    />
-                    <span className="ml-auto shrink-0 text-xs font-semibold tabular-nums text-warn">
+                    <span className="ml-auto flex shrink-0 items-center gap-2">
+                      <WorkIcon
+                        label={t('objectives.work.stepDeliverable')}
+                        icon="deliverables"
+                        pressed={isSelected && panel === 'files'}
+                        onClick={() => openStep(task.id, 'files')}
+                      />
+                      <WorkIcon
+                        label={t('objectives.work.viewTasks')}
+                        icon="objectives"
+                        pressed={isSelected && panel === 'tasks'}
+                        onClick={() => openStep(task.id, 'tasks')}
+                      />
+                      <WorkIcon
+                        label={t('objectives.work.viewRemarks')}
+                        icon="remarks"
+                        pressed={isSelected && panel === 'remarks'}
+                        onClick={() => openStep(task.id, 'remarks')}
+                      />
+                      <WorkCount
+                        label={t('objectives.work.taskCount', { count: task.workCount })}
+                        count={task.workCount}
+                        pressed={isSelected && panel === 'tasks'}
+                        onClick={() => openStep(task.id, 'tasks')}
+                      />
+                    </span>
+                    <span className="shrink-0 text-xs font-semibold tabular-nums text-warn">
                       {stepProgress(task.status)} %
                     </span>
                     {canManage && !frozen ? (

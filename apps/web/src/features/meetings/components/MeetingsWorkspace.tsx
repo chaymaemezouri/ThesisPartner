@@ -32,7 +32,7 @@ export function MeetingsWorkspace({
   return (
     <div className="min-w-0">
       {canCreate || canRequest ? (
-        <div className="mb-3 flex justify-end gap-2">
+        <div className="mb-4 flex flex-wrap justify-end gap-3">
           {canRequest ? (
             <IconAction
               label={t('meetings.request')}

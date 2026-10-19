@@ -1,6 +1,8 @@
 import { EmptyState, Modal, Skeleton } from '@thesispartner/ui';
+import { Icon } from '../../../components/Icon';
+import type { IconName } from '../../../routes/nav';
 import { IconAction } from '../../../components/IconAction';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useT } from '../../../i18n/LocaleContext';
 import { useDeliverables } from '../../deliverables/hooks/use-deliverables';
@@ -9,8 +11,17 @@ import { QueryError } from '../../objectives/components/QueryError';
 import { useCreateRemark, useRemarks } from '../hooks/use-remarks';
 import { filtersFromSearch } from '../keys';
 import { REMARK_TAB_IDS, type RemarkTab } from '../labels';
+import { REMARK_STATUS_STYLE } from '../presentation';
 import { RemarkForm } from './RemarkForm';
 import { RemarkList } from './RemarkList';
+
+const TAB_ICON = {
+  all: 'remarks',
+  OPEN: 'messages',
+  IN_PROGRESS: 'pencil',
+  RESOLVED: 'portfolio',
+  CLOSED: 'library',
+} satisfies Record<RemarkTab, IconName>;
 
 export function RemarksWorkspace({
   thesisId,
@@ -39,6 +50,15 @@ export function RemarksWorkspace({
   const create = useCreateRemark(thesisId);
   const [creating, setCreating] = useState(false);
   const tab = tabFromStatus(filters.status);
+  const [desktop, setDesktop] = useState(false);
+  useEffect(() => {
+    if (typeof window.matchMedia !== 'function') return;
+    const media = window.matchMedia('(min-width: 768px)');
+    const updateLayout = () => setDesktop(media.matches);
+    updateLayout();
+    media.addEventListener('change', updateLayout);
+    return () => media.removeEventListener('change', updateLayout);
+  }, []);
   const tabs = REMARK_TAB_IDS.map((id) => ({
     id,
     label: t(`remarks.tabs.${id}`),
@@ -57,34 +77,56 @@ export function RemarksWorkspace({
 
   const statusTabs = (
     <div
-      className={
-        tabsAside
-          ? 'flex gap-0.5 overflow-x-auto rounded-md border border-line bg-surface p-1.5 shadow-control md:sticky md:top-20 md:flex-col md:overflow-visible [scrollbar-width:none] [&::-webkit-scrollbar]:hidden'
-          : 'flex min-w-0 flex-1 gap-1 overflow-x-auto rounded-md border border-line bg-canvas p-1 shadow-control [scrollbar-width:none] [&::-webkit-scrollbar]:hidden'
-      }
+      className={`flex min-w-0 gap-1 overflow-x-auto rounded-[12px] border border-line bg-surface p-1.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${tabsAside ? 'md:flex-col md:overflow-visible' : ''}`}
       role="tablist"
       aria-label={t('remarks.title')}
+      aria-orientation={tabsAside && desktop ? 'vertical' : 'horizontal'}
     >
-      {tabs.map((item) => (
-        <button
-          key={item.id}
-          type="button"
-          role="tab"
-          aria-selected={tab === item.id}
-          className={
-            tabsAside
-              ? item.id === tab
-                ? 'shrink-0 rounded-md bg-brand-soft px-3 py-2 text-left text-sm font-semibold text-brand md:w-full'
-                : 'shrink-0 rounded-md px-3 py-2 text-left text-sm font-medium text-muted transition-colors hover:bg-brand-soft hover:text-brand md:w-full'
-              : item.id === tab
-                ? 'shrink-0 whitespace-nowrap rounded-md bg-surface px-2.5 py-1 text-xs font-semibold text-ink shadow-[0_1px_2px_rgba(15,23,42,0.06)] sm:text-sm'
-                : 'shrink-0 whitespace-nowrap rounded-md px-2.5 py-1 text-xs text-muted hover:text-ink sm:text-sm'
-          }
-          onClick={() => update({ status: item.id === 'all' ? null : item.id })}
-        >
-          {item.label}
-        </button>
-      ))}
+      {tabs.map((item, index) => {
+        const selected = tab === item.id;
+        const style = REMARK_STATUS_STYLE[item.id === 'all' ? 'OPEN' : item.id];
+        return (
+          <button
+            key={item.id}
+            type="button"
+            role="tab"
+            aria-selected={selected}
+            tabIndex={selected ? 0 : -1}
+            className={`flex shrink-0 items-center gap-2.5 whitespace-nowrap rounded-lg border px-2.5 py-2 text-left text-sm transition-colors ${tabsAside ? 'md:w-full' : ''} ${selected ? `${style.edge} ${style.wash} ${style.ink} font-medium` : 'border-transparent text-muted hover:bg-canvas hover:text-ink'}`}
+            onClick={() => update({ status: item.id === 'all' ? null : item.id })}
+            onKeyDown={(event) => {
+              if (
+                !['ArrowRight', 'ArrowDown', 'ArrowLeft', 'ArrowUp', 'Home', 'End'].includes(
+                  event.key,
+                )
+              )
+                return;
+              event.preventDefault();
+              const next =
+                event.key === 'Home'
+                  ? 0
+                  : event.key === 'End'
+                    ? tabs.length - 1
+                    : (index +
+                        (event.key === 'ArrowRight' || event.key === 'ArrowDown' ? 1 : -1) +
+                        tabs.length) %
+                      tabs.length;
+              const nextTab = tabs[next];
+              if (nextTab) update({ status: nextTab.id === 'all' ? null : nextTab.id });
+              event.currentTarget.parentElement
+                ?.querySelectorAll<HTMLButtonElement>('[role="tab"]')
+                [next]?.focus();
+            }}
+          >
+            <span
+              className={`grid h-6 w-6 shrink-0 place-items-center rounded-md ${style.soft} ${style.ink}`}
+            >
+              <Icon name={TAB_ICON[item.id]} className="h-3.5 w-3.5" />
+            </span>
+            {item.label}
+          </button>
+        );
+      })}
     </div>
   );
 
@@ -94,42 +136,64 @@ export function RemarksWorkspace({
         tabsAside ? 'grid items-start gap-4 md:grid-cols-[11rem_minmax(0,1fr)]' : 'min-w-0'
       }
     >
-      {tabsAside ? <div className="md:col-start-1 md:row-start-1">{statusTabs}</div> : null}
+      {tabsAside ? (
+        <div className="min-w-0 md:sticky md:top-20 md:col-start-1 md:row-start-1">
+          {statusTabs}
+        </div>
+      ) : null}
       <div className={tabsAside ? 'min-w-0 md:col-start-2 md:row-start-1' : undefined}>
         <ol
-          className="mb-3 grid gap-2 rounded-md border border-line bg-surface p-2.5 sm:grid-cols-4"
+          className="mb-4 grid grid-cols-2 gap-1 rounded-[12px] border border-line bg-surface p-2 sm:grid-cols-4"
           aria-label={t('remarks.cycleLabel')}
         >
-          {(['OPEN', 'IN_PROGRESS', 'RESOLVED', 'CLOSED'] as const).map((status, index) => (
-            <li key={status} className="min-w-0">
-              <p className="text-[11px] font-medium text-ink">
-                <span className="mr-1 tabular-nums text-muted">{index + 1}.</span>
-                {t(`remarks.statusLabel.${status}`)}
-              </p>
-              <p className="mt-0.5 text-[11px] leading-snug text-muted">
-                {canCreate ? t(`remarks.cycle.${status}`) : t(`remarks.cycleStudent.${status}`)}
-              </p>
-            </li>
-          ))}
+          {(['OPEN', 'IN_PROGRESS', 'RESOLVED', 'CLOSED'] as const).map((status, index) => {
+            const selected = tab === status;
+            const style = REMARK_STATUS_STYLE[status];
+            return (
+              <li key={status} className="min-w-0">
+                <button
+                  type="button"
+                  aria-pressed={selected}
+                  className={`flex h-full w-full items-start gap-2.5 rounded-lg border p-2.5 text-left transition-colors ${style.ink} ${selected ? `${style.edge} ${style.soft} ring-1 ring-current/10` : `${style.wash} border-transparent hover:border-current/15`}`}
+                  onClick={() => update({ status })}
+                >
+                  <span
+                    aria-hidden="true"
+                    className={`grid h-6 w-6 shrink-0 place-items-center rounded-full border bg-surface/85 text-[11px] font-medium tabular-nums ${style.edge} ${style.ink}`}
+                  >
+                    {index + 1}
+                  </span>
+                  <span className="min-w-0">
+                    <span className={`block text-[11px] font-medium ${style.ink}`}>
+                      {t(`remarks.statusLabel.${status}`)}
+                    </span>
+                    <span className="mt-1 block text-[11px] leading-relaxed text-muted">
+                      {canCreate
+                        ? t(`remarks.cycle.${status}`)
+                        : t(`remarks.cycleStudent.${status}`)}
+                    </span>
+                  </span>
+                </button>
+              </li>
+            );
+          })}
         </ol>
-        <div className="flex flex-col gap-2.5">
-          <div className="flex items-center gap-2">
-            {tabsAside ? null : statusTabs}
-            {canCreate ? (
-              <IconAction label={t('remarks.new')} icon="plus" onClick={() => setCreating(true)} />
-            ) : null}
-          </div>
-          <label className="min-w-0 text-xs">
+        <div className="flex flex-wrap items-center gap-3">
+          {!tabsAside ? <div className="w-full">{statusTabs}</div> : null}
+          <label className="min-w-40 flex-1 text-xs">
             <span className="sr-only">{t('common.search')}</span>
             <input
               value={params.get('search') ?? ''}
               placeholder={t('common.search')}
-              className="w-full rounded-md border border-line bg-surface px-2.5 py-1.5 text-xs text-ink sm:text-sm"
+              className="h-9 w-full rounded-lg border border-line bg-surface px-3 text-xs text-ink outline-none transition-[border-color,box-shadow] placeholder:text-muted/70 focus:border-brand/50 focus:shadow-[0_0_0_3px_rgba(36,87,167,0.08)] sm:text-sm"
               onChange={(event) =>
                 update({ search: event.target.value.trim() ? event.target.value : null })
               }
             />
           </label>
+          {canCreate ? (
+            <IconAction label={t('remarks.new')} icon="plus" onClick={() => setCreating(true)} />
+          ) : null}
         </div>
         {remarks.isLoading ? (
           <div className="mt-4" aria-busy="true">

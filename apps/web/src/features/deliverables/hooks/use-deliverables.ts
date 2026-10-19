@@ -40,6 +40,7 @@ function refresh(
         ]
       : []),
     queryClient.invalidateQueries({ queryKey: ['dashboard'] }),
+    queryClient.invalidateQueries({ queryKey: ['supervision'] }),
     queryClient.invalidateQueries({ queryKey: ['objectives', 'detail', thesisId] }),
   ]);
 }

@@ -4,7 +4,9 @@ import { supervisedThesisSchema } from '@thesispartner/validation';
 import { Avatar, EmptyState, Input, Select, Skeleton } from '@thesispartner/ui';
 import type { z } from 'zod';
 import { Icon } from '../../components/Icon';
-import { useT } from '../../i18n/LocaleContext';
+import { useLocale, useT } from '../../i18n/LocaleContext';
+import { formatShortDay } from '../dashboard/labels';
+import { utcToday } from '../dashboard/format';
 import { QueryError } from '../objectives/components/QueryError';
 import { useSupervisedTheses } from './hooks/use-supervised-theses';
 import { portraitUrl } from './temporary-portraits';
@@ -315,9 +317,73 @@ function ListCard({ thesis, name }: { thesis: SupervisedThesis; name: string }) 
               {t('supervision.openSpace')}
             </Link>
           </div>
+          <StudentPriorities thesis={thesis} />
         </div>
       </div>
     </li>
+  );
+}
+
+function StudentPriorities({ thesis }: { thesis: SupervisedThesis }) {
+  const t = useT();
+  const { dateLocale } = useLocale();
+  const deadline = thesis.nextDeadline;
+  const base = `/encadrement/${thesis.thesisId}`;
+  const deadlineUrl = deadline
+    ? deadline.kind === 'OBJECTIVE'
+      ? `${base}/objectifs/${deadline.id}`
+      : deadline.kind === 'DELIVERABLE'
+        ? `${base}/livrables/${deadline.id}`
+        : deadline.kind === 'MEETING'
+          ? `${base}/reunions/${deadline.id}`
+          : `${base}/profil`
+    : null;
+  return (
+    <div className="mt-3 space-y-3 rounded-md border border-line bg-surface p-3 text-left">
+      <div>
+        <p className="text-xs font-medium text-muted">{t('supervision.nextDeadline')}</p>
+        {deadline && deadlineUrl ? (
+          <Link
+            to={deadlineUrl}
+            className="mt-1 block text-sm text-ink hover:text-brand hover:underline"
+          >
+            <span className="block break-words">
+              {deadline.kind === 'EXPECTED_DEFENSE'
+                ? t('dashboard.kind.EXPECTED_DEFENSE')
+                : deadline.title}
+            </span>
+            <time
+              dateTime={deadline.occursOn}
+              className={`mt-1 block text-xs ${deadline.occursOn < utcToday() ? 'text-danger' : 'text-muted'}`}
+            >
+              {formatShortDay(deadline.occursOn, dateLocale)}
+            </time>
+          </Link>
+        ) : (
+          <p className="mt-1 text-xs text-muted">{t('supervision.noDeadline')}</p>
+        )}
+      </div>
+      <Link
+        to={`${base}/livrables?status=SUBMITTED`}
+        className="block text-xs font-medium text-brand hover:underline"
+      >
+        {t('supervision.pendingCount', { count: thesis.pendingValidationCount })}
+      </Link>
+      <div className="border-t border-line pt-2">
+        <p className="text-xs font-medium text-muted">{t('supervision.lastActivity')}</p>
+        {thesis.lastActivityAt ? (
+          <time dateTime={thesis.lastActivityAt} className="mt-1 block text-xs text-ink">
+            {new Date(thesis.lastActivityAt).toLocaleDateString(dateLocale, {
+              day: 'numeric',
+              month: 'short',
+              year: 'numeric',
+            })}
+          </time>
+        ) : (
+          <p className="mt-1 text-xs text-muted">{t('supervision.noActivity')}</p>
+        )}
+      </div>
+    </div>
   );
 }
 
