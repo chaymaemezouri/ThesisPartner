@@ -37,10 +37,15 @@ export function useStepTaskMutations(thesisId: string, objectiveId: string, task
     }),
     update: useMutation({
       mutationFn: (input: { id: string; title: string; description?: string }) =>
-        apiSend(`${base}/${input.id}`, stepTaskSchema, {
-          title: input.title,
-          description: input.description,
-        }, 'PATCH'),
+        apiSend(
+          `${base}/${input.id}`,
+          stepTaskSchema,
+          {
+            title: input.title,
+            description: input.description,
+          },
+          'PATCH',
+        ),
       onSuccess: refresh,
     }),
     remove: useMutation({

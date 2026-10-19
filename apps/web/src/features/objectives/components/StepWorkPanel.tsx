@@ -12,17 +12,10 @@ import { useRef, useState } from 'react';
 import { apiGet, apiSend, apiUpload } from '../../../api/client';
 import { useT } from '../../../i18n/LocaleContext';
 import type { MessageKey } from '../../../i18n/translate';
-import {
-  useDeliverableVersions,
-  useDeliverables,
-} from '../../deliverables/hooks/use-deliverables';
+import { useDeliverableVersions, useDeliverables } from '../../deliverables/hooks/use-deliverables';
 import { fileErrorMessage } from '../../deliverables/components/VersionFile';
 import type { Task } from '../hooks/use-tasks';
-import {
-  useStepTaskMutations,
-  useStepTasks,
-  type StepTask,
-} from '../hooks/use-step-tasks';
+import { useStepTaskMutations, useStepTasks, type StepTask } from '../hooks/use-step-tasks';
 import { QueryError, queryErrorMessage } from './QueryError';
 
 export type StepPanel = 'tasks' | 'files' | 'remarks';
@@ -103,7 +96,10 @@ export function StepWorkPanel({
   const work = useStepTasks(thesisId, objectiveId, step.id);
 
   return (
-    <section className="mt-2 rounded-xl border border-line bg-surface p-3" aria-label={t('objectives.work.actions')}>
+    <section
+      className="mt-2 rounded-xl border border-line bg-surface p-3"
+      aria-label={t('objectives.work.actions')}
+    >
       {work.isError ? <QueryError error={work.error} /> : null}
       {panel === 'tasks' ? (
         <TaskList
@@ -116,7 +112,12 @@ export function StepWorkPanel({
         />
       ) : null}
       {panel === 'files' ? (
-        <StepFiles thesisId={thesisId} objectiveId={objectiveId} step={step} canEdit={canEditStep} />
+        <StepFiles
+          thesisId={thesisId}
+          objectiveId={objectiveId}
+          step={step}
+          canEdit={canEditStep}
+        />
       ) : null}
       {panel === 'remarks' ? (
         <RemarkList remarks={work.data?.remarks ?? []} empty={t('objectives.work.emptyRemarks')} />
@@ -240,14 +241,18 @@ function TaskList({
             {section ? (
               <div className="mt-2 border-t border-line pt-2">
                 {task.description ? <p className="text-sm text-muted">{task.description}</p> : null}
-                {task.reviewMessage ? <p className="mt-1 text-sm text-ink">{task.reviewMessage}</p> : null}
+                {task.reviewMessage ? (
+                  <p className="mt-1 text-sm text-ink">{task.reviewMessage}</p>
+                ) : null}
                 {section === 'files' ? (
                   <FileList
                     thesisId={thesisId}
                     deliverableId={task.deliverableId}
                     files={task.files}
                     canEdit={editable}
-                    onRemove={(versionId) => mutations.removeFile.mutate({ id: task.id, versionId })}
+                    onRemove={(versionId) =>
+                      mutations.removeFile.mutate({ id: task.id, versionId })
+                    }
                     onAttach={async (file) => {
                       if (!task.deliverableId) return;
                       await attachFile(thesisId, task.deliverableId, file);
@@ -271,7 +276,10 @@ function TaskList({
                 ) : null}
                 <div className="mt-3 flex flex-wrap gap-2">
                   {editable ? (
-                    <Button disabled={mutations.submit.isPending} onClick={() => mutations.submit.mutate(task.id)}>
+                    <Button
+                      disabled={mutations.submit.isPending}
+                      onClick={() => mutations.submit.mutate(task.id)}
+                    >
                       {t('objectives.work.submit')}
                     </Button>
                   ) : null}
@@ -335,13 +343,32 @@ function TaskEditor({
         void onSave({ title, description }, file ?? undefined);
       }}
     >
-      <Input id={`work-title-${initial?.id ?? 'new'}`} label={t('objectives.form.title')} value={title} onChange={(event) => setTitle(event.target.value)} required />
-      <Textarea id={`work-description-${initial?.id ?? 'new'}`} label={t('objectives.form.description')} value={description} onChange={(event) => setDescription(event.target.value)} />
+      <Input
+        id={`work-title-${initial?.id ?? 'new'}`}
+        label={t('objectives.form.title')}
+        value={title}
+        onChange={(event) => setTitle(event.target.value)}
+        required
+      />
+      <Textarea
+        id={`work-description-${initial?.id ?? 'new'}`}
+        label={t('objectives.form.description')}
+        value={description}
+        onChange={(event) => setDescription(event.target.value)}
+      />
       {initial ? null : <FilePicker file={file} onFile={setFile} />}
-      {error ? <p className="text-sm text-danger" role="alert">{queryErrorMessage(error, t)}</p> : null}
+      {error ? (
+        <p className="text-sm text-danger" role="alert">
+          {queryErrorMessage(error, t)}
+        </p>
+      ) : null}
       <div className="flex flex-wrap gap-2">
-        <Button type="submit" disabled={pending}>{t('objectives.work.save')}</Button>
-        <Button type="button" variant="secondary" onClick={onCancel}>{t('common.cancel')}</Button>
+        <Button type="submit" disabled={pending}>
+          {t('objectives.work.save')}
+        </Button>
+        <Button type="button" variant="secondary" onClick={onCancel}>
+          {t('common.cancel')}
+        </Button>
       </div>
     </form>
   );
@@ -357,34 +384,63 @@ function ReviewActions({
   pending: boolean;
   error: unknown;
   canExamine: boolean;
-  onDecision: (decision: 'IN_REVIEW' | 'VALIDATED' | 'CHANGES_REQUESTED' | 'REJECTED', message?: string) => void;
+  onDecision: (
+    decision: 'IN_REVIEW' | 'VALIDATED' | 'CHANGES_REQUESTED' | 'REJECTED',
+    message?: string,
+  ) => void;
   onRemark: (message: string) => void;
 }) {
   const t = useT();
   const [message, setMessage] = useState('');
   return (
     <div className="grid w-full gap-2">
-      <Textarea id="work-review" label={t('objectives.work.addRemark')} value={message} placeholder={t('objectives.work.remarkPlaceholder')} onChange={(event) => setMessage(event.target.value)} />
+      <Textarea
+        id="work-review"
+        label={t('objectives.work.addRemark')}
+        value={message}
+        placeholder={t('objectives.work.remarkPlaceholder')}
+        onChange={(event) => setMessage(event.target.value)}
+      />
       <div className="flex flex-wrap gap-2">
         {canExamine ? (
-          <Button variant="secondary" disabled={pending} onClick={() => onDecision('IN_REVIEW', message)}>
+          <Button
+            variant="secondary"
+            disabled={pending}
+            onClick={() => onDecision('IN_REVIEW', message)}
+          >
             {t('objectives.work.examine')}
           </Button>
         ) : null}
         <Button disabled={pending} onClick={() => onDecision('VALIDATED', message)}>
           {t('objectives.work.validate')}
         </Button>
-        <Button variant="secondary" disabled={pending} onClick={() => onDecision('CHANGES_REQUESTED', message)}>
+        <Button
+          variant="secondary"
+          disabled={pending}
+          onClick={() => onDecision('CHANGES_REQUESTED', message)}
+        >
           {t('objectives.work.requestChanges')}
         </Button>
-        <Button variant="secondary" disabled={pending} onClick={() => onDecision('REJECTED', message)}>
+        <Button
+          variant="secondary"
+          disabled={pending}
+          onClick={() => onDecision('REJECTED', message)}
+        >
           {t('objectives.work.reject')}
         </Button>
-        <Button variant="secondary" disabled={pending || message.trim().length === 0} onClick={() => onRemark(message.trim())}>
+        <Button
+          variant="secondary"
+          disabled={pending || message.trim().length === 0}
+          onClick={() => onRemark(message.trim())}
+        >
           {t('objectives.work.addRemark')}
         </Button>
       </div>
-      {error ? <p className="text-sm text-danger" role="alert">{queryErrorMessage(error, t)}</p> : null}
+      {error ? (
+        <p className="text-sm text-danger" role="alert">
+          {queryErrorMessage(error, t)}
+        </p>
+      ) : null}
     </div>
   );
 }
@@ -408,7 +464,14 @@ function StepFiles({
   const mutations = useStepTaskMutations(thesisId, objectiveId, step.id);
   const files = (versions.data?.versions ?? []).flatMap((version) =>
     version.file
-      ? [{ versionId: version.id, versionNumber: version.versionNumber, originalName: version.file.originalName, mimeType: version.file.mimeType }]
+      ? [
+          {
+            versionId: version.id,
+            versionNumber: version.versionNumber,
+            originalName: version.file.originalName,
+            mimeType: version.file.mimeType,
+          },
+        ]
       : [],
   );
   return (
@@ -427,7 +490,9 @@ function StepFiles({
           await queryClient.invalidateQueries({ queryKey: ['deliverables', 'versions', thesisId] });
         }}
       />
-      {files.length === 0 ? <p className="mt-2 text-sm text-muted">{t('objectives.work.emptyFiles')}</p> : null}
+      {files.length === 0 ? (
+        <p className="mt-2 text-sm text-muted">{t('objectives.work.emptyFiles')}</p>
+      ) : null}
     </div>
   );
 }
@@ -442,7 +507,12 @@ function FileList({
 }: {
   thesisId: string;
   deliverableId: string | null;
-  files: Array<{ versionId: string; versionNumber: number; originalName: string; mimeType: string }>;
+  files: Array<{
+    versionId: string;
+    versionNumber: number;
+    originalName: string;
+    mimeType: string;
+  }>;
   canEdit: boolean;
   onRemove: (versionId: string) => void;
   onAttach: (file: File) => Promise<void>;
@@ -499,7 +569,11 @@ function FileList({
           </Button>
         </div>
       ) : null}
-      {error ? <p className="mt-2 text-sm text-danger" role="alert">{error}</p> : null}
+      {error ? (
+        <p className="mt-2 text-sm text-danger" role="alert">
+          {error}
+        </p>
+      ) : null}
     </div>
   );
 }
@@ -565,7 +639,9 @@ function RemarkList({
     <ul className="mt-2 grid gap-2">
       {remarks.map((remark) => (
         <li key={remark.id} className="rounded-md border border-line bg-canvas px-3 py-2">
-          <p className="text-xs font-medium text-muted">{remark.authorName} · {remark.title}</p>
+          <p className="text-xs font-medium text-muted">
+            {remark.authorName} · {remark.title}
+          </p>
           <p className="mt-1 text-sm text-ink">{remark.message}</p>
         </li>
       ))}

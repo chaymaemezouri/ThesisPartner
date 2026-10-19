@@ -108,7 +108,13 @@ export function ResourcesPage() {
             >
               <Icon name="library" className="h-4 w-4" />
             </span>
-            <span className={kind === 'PROPOSED' ? 'text-sm font-semibold text-brand' : 'text-sm font-semibold text-ink'}>
+            <span
+              className={
+                kind === 'PROPOSED'
+                  ? 'text-sm font-semibold text-brand'
+                  : 'text-sm font-semibold text-ink'
+              }
+            >
               {t('resources.proposed.title')}
             </span>
           </button>
@@ -168,109 +174,109 @@ export function ResourcesPage() {
             </div>
           ) : null}
           {kind !== 'PROPOSED' ? (
-          <>
-          <div className="mb-3 flex flex-wrap items-end justify-between gap-3">
-            <div className="min-w-0">
-              <h2 className="text-base font-semibold text-ink">{t(KIND_KEY[kind])}</h2>
-              <p className="mt-0.5 text-sm text-muted">{t(SHELF_KEY[kind])}</p>
-            </div>
-            <div className="flex w-full items-center gap-2 sm:w-auto">
-              <input
-                type="search"
-                value={search}
-                placeholder={t('common.search')}
-                aria-label={t('common.search')}
-                onChange={(event) => setSearch(event.target.value)}
-                className="h-9 min-w-0 flex-1 rounded-md border border-line bg-surface px-3 text-sm text-ink shadow-control outline-none placeholder:text-muted focus:border-brand sm:w-56"
-              />
-              {canShare ? (
-                <IconAction
-                  label={t(ADD_KEY[kind])}
-                  icon="plus"
-                  onClick={() => setCreating(true)}
-                />
+            <>
+              <div className="mb-3 flex flex-wrap items-end justify-between gap-3">
+                <div className="min-w-0">
+                  <h2 className="text-base font-semibold text-ink">{t(KIND_KEY[kind])}</h2>
+                  <p className="mt-0.5 text-sm text-muted">{t(SHELF_KEY[kind])}</p>
+                </div>
+                <div className="flex w-full items-center gap-2 sm:w-auto">
+                  <input
+                    type="search"
+                    value={search}
+                    placeholder={t('common.search')}
+                    aria-label={t('common.search')}
+                    onChange={(event) => setSearch(event.target.value)}
+                    className="h-9 min-w-0 flex-1 rounded-md border border-line bg-surface px-3 text-sm text-ink shadow-control outline-none placeholder:text-muted focus:border-brand sm:w-56"
+                  />
+                  {canShare ? (
+                    <IconAction
+                      label={t(ADD_KEY[kind])}
+                      icon="plus"
+                      onClick={() => setCreating(true)}
+                    />
+                  ) : null}
+                </div>
+              </div>
+
+              {library.isLoading ? (
+                <div className="flex flex-col gap-2" aria-busy="true">
+                  <Skeleton className="h-20" />
+                  <Skeleton className="h-20" />
+                </div>
               ) : null}
-            </div>
-          </div>
+              {library.isError ? <QueryError error={library.error} /> : null}
 
-          {library.isLoading ? (
-            <div className="flex flex-col gap-2" aria-busy="true">
-              <Skeleton className="h-20" />
-              <Skeleton className="h-20" />
-            </div>
-          ) : null}
-          {library.isError ? <QueryError error={library.error} /> : null}
-
-          {library.data && onShelf.length === 0 ? (
-            <div className="rounded-md border border-dashed border-line bg-surface px-4 py-10 text-center">
-              <span className="mx-auto grid h-11 w-11 place-items-center rounded-md bg-brand-soft text-brand">
-                <Icon name={SHELF_ICON[kind]} className="h-5 w-5" />
-              </span>
-              <p className="mt-3 text-sm font-medium text-ink">{t(EMPTY_KEY[kind])}</p>
-            </div>
-          ) : null}
-
-          {library.data && onShelf.length > 0 && visible.length === 0 ? (
-            <p className="text-sm text-muted">{t('resources.filteredEmpty')}</p>
-          ) : null}
-
-          {visible.length > 0 ? (
-            <ul className="divide-y divide-line overflow-hidden rounded-md border border-line bg-surface shadow-card">
-              {visible.map((item) => (
-                <li key={item.id} className="flex items-start gap-3 px-3 py-3">
-                  <span className="mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-md bg-brand-soft text-brand">
-                    <Icon name={SHELF_ICON[item.kind]} className="h-4 w-4" />
+              {library.data && onShelf.length === 0 ? (
+                <div className="rounded-md border border-dashed border-line bg-surface px-4 py-10 text-center">
+                  <span className="mx-auto grid h-11 w-11 place-items-center rounded-md bg-brand-soft text-brand">
+                    <Icon name={SHELF_ICON[kind]} className="h-5 w-5" />
                   </span>
-                  <div className="min-w-0 flex-1">
-                    <h3 className="text-sm font-semibold text-ink">{item.title}</h3>
-                    {item.source ? (
-                      <p className="mt-0.5 text-xs font-medium text-brand">{item.source}</p>
-                    ) : null}
-                    {item.summary ? (
-                      <p className="mt-1 text-sm leading-relaxed text-muted">{item.summary}</p>
-                    ) : null}
-                    <p className="mt-1.5 text-[11px] text-muted">
-                      <time dateTime={item.createdAt}>
-                        {formatShortDay(item.createdAt.slice(0, 10), dateLocale)}
-                      </time>
-                      {!canShare && item.authorName
-                        ? ` · ${t('resources.sharedBy', { name: item.authorName })}`
-                        : null}
-                    </p>
-                  </div>
-                  <div className="flex shrink-0 items-center gap-1">
-                    {item.url ? (
-                      <a
-                        href={item.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="mr-1 rounded-md bg-brand px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-brand-strong"
-                      >
-                        {t('resources.open')}
-                      </a>
-                    ) : null}
-                    {canShare ? (
-                      <>
-                        <IconAction
-                          tone="neutral"
-                          icon="pencil"
-                          label={t('resources.edit')}
-                          onClick={() => setEditing(item)}
-                        />
-                        <IconAction
-                          tone="danger"
-                          icon="trash"
-                          label={t('common.delete')}
-                          onClick={() => setPendingDelete(item)}
-                        />
-                      </>
-                    ) : null}
-                  </div>
-                </li>
-              ))}
-            </ul>
-          ) : null}
-          </>
+                  <p className="mt-3 text-sm font-medium text-ink">{t(EMPTY_KEY[kind])}</p>
+                </div>
+              ) : null}
+
+              {library.data && onShelf.length > 0 && visible.length === 0 ? (
+                <p className="text-sm text-muted">{t('resources.filteredEmpty')}</p>
+              ) : null}
+
+              {visible.length > 0 ? (
+                <ul className="divide-y divide-line overflow-hidden rounded-md border border-line bg-surface shadow-card">
+                  {visible.map((item) => (
+                    <li key={item.id} className="flex items-start gap-3 px-3 py-3">
+                      <span className="mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-md bg-brand-soft text-brand">
+                        <Icon name={SHELF_ICON[item.kind]} className="h-4 w-4" />
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <h3 className="text-sm font-semibold text-ink">{item.title}</h3>
+                        {item.source ? (
+                          <p className="mt-0.5 text-xs font-medium text-brand">{item.source}</p>
+                        ) : null}
+                        {item.summary ? (
+                          <p className="mt-1 text-sm leading-relaxed text-muted">{item.summary}</p>
+                        ) : null}
+                        <p className="mt-1.5 text-[11px] text-muted">
+                          <time dateTime={item.createdAt}>
+                            {formatShortDay(item.createdAt.slice(0, 10), dateLocale)}
+                          </time>
+                          {!canShare && item.authorName
+                            ? ` · ${t('resources.sharedBy', { name: item.authorName })}`
+                            : null}
+                        </p>
+                      </div>
+                      <div className="flex shrink-0 items-center gap-1">
+                        {item.url ? (
+                          <a
+                            href={item.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="mr-1 rounded-md bg-brand px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-brand-strong"
+                          >
+                            {t('resources.open')}
+                          </a>
+                        ) : null}
+                        {canShare ? (
+                          <>
+                            <IconAction
+                              tone="neutral"
+                              icon="pencil"
+                              label={t('resources.edit')}
+                              onClick={() => setEditing(item)}
+                            />
+                            <IconAction
+                              tone="danger"
+                              icon="trash"
+                              label={t('common.delete')}
+                              onClick={() => setPendingDelete(item)}
+                            />
+                          </>
+                        ) : null}
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
+            </>
           ) : null}
         </section>
       </div>

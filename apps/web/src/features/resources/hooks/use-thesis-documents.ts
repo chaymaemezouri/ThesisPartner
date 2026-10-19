@@ -56,7 +56,11 @@ export function useThesisDocumentActions(thesisId: string) {
       onSuccess: refresh,
     }),
     review: useMutation({
-      mutationFn: (input: { id: string; decision: 'VALIDATED' | 'CHANGES_REQUESTED'; message?: string }) =>
+      mutationFn: (input: {
+        id: string;
+        decision: 'VALIDATED' | 'CHANGES_REQUESTED';
+        message?: string;
+      }) =>
         apiSend(`${base}/${input.id}/review`, documentDeskSchema, {
           decision: input.decision,
           message: input.message,

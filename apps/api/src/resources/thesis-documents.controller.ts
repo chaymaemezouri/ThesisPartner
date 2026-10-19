@@ -95,7 +95,11 @@ export class ThesisDocumentsController {
       thesisId,
       documentId,
       uploaded
-        ? { path: uploaded.path, originalName: uploaded.originalname, declaredMime: uploaded.mimetype }
+        ? {
+            path: uploaded.path,
+            originalName: uploaded.originalname,
+            declaredMime: uploaded.mimetype,
+          }
         : undefined,
       request.requestId,
     );

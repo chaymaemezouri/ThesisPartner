@@ -381,7 +381,11 @@ export class StepTasksService {
     if (!version) throw new AppException(404, 'NOT_FOUND', 'Resource not found');
     const status = version.deliverable.stepTask?.status;
     if (stepTaskId && status && !canEditStepTask(status)) {
-      throw new AppException(403, 'FORBIDDEN', 'Le livrable d’une tâche soumise ne peut pas être retiré');
+      throw new AppException(
+        403,
+        'FORBIDDEN',
+        'Le livrable d’une tâche soumise ne peut pas être retiré',
+      );
     }
     if (!stepTaskId) {
       const objective = await this.prisma.objective.findFirst({
@@ -448,7 +452,10 @@ export class StepTasksService {
       where: { id: objectiveId, thesisId },
     });
     if (!objective) throw new AppException(404, 'NOT_FOUND', 'Resource not found');
-    const step = await tx.task.findFirst({ where: { id: taskId, objectiveId }, select: { id: true } });
+    const step = await tx.task.findFirst({
+      where: { id: taskId, objectiveId },
+      select: { id: true },
+    });
     if (!step) throw new AppException(404, 'NOT_FOUND', 'Resource not found');
     if (objective.status === 'COMPLETED' || objective.status === 'CANCELLED') {
       throw new AppException(403, 'FORBIDDEN', 'Cet objectif ne peut plus être modifié');

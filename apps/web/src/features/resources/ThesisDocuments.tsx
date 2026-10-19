@@ -42,7 +42,8 @@ export function ThesisDocuments({ canManage }: { canManage: boolean }) {
     if (importance !== 'ALL' && item.importance !== importance) return false;
     if (priority !== 'ALL' && item.priority !== priority) return false;
     if (objectiveId === 'NONE' && item.objectiveId) return false;
-    if (objectiveId !== 'ALL' && objectiveId !== 'NONE' && item.objectiveId !== objectiveId) return false;
+    if (objectiveId !== 'ALL' && objectiveId !== 'NONE' && item.objectiveId !== objectiveId)
+      return false;
     return true;
   });
   const summary = desk.data?.summary;
@@ -98,15 +99,26 @@ export function ThesisDocuments({ canManage }: { canManage: boolean }) {
         </Filter>
         <Filter label={t('resources.proposed.filterStatus')} value={status} onChange={setStatus}>
           <option value="ALL">{t('resources.proposed.filterAll')}</option>
-          {(['TO_READ', 'READ', 'SYNTHESIS_DRAFT', 'SUBMITTED', 'CHANGES_REQUESTED', 'VALIDATED'] as const).map(
-            (id) => (
-              <option key={id} value={id}>
-                {t(`resources.proposed.status.${id}` as MessageKey)}
-              </option>
-            ),
-          )}
+          {(
+            [
+              'TO_READ',
+              'READ',
+              'SYNTHESIS_DRAFT',
+              'SUBMITTED',
+              'CHANGES_REQUESTED',
+              'VALIDATED',
+            ] as const
+          ).map((id) => (
+            <option key={id} value={id}>
+              {t(`resources.proposed.status.${id}` as MessageKey)}
+            </option>
+          ))}
         </Filter>
-        <Filter label={t('resources.proposed.importance')} value={importance} onChange={setImportance}>
+        <Filter
+          label={t('resources.proposed.importance')}
+          value={importance}
+          onChange={setImportance}
+        >
           <option value="ALL">{t('resources.proposed.filterAll')}</option>
           {IMPORTANCE.map((id) => (
             <option key={id} value={id}>
@@ -122,7 +134,11 @@ export function ThesisDocuments({ canManage }: { canManage: boolean }) {
             </option>
           ))}
         </Filter>
-        <Filter label={t('resources.proposed.objective')} value={objectiveId} onChange={setObjectiveId}>
+        <Filter
+          label={t('resources.proposed.objective')}
+          value={objectiveId}
+          onChange={setObjectiveId}
+        >
           <option value="ALL">{t('resources.proposed.filterAll')}</option>
           <option value="NONE">{t('resources.proposed.unassigned')}</option>
           {(desk.data?.objectives ?? []).map((objective) => (
@@ -215,12 +231,18 @@ function DocumentRow({
       {open ? (
         <div className="mt-3 border-t border-line pt-3">
           {item.reference ? <p className="text-sm text-ink">{item.reference}</p> : null}
-          {item.instructions ? <p className="mt-1 text-sm text-muted">{item.instructions}</p> : null}
+          {item.instructions ? (
+            <p className="mt-1 text-sm text-muted">{item.instructions}</p>
+          ) : null}
           {item.access === 'PROTECTED' && !canManage ? (
             <div className="mt-2">
               <p className="text-sm text-warn">{t('resources.proposed.protected')}</p>
               {item.status === 'TO_READ' ? (
-                <Button className="mt-2" variant="secondary" onClick={() => actions.consult.mutate(item.id)}>
+                <Button
+                  className="mt-2"
+                  variant="secondary"
+                  onClick={() => actions.consult.mutate(item.id)}
+                >
                   {t('resources.proposed.consult')}
                 </Button>
               ) : null}
@@ -255,7 +277,9 @@ function DocumentRow({
               ) : null}
             </div>
           )}
-          {item.reviewMessage ? <p className="mt-2 text-sm text-ink">{item.reviewMessage}</p> : null}
+          {item.reviewMessage ? (
+            <p className="mt-2 text-sm text-ink">{item.reviewMessage}</p>
+          ) : null}
           {!canManage && EDITABLE.has(item.status) ? (
             <SynthesisForm thesisId={thesisId} item={item} objectives={objectives} />
           ) : !canManage ? (
@@ -270,7 +294,11 @@ function DocumentRow({
               <Button variant="secondary" onClick={onEdit}>
                 {t('resources.edit')}
               </Button>
-              <Button variant="secondary" disabled={actions.remove.isPending} onClick={() => actions.remove.mutate(item.id)}>
+              <Button
+                variant="secondary"
+                disabled={actions.remove.isPending}
+                onClick={() => actions.remove.mutate(item.id)}
+              >
                 {t('common.delete')}
               </Button>
             </div>
@@ -281,7 +309,11 @@ function DocumentRow({
   );
 }
 
-type DocumentDeskObjectives = Array<{ id: string; title: string; steps: Array<{ id: string; title: string }> }>;
+type DocumentDeskObjectives = Array<{
+  id: string;
+  title: string;
+  steps: Array<{ id: string; title: string }>;
+}>;
 
 function SynthesisForm({
   thesisId,
@@ -303,33 +335,98 @@ function SynthesisForm({
   const [objectiveId, setObjectiveId] = useState(item.objectiveId ?? '');
   const [taskId, setTaskId] = useState(item.taskId ?? '');
   const steps = objectives.find((objective) => objective.id === objectiveId)?.steps ?? [];
-  const body = { summary, methodology, results, limits, thesisLink, exploitation, objectiveId, taskId };
+  const body = {
+    summary,
+    methodology,
+    results,
+    limits,
+    thesisLink,
+    exploitation,
+    objectiveId,
+    taskId,
+  };
   return (
     <form className="mt-3 grid gap-2" onSubmit={(event) => event.preventDefault()}>
-      <Select id={`doc-obj-${item.id}`} label={t('resources.proposed.objective')} value={objectiveId} onChange={(event) => { setObjectiveId(event.target.value); setTaskId(''); }}>
+      <Select
+        id={`doc-obj-${item.id}`}
+        label={t('resources.proposed.objective')}
+        value={objectiveId}
+        onChange={(event) => {
+          setObjectiveId(event.target.value);
+          setTaskId('');
+        }}
+      >
         <option value="">{t('resources.proposed.none')}</option>
         {objectives.map((objective) => (
-          <option key={objective.id} value={objective.id}>{objective.title}</option>
+          <option key={objective.id} value={objective.id}>
+            {objective.title}
+          </option>
         ))}
       </Select>
-      <Select id={`doc-step-${item.id}`} label={t('resources.proposed.step')} value={taskId} onChange={(event) => setTaskId(event.target.value)}>
+      <Select
+        id={`doc-step-${item.id}`}
+        label={t('resources.proposed.step')}
+        value={taskId}
+        onChange={(event) => setTaskId(event.target.value)}
+      >
         <option value="">{t('resources.proposed.none')}</option>
         {steps.map((step) => (
-          <option key={step.id} value={step.id}>{step.title}</option>
+          <option key={step.id} value={step.id}>
+            {step.title}
+          </option>
         ))}
       </Select>
-      <Textarea id={`sum-${item.id}`} label={t('resources.proposed.summary')} value={summary} onChange={(event) => setSummary(event.target.value)} />
-      <Textarea id={`met-${item.id}`} label={t('resources.proposed.methodology')} value={methodology} onChange={(event) => setMethodology(event.target.value)} />
-      <Textarea id={`res-${item.id}`} label={t('resources.proposed.results')} value={results} onChange={(event) => setResults(event.target.value)} />
-      <Textarea id={`lim-${item.id}`} label={t('resources.proposed.limits')} value={limits} onChange={(event) => setLimits(event.target.value)} />
-      <Textarea id={`link-${item.id}`} label={t('resources.proposed.thesisLink')} value={thesisLink} onChange={(event) => setThesisLink(event.target.value)} />
-      <Textarea id={`use-${item.id}`} label={t('resources.proposed.exploitation')} value={exploitation} onChange={(event) => setExploitation(event.target.value)} />
-      {actions.synthesis.error ? <p className="text-sm text-danger">{queryErrorMessage(actions.synthesis.error, t)}</p> : null}
+      <Textarea
+        id={`sum-${item.id}`}
+        label={t('resources.proposed.summary')}
+        value={summary}
+        onChange={(event) => setSummary(event.target.value)}
+      />
+      <Textarea
+        id={`met-${item.id}`}
+        label={t('resources.proposed.methodology')}
+        value={methodology}
+        onChange={(event) => setMethodology(event.target.value)}
+      />
+      <Textarea
+        id={`res-${item.id}`}
+        label={t('resources.proposed.results')}
+        value={results}
+        onChange={(event) => setResults(event.target.value)}
+      />
+      <Textarea
+        id={`lim-${item.id}`}
+        label={t('resources.proposed.limits')}
+        value={limits}
+        onChange={(event) => setLimits(event.target.value)}
+      />
+      <Textarea
+        id={`link-${item.id}`}
+        label={t('resources.proposed.thesisLink')}
+        value={thesisLink}
+        onChange={(event) => setThesisLink(event.target.value)}
+      />
+      <Textarea
+        id={`use-${item.id}`}
+        label={t('resources.proposed.exploitation')}
+        value={exploitation}
+        onChange={(event) => setExploitation(event.target.value)}
+      />
+      {actions.synthesis.error ? (
+        <p className="text-sm text-danger">{queryErrorMessage(actions.synthesis.error, t)}</p>
+      ) : null}
       <div className="flex flex-wrap gap-2">
-        <Button variant="secondary" disabled={actions.synthesis.isPending} onClick={() => actions.synthesis.mutate({ id: item.id, body })}>
+        <Button
+          variant="secondary"
+          disabled={actions.synthesis.isPending}
+          onClick={() => actions.synthesis.mutate({ id: item.id, body })}
+        >
           {t('resources.proposed.saveDraft')}
         </Button>
-        <Button disabled={actions.synthesis.isPending} onClick={() => actions.synthesis.mutate({ id: item.id, body: { ...body, submit: true } })}>
+        <Button
+          disabled={actions.synthesis.isPending}
+          onClick={() => actions.synthesis.mutate({ id: item.id, body: { ...body, submit: true } })}
+        >
           {t('resources.proposed.submit')}
         </Button>
       </div>
@@ -368,13 +465,29 @@ function ReviewForm({ thesisId, documentId }: { thesisId: string; documentId: st
   const [message, setMessage] = useState('');
   return (
     <div className="mt-3 grid gap-2">
-      <Textarea id={`review-${documentId}`} label={t('resources.proposed.remark')} value={message} onChange={(event) => setMessage(event.target.value)} />
-      {actions.review.error ? <p className="text-sm text-danger">{queryErrorMessage(actions.review.error, t)}</p> : null}
+      <Textarea
+        id={`review-${documentId}`}
+        label={t('resources.proposed.remark')}
+        value={message}
+        onChange={(event) => setMessage(event.target.value)}
+      />
+      {actions.review.error ? (
+        <p className="text-sm text-danger">{queryErrorMessage(actions.review.error, t)}</p>
+      ) : null}
       <div className="flex flex-wrap gap-2">
-        <Button disabled={actions.review.isPending} onClick={() => actions.review.mutate({ id: documentId, decision: 'VALIDATED', message })}>
+        <Button
+          disabled={actions.review.isPending}
+          onClick={() => actions.review.mutate({ id: documentId, decision: 'VALIDATED', message })}
+        >
           {t('resources.proposed.validate')}
         </Button>
-        <Button variant="secondary" disabled={actions.review.isPending || message.trim().length === 0} onClick={() => actions.review.mutate({ id: documentId, decision: 'CHANGES_REQUESTED', message })}>
+        <Button
+          variant="secondary"
+          disabled={actions.review.isPending || message.trim().length === 0}
+          onClick={() =>
+            actions.review.mutate({ id: documentId, decision: 'CHANGES_REQUESTED', message })
+          }
+        >
           {t('resources.proposed.requestChanges')}
         </Button>
       </div>
@@ -405,8 +518,12 @@ function DocumentForm({
   const [url, setUrl] = useState(initial?.url ?? '');
   const [objectiveId, setObjectiveId] = useState(initial?.objectiveId ?? '');
   const [taskId, setTaskId] = useState(initial?.taskId ?? '');
-  const [importance, setImportance] = useState<DocumentDraft['importance']>(initial?.importance ?? 'MEDIUM');
-  const [priority, setPriority] = useState<DocumentDraft['priority']>(initial?.priority ?? 'NORMAL');
+  const [importance, setImportance] = useState<DocumentDraft['importance']>(
+    initial?.importance ?? 'MEDIUM',
+  );
+  const [priority, setPriority] = useState<DocumentDraft['priority']>(
+    initial?.priority ?? 'NORMAL',
+  );
   const [access, setAccess] = useState<DocumentDraft['access']>(initial?.access ?? 'SHARED');
   const [dueDate, setDueDate] = useState(initial?.dueDate ?? '');
   const [instructions, setInstructions] = useState(initial?.instructions ?? '');
@@ -450,53 +567,139 @@ function DocumentForm({
           });
         }}
       >
-        <Input id="doc-title" label={t('resources.form.title')} value={title} onChange={(event) => setTitle(event.target.value)} required />
-        <Select id="doc-kind" label={t('resources.proposed.filterKind')} value={kind} onChange={(event) => setKind(event.target.value as DocumentDraft['kind'])}>
+        <Input
+          id="doc-title"
+          label={t('resources.form.title')}
+          value={title}
+          onChange={(event) => setTitle(event.target.value)}
+          required
+        />
+        <Select
+          id="doc-kind"
+          label={t('resources.proposed.filterKind')}
+          value={kind}
+          onChange={(event) => setKind(event.target.value as DocumentDraft['kind'])}
+        >
           {KINDS.map((id) => (
-            <option key={id} value={id}>{t(`resources.proposed.kind.${id}` as MessageKey)}</option>
+            <option key={id} value={id}>
+              {t(`resources.proposed.kind.${id}` as MessageKey)}
+            </option>
           ))}
         </Select>
-        <Input id="doc-authors" label={t('resources.proposed.authors')} value={authors} onChange={(event) => setAuthors(event.target.value)} />
-        <Textarea id="doc-reference" label={t('resources.proposed.reference')} value={reference} onChange={(event) => setReference(event.target.value)} />
-        <Input id="doc-url" label={t('resources.proposed.url')} value={url} onChange={(event) => setUrl(event.target.value)} />
-        <Select id="doc-objective" label={t('resources.proposed.objective')} value={objectiveId} onChange={(event) => { setObjectiveId(event.target.value); setTaskId(''); }}>
+        <Input
+          id="doc-authors"
+          label={t('resources.proposed.authors')}
+          value={authors}
+          onChange={(event) => setAuthors(event.target.value)}
+        />
+        <Textarea
+          id="doc-reference"
+          label={t('resources.proposed.reference')}
+          value={reference}
+          onChange={(event) => setReference(event.target.value)}
+        />
+        <Input
+          id="doc-url"
+          label={t('resources.proposed.url')}
+          value={url}
+          onChange={(event) => setUrl(event.target.value)}
+        />
+        <Select
+          id="doc-objective"
+          label={t('resources.proposed.objective')}
+          value={objectiveId}
+          onChange={(event) => {
+            setObjectiveId(event.target.value);
+            setTaskId('');
+          }}
+        >
           <option value="">{t('resources.proposed.none')}</option>
           {objectives.map((objective) => (
-            <option key={objective.id} value={objective.id}>{objective.title}</option>
+            <option key={objective.id} value={objective.id}>
+              {objective.title}
+            </option>
           ))}
         </Select>
-        <Select id="doc-step" label={t('resources.proposed.step')} value={taskId} onChange={(event) => setTaskId(event.target.value)}>
+        <Select
+          id="doc-step"
+          label={t('resources.proposed.step')}
+          value={taskId}
+          onChange={(event) => setTaskId(event.target.value)}
+        >
           <option value="">{t('resources.proposed.none')}</option>
           {steps.map((step) => (
-            <option key={step.id} value={step.id}>{step.title}</option>
+            <option key={step.id} value={step.id}>
+              {step.title}
+            </option>
           ))}
         </Select>
-        <Select id="doc-importance" label={t('resources.proposed.importance')} value={importance} onChange={(event) => setImportance(event.target.value as DocumentDraft['importance'])}>
+        <Select
+          id="doc-importance"
+          label={t('resources.proposed.importance')}
+          value={importance}
+          onChange={(event) => setImportance(event.target.value as DocumentDraft['importance'])}
+        >
           {IMPORTANCE.map((id) => (
-            <option key={id} value={id}>{t(`resources.proposed.importanceLevel.${id}` as MessageKey)}</option>
+            <option key={id} value={id}>
+              {t(`resources.proposed.importanceLevel.${id}` as MessageKey)}
+            </option>
           ))}
         </Select>
-        <Select id="doc-priority" label={t('resources.proposed.priority')} value={priority} onChange={(event) => setPriority(event.target.value as DocumentDraft['priority'])}>
+        <Select
+          id="doc-priority"
+          label={t('resources.proposed.priority')}
+          value={priority}
+          onChange={(event) => setPriority(event.target.value as DocumentDraft['priority'])}
+        >
           {PRIORITY.map((id) => (
-            <option key={id} value={id}>{t(`resources.proposed.priorityLevel.${id}` as MessageKey)}</option>
+            <option key={id} value={id}>
+              {t(`resources.proposed.priorityLevel.${id}` as MessageKey)}
+            </option>
           ))}
         </Select>
-        <Select id="doc-access" label={t('resources.proposed.access')} value={access} onChange={(event) => setAccess(event.target.value as DocumentDraft['access'])}>
+        <Select
+          id="doc-access"
+          label={t('resources.proposed.access')}
+          value={access}
+          onChange={(event) => setAccess(event.target.value as DocumentDraft['access'])}
+        >
           <option value="SHARED">{t('resources.proposed.accessLevel.SHARED')}</option>
           <option value="PROTECTED">{t('resources.proposed.accessLevel.PROTECTED')}</option>
         </Select>
-        <Input id="doc-due" label={t('resources.proposed.due')} type="date" value={dueDate} onChange={(event) => setDueDate(event.target.value)} />
-        <Textarea id="doc-instructions" label={t('resources.proposed.instructions')} value={instructions} onChange={(event) => setInstructions(event.target.value)} />
+        <Input
+          id="doc-due"
+          label={t('resources.proposed.due')}
+          type="date"
+          value={dueDate}
+          onChange={(event) => setDueDate(event.target.value)}
+        />
+        <Textarea
+          id="doc-instructions"
+          label={t('resources.proposed.instructions')}
+          value={instructions}
+          onChange={(event) => setInstructions(event.target.value)}
+        />
         <label className="text-sm text-ink">
           {t('resources.proposed.file')}
-          <input className="mt-1 block text-sm" type="file" accept=".pdf,.doc,.docx" onChange={(event) => setFile(event.target.files?.[0] ?? null)} />
+          <input
+            className="mt-1 block text-sm"
+            type="file"
+            accept=".pdf,.doc,.docx"
+            onChange={(event) => setFile(event.target.files?.[0] ?? null)}
+          />
         </label>
         {actions.create.error || actions.update.error ? (
-          <p className="text-sm text-danger">{queryErrorMessage(actions.update.error ?? actions.create.error, t)}</p>
+          <p className="text-sm text-danger">
+            {queryErrorMessage(actions.update.error ?? actions.create.error, t)}
+          </p>
         ) : null}
         <div className="flex gap-2">
-          <Button type="submit" disabled={actions.create.isPending || actions.update.isPending}>{t('common.save')}</Button>
-          <Button type="button" variant="secondary" onClick={onClose}>{t('common.cancel')}</Button>
+          <Button type="submit" disabled={actions.create.isPending || actions.update.isPending}>
+            {t('common.save')}
+          </Button>
+          <Button type="button" variant="secondary" onClick={onClose}>
+            {t('common.cancel')}
+          </Button>
         </div>
       </form>
     </Modal>
@@ -517,7 +720,11 @@ function Filter({
   return (
     <label className="text-xs text-muted">
       {label}
-      <select className="mt-1 block rounded-md border border-line bg-surface px-2 py-1.5 text-sm text-ink" value={value} onChange={(event) => onChange(event.target.value)}>
+      <select
+        className="mt-1 block rounded-md border border-line bg-surface px-2 py-1.5 text-sm text-ink"
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+      >
         {children}
       </select>
     </label>

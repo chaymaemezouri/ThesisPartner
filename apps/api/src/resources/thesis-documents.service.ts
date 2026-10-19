@@ -61,7 +61,10 @@ export class ThesisDocumentsService {
     const canManage = role === 'SUPERVISOR';
     const rows = documents
       .map((row) => this.toDto(row, canManage))
-      .sort((a, b) => PRIORITY_RANK[a.priority] - PRIORITY_RANK[b.priority] || a.title.localeCompare(b.title));
+      .sort(
+        (a, b) =>
+          PRIORITY_RANK[a.priority] - PRIORITY_RANK[b.priority] || a.title.localeCompare(b.title),
+      );
     return {
       canManage,
       objectives: objectives.map((objective) => ({
@@ -160,7 +163,9 @@ export class ThesisDocumentsService {
     if (role !== 'SUPERVISOR') {
       throw new AppException(403, 'FORBIDDEN', 'Seul le superviseur peut supprimer un document');
     }
-    const existing = await this.prisma.thesisDocument.findFirst({ where: { id: documentId, thesisId } });
+    const existing = await this.prisma.thesisDocument.findFirst({
+      where: { id: documentId, thesisId },
+    });
     if (!existing) throw new AppException(404, 'NOT_FOUND', 'Ce document est introuvable');
     await this.prisma.$transaction(async (tx) => {
       await tx.thesisDocument.delete({ where: { id: documentId } });
@@ -196,7 +201,9 @@ export class ThesisDocumentsService {
     if (info.size > this.env.MAX_UPLOAD_SIZE_MB * 1024 * 1024) {
       throw new AppException(400, 'VALIDATION_ERROR', 'Le fichier dépasse la taille autorisée');
     }
-    const existing = await this.prisma.thesisDocument.findFirst({ where: { id: documentId, thesisId } });
+    const existing = await this.prisma.thesisDocument.findFirst({
+      where: { id: documentId, thesisId },
+    });
     if (!existing) throw new AppException(404, 'NOT_FOUND', 'Ce document est introuvable');
     const key = `theses/${thesisId}/documents/${documentId}/${randomUUID()}`;
     try {
@@ -213,7 +220,11 @@ export class ThesisDocumentsService {
       }
       await this.prisma.thesisDocument.update({
         where: { id: documentId },
-        data: { fileKey: key, fileName: file.originalName.slice(0, 180), fileMime: file.declaredMime.slice(0, 160) },
+        data: {
+          fileKey: key,
+          fileName: file.originalName.slice(0, 180),
+          fileMime: file.declaredMime.slice(0, 160),
+        },
       });
       await this.audit.record(this.prisma, {
         actorId,
@@ -223,7 +234,8 @@ export class ThesisDocumentsService {
         entityId: documentId,
         requestId,
       });
-      if (existing.fileKey) await this.storage.deleteObject(existing.fileKey).catch(() => undefined);
+      if (existing.fileKey)
+        await this.storage.deleteObject(existing.fileKey).catch(() => undefined);
     } finally {
       await unlink(file.path).catch(() => undefined);
     }
@@ -235,7 +247,9 @@ export class ThesisDocumentsService {
     if (role !== 'SUPERVISOR') {
       throw new AppException(403, 'FORBIDDEN', 'Seul le superviseur peut retirer un fichier');
     }
-    const existing = await this.prisma.thesisDocument.findFirst({ where: { id: documentId, thesisId } });
+    const existing = await this.prisma.thesisDocument.findFirst({
+      where: { id: documentId, thesisId },
+    });
     if (!existing) throw new AppException(404, 'NOT_FOUND', 'Ce document est introuvable');
     if (existing.fileKey) await this.storage.deleteObject(existing.fileKey).catch(() => undefined);
     await this.prisma.thesisDocument.update({
@@ -255,7 +269,9 @@ export class ThesisDocumentsService {
 
   async download(actorId: string, thesisId: string, documentId: string, inline: boolean) {
     const role = await this.role(actorId, thesisId);
-    const existing = await this.prisma.thesisDocument.findFirst({ where: { id: documentId, thesisId } });
+    const existing = await this.prisma.thesisDocument.findFirst({
+      where: { id: documentId, thesisId },
+    });
     if (!existing?.fileKey || !existing.fileName) {
       throw new AppException(404, 'NOT_FOUND', 'Aucun fichier n’est joint');
     }
@@ -275,7 +291,9 @@ export class ThesisDocumentsService {
     if (role !== 'DOCTORAL_STUDENT') {
       throw new AppException(403, 'FORBIDDEN', 'Seul le doctorant enregistre une consultation');
     }
-    const existing = await this.prisma.thesisDocument.findFirst({ where: { id: documentId, thesisId } });
+    const existing = await this.prisma.thesisDocument.findFirst({
+      where: { id: documentId, thesisId },
+    });
     if (!existing) throw new AppException(404, 'NOT_FOUND', 'Ce document est introuvable');
     await this.markRead(actorId, existing.id);
     return this.list(actorId, thesisId);
@@ -303,13 +321,20 @@ export class ThesisDocumentsService {
     }
     const summary = blank(body.summary);
     if (body.submit && !summary) {
-      throw new AppException(400, 'VALIDATION_ERROR', 'Le résumé est requis pour soumettre la synthèse', [
-        { field: 'summary', message: 'Champ requis' },
-      ]);
+      throw new AppException(
+        400,
+        'VALIDATION_ERROR',
+        'Le résumé est requis pour soumettre la synthèse',
+        [{ field: 'summary', message: 'Champ requis' }],
+      );
     }
     const link = await this.resolveLink(thesisId, body.objectiveId, body.taskId);
     const now = new Date();
-    const nextStatus = body.submit ? 'SUBMITTED' : status === 'CHANGES_REQUESTED' ? 'CHANGES_REQUESTED' : 'SYNTHESIS_DRAFT';
+    const nextStatus = body.submit
+      ? 'SUBMITTED'
+      : status === 'CHANGES_REQUESTED'
+        ? 'CHANGES_REQUESTED'
+        : 'SYNTHESIS_DRAFT';
     await this.prisma.$transaction(async (tx) => {
       if (body.objectiveId !== undefined || body.taskId !== undefined) {
         await tx.thesisDocument.update({
@@ -388,7 +413,10 @@ export class ThesisDocumentsService {
       await this.audit.record(tx, {
         actorId,
         thesisId,
-        action: body.decision === 'VALIDATED' ? 'document.synthesis_validated' : 'document.changes_requested',
+        action:
+          body.decision === 'VALIDATED'
+            ? 'document.synthesis_validated'
+            : 'document.changes_requested',
         entityType: 'thesis_document',
         entityId: documentId,
         requestId,
@@ -452,8 +480,12 @@ export class ThesisDocumentsService {
       return { objectiveId: row.objectiveId, taskId: row.id };
     }
     if (objective) {
-      const row = await this.prisma.objective.findFirst({ where: { id: objective, thesisId }, select: { id: true } });
-      if (!row) throw new AppException(400, 'VALIDATION_ERROR', 'Cet objectif n’appartient pas à la thèse');
+      const row = await this.prisma.objective.findFirst({
+        where: { id: objective, thesisId },
+        select: { id: true },
+      });
+      if (!row)
+        throw new AppException(400, 'VALIDATION_ERROR', 'Cet objectif n’appartient pas à la thèse');
       return { objectiveId: row.id, taskId: null };
     }
     return { objectiveId: null, taskId: null };
@@ -476,7 +508,8 @@ export class ThesisDocumentsService {
       objective: { id: string; title: string } | null;
       task: { id: string; title: string } | null;
       study: {
-        status: 'TO_READ' | 'READ' | 'SYNTHESIS_DRAFT' | 'SUBMITTED' | 'CHANGES_REQUESTED' | 'VALIDATED';
+        status:
+          'TO_READ' | 'READ' | 'SYNTHESIS_DRAFT' | 'SUBMITTED' | 'CHANGES_REQUESTED' | 'VALIDATED';
         summary: string | null;
         methodology: string | null;
         results: string | null;
@@ -504,7 +537,9 @@ export class ThesisDocumentsService {
       importance: row.importance,
       priority: row.priority,
       dueDate,
-      overdue: Boolean(dueDate && dueDate < new Date().toISOString().slice(0, 10) && status !== 'VALIDATED'),
+      overdue: Boolean(
+        dueDate && dueDate < new Date().toISOString().slice(0, 10) && status !== 'VALIDATED',
+      ),
       instructions: row.instructions,
       objectiveId: row.objective?.id ?? null,
       objectiveTitle: row.objective?.title ?? null,
@@ -529,7 +564,9 @@ function summarize(rows: Array<{ status: string; priority: string; overdue: bool
     drafts: rows.filter((row) => row.status === 'SYNTHESIS_DRAFT').length,
     submitted: rows.filter((row) => row.status === 'SUBMITTED').length,
     validated: rows.filter((row) => row.status === 'VALIDATED').length,
-    priorityOpen: rows.filter((row) => (row.priority === 'HIGH' || row.priority === 'URGENT') && row.status !== 'VALIDATED').length,
+    priorityOpen: rows.filter(
+      (row) => (row.priority === 'HIGH' || row.priority === 'URGENT') && row.status !== 'VALIDATED',
+    ).length,
     overdue: rows.filter((row) => row.overdue).length,
   };
 }

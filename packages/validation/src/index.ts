@@ -1344,7 +1344,8 @@ export const documentFollowUpSchema = z.enum([
   'VALIDATED',
 ]);
 
-const optionalText = (max: number) => z.union([z.string().trim().max(max), z.literal('')]).optional();
+const optionalText = (max: number) =>
+  z.union([z.string().trim().max(max), z.literal('')]).optional();
 
 export const thesisDocumentInputSchema = z
   .object({
@@ -1428,7 +1429,9 @@ export const documentDeskSchema = z
           .object({
             id: uuidSchema,
             title: z.string().max(200),
-            steps: z.array(z.object({ id: uuidSchema, title: z.string().max(200) }).strict()).max(200),
+            steps: z
+              .array(z.object({ id: uuidSchema, title: z.string().max(200) }).strict())
+              .max(200),
           })
           .strict(),
       )

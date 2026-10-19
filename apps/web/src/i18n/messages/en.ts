@@ -1008,7 +1008,8 @@ export const en = {
       validate: 'Validate',
       requestChanges: 'Request complements',
       remark: 'Remark',
-      protected: 'Protected document. Only the bibliographic reference is shared. The file and the link stay with the supervisor.',
+      protected:
+        'Protected document. Only the bibliographic reference is shared. The file and the link stay with the supervisor.',
       open: 'Open',
       download: 'Download',
       consult: 'Mark as consulted',
