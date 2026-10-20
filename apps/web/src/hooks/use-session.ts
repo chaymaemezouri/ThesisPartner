@@ -1,12 +1,18 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ackSchema, currentUserResponseSchema } from '@thesispartner/validation';
 import { useNavigate } from 'react-router-dom';
-import { apiGet, apiSend } from '../api/client';
+import { apiGet, apiSend, ApiClientError } from '../api/client';
 
 export function useMeQuery() {
   return useQuery({
     queryKey: ['me'],
     queryFn: () => apiGet('/api/v1/auth/me', currentUserResponseSchema),
+    retry: (attempt, error) =>
+      attempt < 2 &&
+      (error instanceof TypeError ||
+        (error instanceof ApiClientError && error.body.statusCode >= 500)),
+    retryDelay: (attempt) => Math.min(500 * 2 ** attempt, 2000),
+    refetchOnWindowFocus: true,
   });
 }
 

@@ -1,5 +1,8 @@
 import { Button, EmptyState, Skeleton, Textarea } from '@thesispartner/ui';
 import { useState } from 'react';
+import { Icon } from '../../components/Icon';
+import type { IconName } from '../../routes/nav';
+import { DeskNotifications } from './components/DeskNotifications';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useLocale, useT } from '../../i18n/LocaleContext';
 import type { MessageKey } from '../../i18n/translate';
@@ -25,6 +28,15 @@ const SECTIONS = [
 ] as const;
 
 type Section = (typeof SECTIONS)[number];
+const SECTION_ICON = {
+  notifications: 'notice',
+  schedule: 'meetings',
+  reports: 'deliverables',
+  evaluations: 'radar',
+  publications: 'library',
+  decisions: 'watch',
+  plan: 'objectives',
+} satisfies Record<Section, IconName>;
 
 const DECISION_KEY: Record<string, MessageKey> = {
   'deliverable.validated': 'followUp.decision.deliverableValidated',
@@ -59,8 +71,11 @@ export function SupervisorDeskPage() {
       ) : null}
       {desk.isError ? <QueryError error={desk.error} /> : null}
       {desk.data ? (
-        <div className="grid items-start gap-4 md:grid-cols-[13rem_minmax(0,1fr)]">
-          <div className="flex gap-0.5 overflow-x-auto rounded-md border border-line bg-surface p-1.5 shadow-control md:sticky md:top-20 md:flex-col md:overflow-visible [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div className="grid items-start gap-4 md:grid-cols-[14rem_minmax(0,1fr)]">
+          <nav
+            aria-label={t('nav.followUp')}
+            className="flex min-w-0 gap-1 overflow-x-auto rounded-[12px] border border-line bg-surface p-1.5 md:sticky md:top-20 md:flex-col md:overflow-visible [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          >
             {SECTIONS.map((item) => (
               <button
                 key={item}
@@ -68,8 +83,8 @@ export function SupervisorDeskPage() {
                 aria-current={section === item ? 'page' : undefined}
                 className={
                   section === item
-                    ? 'rounded-md bg-brand-soft px-3 py-2 text-left text-sm font-semibold text-brand'
-                    : 'rounded-md px-3 py-2 text-left text-sm text-ink hover:bg-canvas'
+                    ? 'flex shrink-0 items-center gap-2.5 rounded-lg border border-brand/15 bg-brand-soft/75 px-2.5 py-2.5 text-left text-sm font-medium text-brand'
+                    : 'flex shrink-0 items-center gap-2.5 rounded-lg border border-transparent px-2.5 py-2.5 text-left text-sm text-muted transition-colors hover:bg-canvas hover:text-ink'
                 }
                 onClick={() => {
                   const next = new URLSearchParams(params);
@@ -77,13 +92,25 @@ export function SupervisorDeskPage() {
                   setParams(next);
                 }}
               >
-                {t(`followUp.${item}`)}
+                <Icon name={SECTION_ICON[item]} className="h-4 w-4 shrink-0" />
+                <span className="whitespace-nowrap md:whitespace-normal">
+                  {t(`followUp.${item}`)}
+                </span>
               </button>
             ))}
-          </div>
+          </nav>
           <section className="min-w-0">
-            <h2 className="text-base font-semibold text-ink">{t(`followUp.${section}`)}</h2>
-            <p className="mt-1 mb-4 text-sm text-muted">{t(`followUp.${section}Help`)}</p>
+            <header className="mb-4 flex items-start gap-3 rounded-[12px] border border-brand/10 bg-gradient-to-r from-brand-soft/55 via-surface to-surface p-4">
+              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-[10px] bg-brand-soft text-brand">
+                <Icon name={SECTION_ICON[section]} className="h-5 w-5" />
+              </span>
+              <div className="min-w-0">
+                <h2 className="text-base font-semibold text-ink">{t(`followUp.${section}`)}</h2>
+                <p className="mt-1 text-sm leading-relaxed text-muted">
+                  {t(`followUp.${section}Help`)}
+                </p>
+              </div>
+            </header>
             <DeskSection section={section} data={desk.data} />
           </section>
         </div>
@@ -97,54 +124,14 @@ function isSection(value: string | null): value is Section {
 }
 
 function DeskSection({ section, data }: { section: Section; data: SupervisorDesk }) {
-  if (section === 'notifications') return <Notifications data={data} />;
+  if (section === 'notifications')
+    return <DeskNotifications notifications={data.notifications} destination={place} />;
   if (section === 'schedule') return <Schedule data={data} />;
   if (section === 'reports') return <Reports data={data} />;
   if (section === 'evaluations') return <Evaluations data={data} />;
   if (section === 'publications') return <Publications data={data} />;
   if (section === 'decisions') return <Decisions data={data} />;
   return <Plan data={data} />;
-}
-
-function Notifications({ data }: { data: SupervisorDesk }) {
-  const t = useT();
-  const { dateLocale } = useLocale();
-  if (data.notifications.length === 0) {
-    return (
-      <EmptyState
-        title={t('followUp.noNotifications')}
-        description={t('followUp.notificationsHelp')}
-      />
-    );
-  }
-  return (
-    <ul className="overflow-hidden rounded-md border border-line bg-surface">
-      {data.notifications.map((item) => (
-        <li key={item.id} className="border-b border-line last:border-b-0">
-          <Link
-            to={place(item.kind, item.thesisId)}
-            className="flex items-start justify-between gap-3 px-3 py-2.5 hover:bg-canvas/70"
-          >
-            <span className="min-w-0">
-              <span className="block text-[11px] font-medium text-brand">
-                {t(`followUp.kind.${item.kind}`)}
-                <span aria-hidden="true"> · </span>
-                {item.studentName}
-              </span>
-              <span className="mt-0.5 block truncate text-sm font-medium text-ink">
-                {item.title}
-              </span>
-            </span>
-            {item.date ? (
-              <time className="shrink-0 text-[11px] text-muted" dateTime={item.date}>
-                {formatShortDay(item.date, dateLocale)}
-              </time>
-            ) : null}
-          </Link>
-        </li>
-      ))}
-    </ul>
-  );
 }
 
 function Schedule({ data }: { data: SupervisorDesk }) {
@@ -166,7 +153,7 @@ function Schedule({ data }: { data: SupervisorDesk }) {
       {rows.length === 0 ? (
         <EmptyState title={t('followUp.noSchedule')} description={t('followUp.scheduleHelp')} />
       ) : (
-        <ul className="overflow-hidden rounded-md border border-line bg-surface">
+        <ul className="overflow-hidden rounded-[12px] border border-line bg-surface">
           {rows.map((item) => (
             <li key={item.id} className="border-b border-line last:border-b-0">
               <Link
@@ -292,7 +279,7 @@ function Evaluations({ data }: { data: SupervisorDesk }) {
           description={t('followUp.evaluationsHelp')}
         />
       ) : (
-        <ul className="overflow-hidden rounded-md border border-line bg-surface">
+        <ul className="overflow-hidden rounded-[12px] border border-line bg-surface">
           {rows.map((item) => (
             <li key={item.id} className="border-b border-line px-3 py-2.5 last:border-b-0">
               <p className="text-sm font-medium text-ink">
@@ -389,7 +376,7 @@ function Publications({ data }: { data: SupervisorDesk }) {
     );
   }
   return (
-    <ul className="overflow-hidden rounded-md border border-line bg-surface">
+    <ul className="overflow-hidden rounded-[12px] border border-line bg-surface">
       {data.publications.map((item) => (
         <PublicationRow key={item.id} item={item} />
       ))}
@@ -436,7 +423,7 @@ function Decisions({ data }: { data: SupervisorDesk }) {
     );
   }
   return (
-    <ul className="overflow-hidden rounded-md border border-line bg-surface">
+    <ul className="overflow-hidden rounded-[12px] border border-line bg-surface">
       {data.decisions.map((item) => {
         const key = DECISION_KEY[item.action];
         const day = item.createdAt.slice(0, 10);
@@ -482,7 +469,7 @@ function Plan({ data }: { data: SupervisorDesk }) {
       {phases.length === 0 ? (
         <EmptyState title={t('followUp.noPlan')} description={t('followUp.planHelp')} />
       ) : (
-        <ol className="overflow-hidden rounded-md border border-line bg-surface">
+        <ol className="overflow-hidden rounded-[12px] border border-line bg-surface">
           {phases.map((phase, index) => (
             <li key={phase.id} className="border-b border-line last:border-b-0">
               <Link

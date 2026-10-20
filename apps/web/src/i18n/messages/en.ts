@@ -74,6 +74,10 @@ export const en = {
     followUpDesc: 'Alerts, dates, reports and decisions.',
   },
   auth: {
+    openingSession: 'Opening your session…',
+    serviceUnavailable: 'Service unavailable',
+    serviceUnavailableHelp: 'The workspace is not responding. Check your connection and try again.',
+    retrySession: 'Try again',
     loginTitle: 'Sign in',
     loginSubtitle: 'Access your ThesisPartner workspace.',
     loginHeroTitle: 'Your research journey, organized.',
@@ -722,6 +726,11 @@ export const en = {
     deskEmptyRequests: 'No request to confirm.',
   },
   followUp: {
+    notificationType: 'Notification type',
+    allNotifications: 'All',
+    searchNotifications: 'Search a student or title…',
+    noMatchingNotifications: 'No notification matches these filters.',
+    resetFilters: 'Reset filters',
     notifications: 'Notification centre',
     notificationsHelp: 'Alerts for new deliverables, delays, meetings and replies to remarks.',
     schedule: 'Academic schedule',
@@ -935,6 +944,12 @@ export const en = {
   },
   portfolio: {
     title: 'Portfolio',
+    editProfile: 'Edit profile',
+    viewAll: 'View all',
+    viewSection: 'View section: {section}',
+    filterType: 'Publication type',
+    allPublications: 'All',
+    noMatchingPublications: 'No publication matches these filters.',
     subtitle: 'Publications, projects and skills.',
     tab: {
       cv: 'CV',

@@ -76,6 +76,11 @@ export const fr: Messages = {
     followUpDesc: 'Alertes, dates, bilans et décisions.',
   },
   auth: {
+    openingSession: 'Ouverture de la session…',
+    serviceUnavailable: 'Service indisponible',
+    serviceUnavailableHelp:
+      'L’espace de travail ne répond pas. Vérifiez votre connexion puis réessayez.',
+    retrySession: 'Réessayer',
     loginTitle: 'Connexion',
     loginSubtitle: 'Accédez à votre espace ThesisPartner.',
     loginHeroTitle: 'Votre parcours de recherche, organisé.',
@@ -729,6 +734,11 @@ export const fr: Messages = {
     deskEmptyRequests: 'Aucune demande à confirmer.',
   },
   followUp: {
+    notificationType: 'Type de notification',
+    allNotifications: 'Toutes',
+    searchNotifications: 'Rechercher un doctorant ou un titre…',
+    noMatchingNotifications: 'Aucune notification ne correspond à ces filtres.',
+    resetFilters: 'Réinitialiser les filtres',
     notifications: 'Centre de notifications',
     notificationsHelp:
       'Alertes sur les nouveaux livrables, retards, réunions et réponses aux remarques.',
@@ -944,6 +954,12 @@ export const fr: Messages = {
   },
   portfolio: {
     title: 'Portfolio',
+    editProfile: 'Modifier le profil',
+    viewAll: 'Voir tout',
+    viewSection: 'Voir la section : {section}',
+    filterType: 'Type de publication',
+    allPublications: 'Toutes',
+    noMatchingPublications: 'Aucune publication ne correspond à ces filtres.',
     subtitle: 'Publications, projets et compétences.',
     tab: {
       cv: 'CV',

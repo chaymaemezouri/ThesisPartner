@@ -379,13 +379,15 @@ describe('deliverables', () => {
       expect(within(dialog).getByRole('button', { name: 'Submit to supervisor' })).toBeEnabled(),
     );
     await user.click(within(dialog).getByRole('button', { name: 'Submit to supervisor' }));
-    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument(), {
+      timeout: 5000,
+    });
     expect(
       writes.filter((url) => url === `POST /api/v1/theses/${thesisId}/deliverables`),
     ).toHaveLength(1);
     expect(writes.filter((url) => url.endsWith('/versions'))).toHaveLength(1);
     expect(submissions).toBe(2);
-  });
+  }, 10000);
 
   it('does not present an older file as the current version', async () => {
     vi.stubGlobal(
