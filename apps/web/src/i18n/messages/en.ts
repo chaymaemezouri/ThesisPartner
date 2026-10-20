@@ -1,6 +1,6 @@
 export const en = {
   common: {
-    appName: 'ThesisPartner',
+    appName: 'thesisPartner chaimae',
     loading: 'Loading…',
     save: 'Save',
     cancel: 'Cancel',
