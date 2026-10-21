@@ -145,7 +145,7 @@ function BrandMark({ light = false }: { light?: boolean }) {
       <span
         className={`text-base font-semibold tracking-tight ${light ? 'text-white' : 'text-ink'}`}
       >
-        thesisPartner chaimae
+        ThesisPartner
       </span>
     </div>
   );

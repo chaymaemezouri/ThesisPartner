@@ -2,7 +2,7 @@ import type { Messages } from './en';
 
 export const fr: Messages = {
   common: {
-    appName: 'thesisPartner chaimae',
+    appName: 'ThesisPartner',
     loading: 'Chargement…',
     save: 'Enregistrer',
     cancel: 'Annuler',

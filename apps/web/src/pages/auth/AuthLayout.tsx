@@ -21,7 +21,7 @@ export function AuthLayout({
             <span className="h-2.5 w-2.5 rounded-sm bg-white" />
           </span>
           <span className="text-lg font-semibold tracking-tight text-ink">
-            thesisPartner chaimae
+            ThesisPartner
           </span>
         </Link>
         <section className="rounded-md border border-line bg-surface p-5 shadow-card">
