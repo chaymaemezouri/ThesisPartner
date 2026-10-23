@@ -202,7 +202,7 @@ describe('remarks pages', () => {
     );
     renderAt('/remarques?search=protocole', <DoctoralRemarksPage />);
     await screen.findByText('Preciser la methodologie');
-    await user.click(screen.getByRole('button', { name: /^In progress/ }));
+    await user.click(screen.getByRole('tab', { name: 'In progress' }));
     expect(screen.getByRole('tab', { name: 'In progress' })).toHaveAttribute(
       'aria-selected',
       'true',
