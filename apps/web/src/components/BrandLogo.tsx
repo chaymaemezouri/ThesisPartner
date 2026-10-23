@@ -1,7 +1,9 @@
+import logoSrc from '../assets/brand/thesispartner.png';
+
 export function BrandLogo({ className = 'h-10 w-10' }: { className?: string }) {
   return (
     <img
-      src="/brand/thesispartner.png"
+      src={logoSrc}
       alt=""
       aria-hidden="true"
       width={500}
