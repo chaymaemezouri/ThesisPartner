@@ -176,10 +176,7 @@ export function AppRoutes() {
           <Route path="portfolio" element={<PortfolioPage />} />
           <Route path="ressources" element={<ResourcesPage />} />
           <Route path="radar" element={<ResearchAiPage />} />
-          <Route
-            path="encadrement/:thesisId/radar"
-            element={<SupervisorResearchAiPage />}
-          />
+          <Route path="encadrement/:thesisId/radar" element={<SupervisorResearchAiPage />} />
           <Route path="suivi" element={<SupervisorDeskPage />} />
           <Route path="messagerie" element={<MessagesPage />} />
           <Route path="messagerie/:conversationId" element={<MessagesPage />} />

@@ -390,7 +390,10 @@ function ReviewPanel({
   }
 
   return (
-    <section className="space-y-3 border-t border-line/70 pt-3" aria-label={t('deliverables.reviewAria')}>
+    <section
+      className="space-y-3 border-t border-line/70 pt-3"
+      aria-label={t('deliverables.reviewAria')}
+    >
       {showDraft ? (
         <div className="flex flex-col gap-2">
           <p className="text-xs text-muted">{t('deliverables.submitHint')}</p>

@@ -111,7 +111,9 @@ export function RemarksWorkspace({
             >
               <Icon name={TAB_ICON[item.id]} className="h-4 w-4" />
             </span>
-            <span className={`whitespace-nowrap text-sm ${selected ? 'font-semibold' : 'font-medium'}`}>
+            <span
+              className={`whitespace-nowrap text-sm ${selected ? 'font-semibold' : 'font-medium'}`}
+            >
               {item.label}
             </span>
           </button>

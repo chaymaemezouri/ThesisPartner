@@ -121,7 +121,10 @@ export function StudentNotificationsBell() {
       if (!item.unread) continue;
       const peer =
         item.title?.trim() ||
-        item.participants.map((person) => person.displayName).filter(Boolean).join(', ') ||
+        item.participants
+          .map((person) => person.displayName)
+          .filter(Boolean)
+          .join(', ') ||
         t('nav.messages');
       rows.push({
         id: `msg-${item.id}`,

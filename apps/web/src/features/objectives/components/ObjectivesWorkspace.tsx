@@ -47,8 +47,7 @@ export function ObjectivesWorkspace({
   const remove = useDeleteObjective(thesisId);
   const filtered = tab !== 'all' || search.trim().length > 0;
 
-  const showCreate =
-    canManage && (objectives.data?.objectives.length ?? 0) > 0;
+  const showCreate = canManage && (objectives.data?.objectives.length ?? 0) > 0;
 
   return (
     <div className="min-w-0">

@@ -132,9 +132,7 @@ export function DeliverablesWorkspace({
             type="button"
             role="tab"
             aria-label={t(`deliverables.tabs.${id}`)}
-            aria-description={
-              count !== null ? t('deliverables.resultCount', { count }) : undefined
-            }
+            aria-description={count !== null ? t('deliverables.resultCount', { count }) : undefined}
             aria-selected={selected}
             tabIndex={selected ? 0 : -1}
             className={`group flex shrink-0 items-center gap-2 rounded-xl px-2.5 py-2 text-left transition-[background-color,box-shadow,color] duration-150 ${
@@ -172,9 +170,7 @@ export function DeliverablesWorkspace({
               <span className={`text-sm ${selected ? 'font-semibold' : 'font-medium'}`}>
                 {t(`deliverables.tabs.${id}`)}
               </span>
-              <span
-                className={`text-xs tabular-nums ${selected ? 'text-brand' : 'text-muted'}`}
-              >
+              <span className={`text-xs tabular-nums ${selected ? 'text-brand' : 'text-muted'}`}>
                 {count !== null ? count : '–'}
               </span>
             </span>

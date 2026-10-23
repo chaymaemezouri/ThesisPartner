@@ -629,11 +629,7 @@ function StudentDocumentTable({
                       <Button
                         className="h-9 w-full px-2.5 text-xs lg:h-8 lg:w-auto"
                         variant={
-                          open
-                            ? 'secondary'
-                            : EDITABLE.has(item.status)
-                              ? 'primary'
-                              : 'secondary'
+                          open ? 'secondary' : EDITABLE.has(item.status) ? 'primary' : 'secondary'
                         }
                         aria-expanded={open}
                         aria-controls={`document-details-${item.id}`}

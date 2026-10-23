@@ -64,10 +64,7 @@ const schema = z.object({
   ),
   FILE_SCAN_MODE: z.preprocess(emptyToUndefined, z.enum(['stub']).default('stub')),
   OPENAI_API_KEY: z.preprocess(emptyToUndefined, z.string().min(10).max(200).optional()),
-  OPENAI_MODEL: z.preprocess(
-    emptyToUndefined,
-    z.string().min(1).max(80).default('gpt-4o-mini'),
-  ),
+  OPENAI_MODEL: z.preprocess(emptyToUndefined, z.string().min(1).max(80).default('gpt-4o-mini')),
 });
 
 export type Env = z.infer<typeof schema>;

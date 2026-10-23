@@ -65,12 +65,6 @@ export function Icon({
 }: IconProps & { name: IconName }) {
   const Phosphor = icons[name];
   return (
-    <Phosphor
-      aria-hidden="true"
-      size={size}
-      weight={weight}
-      className={className}
-      {...props}
-    />
+    <Phosphor aria-hidden="true" size={size} weight={weight} className={className} {...props} />
   );
 }

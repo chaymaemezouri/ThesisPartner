@@ -84,7 +84,9 @@ export function PortfolioWorkspace() {
               >
                 <Icon name={TAB_ICONS[id]} className="h-4 w-4" />
               </span>
-              <span className={`whitespace-nowrap text-sm ${selected ? 'font-semibold' : 'font-medium'}`}>
+              <span
+                className={`whitespace-nowrap text-sm ${selected ? 'font-semibold' : 'font-medium'}`}
+              >
                 {t(`portfolio.tab.${id}`)}
               </span>
             </button>

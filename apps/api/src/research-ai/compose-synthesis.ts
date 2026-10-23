@@ -55,7 +55,10 @@ function uncapitalizeEn(value: string): string {
 }
 
 function cleanProse(value: string): string {
-  return value.replace(/\s+/g, ' ').trim().replace(/^["«]\s*|\s*["»]$/g, '');
+  return value
+    .replace(/\s+/g, ' ')
+    .trim()
+    .replace(/^["«]\s*|\s*["»]$/g, '');
 }
 
 function sentence(value: string): string {

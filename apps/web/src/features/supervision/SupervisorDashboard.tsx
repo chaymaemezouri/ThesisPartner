@@ -71,7 +71,9 @@ export function SupervisorDashboard({ layout = 'cards' }: { layout?: 'cards' | '
             label={t('supervision.statsObjectives')}
             value={t('supervision.statsInProgress', { count: stats.inProgress })}
             detail={
-              stats.overdue > 0 ? t('supervision.statsOverdue', { count: stats.overdue }) : undefined
+              stats.overdue > 0
+                ? t('supervision.statsOverdue', { count: stats.overdue })
+                : undefined
             }
           />
           <Stat

@@ -52,9 +52,7 @@ export function SettingsPage() {
                 </dt>
                 <dd className="mt-0.5 break-all text-ink">{user.email}</dd>
                 <p className="mt-1 text-xs text-muted">
-                  {user.emailVerified
-                    ? t('settings.emailVerified')
-                    : t('settings.emailUnverified')}
+                  {user.emailVerified ? t('settings.emailVerified') : t('settings.emailUnverified')}
                 </p>
               </div>
             </dl>

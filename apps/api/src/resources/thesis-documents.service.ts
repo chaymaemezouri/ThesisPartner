@@ -161,11 +161,7 @@ export class ThesisDocumentsService {
           importance: studentOwned ? existing.importance : body.importance,
           priority: studentOwned ? existing.priority : body.priority,
           access: studentOwned ? 'SHARED' : body.access,
-          dueDate: studentOwned
-            ? existing.dueDate
-            : body.dueDate
-              ? parseDay(body.dueDate)
-              : null,
+          dueDate: studentOwned ? existing.dueDate : body.dueDate ? parseDay(body.dueDate) : null,
           instructions: studentOwned ? existing.instructions : blank(body.instructions),
         },
       });
@@ -656,12 +652,7 @@ export class ThesisDocumentsService {
       task: { id: string; title: string } | null;
       study: {
         status:
-          | 'TO_READ'
-          | 'READ'
-          | 'SYNTHESIS_DRAFT'
-          | 'SUBMITTED'
-          | 'CHANGES_REQUESTED'
-          | 'VALIDATED';
+          'TO_READ' | 'READ' | 'SYNTHESIS_DRAFT' | 'SUBMITTED' | 'CHANGES_REQUESTED' | 'VALIDATED';
         summary: string | null;
         methodology: string | null;
         results: string | null;
