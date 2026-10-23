@@ -8,18 +8,27 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum PlatformRole {
+  USER
+  SUPER_ADMIN
+}
+
 /// Stored lowercase by the application. Uniqueness applies to that normalized value.
 model User {
-  id              String    @id @default(uuid()) @db.Uuid
-  email           String    @unique @db.VarChar(320)
-  passwordHash    String    @map("password_hash")
-  emailVerifiedAt DateTime? @map("email_verified_at")
-  disabledAt      DateTime? @map("disabled_at")
-  createdAt       DateTime  @default(now()) @map("created_at")
-  updatedAt       DateTime  @updatedAt @map("updated_at")
+  id              String       @id @default(uuid()) @db.Uuid
+  email           String       @unique @db.VarChar(320)
+  passwordHash    String       @map("password_hash")
+  emailVerifiedAt DateTime?    @map("email_verified_at")
+  disabledAt      DateTime?    @map("disabled_at")
+  /// Global platform role. Independent of ThesisMembership roles.
+  platformRole    PlatformRole @default(USER) @map("platform_role")
+  createdAt       DateTime     @default(now()) @map("created_at")
+  updatedAt       DateTime     @updatedAt @map("updated_at")
 
   profile              Profile?
   memberships          ThesisMembership[]
+  invitationsSent      Invitation[]         @relation("InvitationInviter")
+  supervisionHistory   SupervisionHistory[] @relation("SupervisionHistorySupervisor")
   sessions             Session[]
   authTokens           AuthToken[]
   auditLogs            AuditLog[]
@@ -49,6 +58,9 @@ model User {
   documentStudies            DocumentStudy[]      @relation("DocumentStudyStudent")
   documentStudiesReviewed    DocumentStudy[]      @relation("DocumentStudyReviewer")
 
+  @@index([platformRole])
+  @@index([disabledAt])
+  @@index([createdAt])
   @@map("users")
 }
 
@@ -174,18 +186,74 @@ model Thesis {
   createdAt         DateTime     @default(now()) @map("created_at")
   updatedAt         DateTime     @updatedAt @map("updated_at")
 
-  memberships  ThesisMembership[]
-  auditLogs    AuditLog[]
-  objectives   Objective[]
-  deliverables Deliverable[]
-  meetings      Meeting[]
-  remarks       Remark[]
-  evaluations   PeriodicEvaluation[]
-  conversations Conversation[]
-  documents     ThesisDocument[]
+  memberships          ThesisMembership[]
+  invitations          Invitation[]
+  supervisionHistory   SupervisionHistory[]
+  auditLogs            AuditLog[]
+  objectives           Objective[]
+  deliverables         Deliverable[]
+  meetings             Meeting[]
+  remarks              Remark[]
+  evaluations          PeriodicEvaluation[]
+  conversations        Conversation[]
+  documents            ThesisDocument[]
 
   @@index([status])
   @@map("theses")
+}
+
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  EXPIRED
+  CANCELLED
+}
+
+/// Explicit invitation before ThesisMembership is created. Token stored hashed.
+model Invitation {
+  id                   String           @id @default(uuid()) @db.Uuid
+  thesisId             String           @map("thesis_id") @db.Uuid
+  email                String           @db.VarChar(320)
+  role                 MembershipRole
+  status               InvitationStatus @default(PENDING)
+  tokenHash            String           @unique @map("token_hash") @db.VarChar(64)
+  invitedById          String           @map("invited_by_id") @db.Uuid
+  /// When true, accepting replaces the current SUPERVISOR and archives them in SupervisionHistory.
+  replacesSupervisor   Boolean          @default(false) @map("replaces_supervisor")
+  changeReason         String?          @map("change_reason") @db.VarChar(500)
+  expiresAt            DateTime         @map("expires_at")
+  respondedAt          DateTime?        @map("responded_at")
+  createdAt            DateTime         @default(now()) @map("created_at")
+  updatedAt            DateTime         @updatedAt @map("updated_at")
+
+  thesis    Thesis @relation(fields: [thesisId], references: [id], onDelete: Cascade)
+  invitedBy User   @relation("InvitationInviter", fields: [invitedById], references: [id], onDelete: Cascade)
+
+  @@index([thesisId, status])
+  @@index([email, status])
+  @@index([expiresAt])
+  @@map("invitations")
+}
+
+/// Closed supervisor periods kept for history when the active encadrant changes.
+model SupervisionHistory {
+  id               String   @id @default(uuid()) @db.Uuid
+  thesisId         String   @map("thesis_id") @db.Uuid
+  supervisorUserId String   @map("supervisor_user_id") @db.Uuid
+  startedAt        DateTime @map("started_at")
+  endedAt          DateTime @map("ended_at")
+  endedReason      String   @map("ended_reason") @db.VarChar(80)
+  changeReason     String?  @map("change_reason") @db.VarChar(500)
+  invitationId     String?  @map("invitation_id") @db.Uuid
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  thesis     Thesis @relation(fields: [thesisId], references: [id], onDelete: Cascade)
+  supervisor User   @relation("SupervisionHistorySupervisor", fields: [supervisorUserId], references: [id], onDelete: Restrict)
+
+  @@index([thesisId, endedAt])
+  @@index([supervisorUserId])
+  @@map("supervision_history")
 }
 
 enum MembershipRole {
@@ -269,6 +337,8 @@ model AuditLog {
   @@index([thesisId, createdAt])
   @@index([actorId, createdAt])
   @@index([entityType, entityId])
+  @@index([action, createdAt])
+  @@index([createdAt])
   @@map("audit_logs")
 }
 

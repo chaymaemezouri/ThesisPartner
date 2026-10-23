@@ -92,7 +92,9 @@ export class ThesesController {
   @Post(':thesisId/members')
   @HttpCode(201)
   @ValidateBody(inviteMemberSchema)
-  @ApiOperation({ summary: 'Add a member by email' })
+  @ApiOperation({
+    summary: 'Create a pending invitation by email (membership only after accept)',
+  })
   invite(
     @Param('thesisId', ParseUUIDPipe) thesisId: string,
     @Body() body: unknown,

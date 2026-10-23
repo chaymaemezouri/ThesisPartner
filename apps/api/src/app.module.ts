@@ -8,6 +8,7 @@ import { ThesisAccessModule } from './common/thesis-access/thesis-access.module'
 import { ZodBodyInterceptor } from './common/validation/zod-body.interceptor';
 import { AppConfigModule } from './config/config.module';
 import { ENV, type Env } from './config/env';
+import { AdminModule } from './admin/admin.module';
 import { AuditModule } from './audit/audit.module';
 import { AuthModule } from './auth/auth.module';
 import { CsrfGuard } from './auth/csrf.guard';
@@ -15,6 +16,7 @@ import { FallbackModule } from './auth/fallback.module';
 import { SessionAuthGuard } from './auth/session-auth.guard';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { HealthModule } from './health/health.module';
+import { InvitationsModule } from './invitations/invitations.module';
 import { ObjectivesModule } from './objectives/objectives.module';
 import { DeliverablesModule } from './deliverables/deliverables.module';
 import { MeetingsModule } from './meetings/meetings.module';
@@ -41,8 +43,10 @@ import { ThesesModule } from './theses/theses.module';
     SecurityModule,
     AuditModule,
     AuthModule,
+    AdminModule,
     ThesisAccessModule,
     ThesesModule,
+    InvitationsModule,
     ProfileModule,
     DashboardModule,
     ObjectivesModule,

@@ -104,6 +104,40 @@ export function SettingsPage() {
 
       <section
         className="rounded-md border border-line bg-surface px-4 py-4"
+        aria-labelledby="invitations-access-title"
+      >
+        <h2 id="invitations-access-title" className="text-sm font-medium text-ink">
+          {t('invitations.inboxTitle')}
+        </h2>
+        <p className="mt-1 text-sm text-muted">{t('invitations.inboxSubtitle')}</p>
+        <Link
+          to="/invitations"
+          className="mt-4 inline-flex h-10 items-center justify-center rounded-lg border border-line bg-canvas px-4 text-sm font-semibold text-ink hover:border-ink/20"
+        >
+          {t('invitations.inboxTitle')}
+        </Link>
+      </section>
+
+      {user?.platformRole === 'SUPER_ADMIN' ? (
+        <section
+          className="rounded-md border border-line bg-surface px-4 py-4"
+          aria-labelledby="admin-access-title"
+        >
+          <h2 id="admin-access-title" className="text-sm font-medium text-ink">
+            {t('settings.adminAccess')}
+          </h2>
+          <p className="mt-1 text-sm text-muted">{t('settings.adminAccessHelp')}</p>
+          <Link
+            to="/admin"
+            className="mt-4 inline-flex h-10 items-center justify-center rounded-lg border border-brand bg-brand px-4 text-sm font-semibold text-white hover:border-brand-strong hover:bg-brand-strong"
+          >
+            {t('settings.openAdmin')}
+          </Link>
+        </section>
+      ) : null}
+
+      <section
+        className="rounded-md border border-line bg-surface px-4 py-4"
         aria-labelledby="security-title"
       >
         <h2 id="security-title" className="text-sm font-medium text-ink">

@@ -11,6 +11,7 @@ import {
 } from '@thesispartner/validation';
 import request from 'supertest';
 import { createApp } from '../src/app.factory';
+import { inviteSupervisor } from './helpers/invite-supervisor';
 import { PrismaService } from '../src/infrastructure/prisma/prisma.service';
 import { commitAfterUpload } from '../src/storage/commit-upload';
 import { S3ObjectStorage } from '../src/storage/s3-object-storage';
@@ -328,11 +329,7 @@ describe('deliverable files', () => {
     thesisId: string,
     email: string,
   ) {
-    const response = await account.agent
-      .post(`/api/v1/theses/${thesisId}/members`)
-      .set('x-csrf-token', account.csrf)
-      .send({ email, role: 'SUPERVISOR' });
-    expect(response.status).toBe(201);
+    await inviteSupervisor(prisma, account, thesisId, email);
   }
 
   async function createDeliverable(

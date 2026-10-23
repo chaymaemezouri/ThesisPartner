@@ -7,6 +7,7 @@ import {
 } from '@thesispartner/validation';
 import request from 'supertest';
 import { createApp } from '../src/app.factory';
+import { inviteSupervisor } from './helpers/invite-supervisor';
 import { PrismaService } from '../src/infrastructure/prisma/prisma.service';
 
 const password = 'phrase-secrete-12';
@@ -186,7 +187,7 @@ describe('objectives and supervision', () => {
     const thesisC = await createThesis(studentC, 'These Gamma');
     await invite(studentA, thesisA, supervisorX.email);
     const secondSupervisor = await studentA.agent
-      .post(`/api/v1/theses/${thesisA}/members`)
+      .post(`/api/v1/theses/${thesisA}/invitations`)
       .set('x-csrf-token', studentA.csrf)
       .send({ email: supervisorY.email, role: 'SUPERVISOR' });
     expect(secondSupervisor.status).toBe(409);
@@ -335,10 +336,6 @@ describe('objectives and supervision', () => {
     thesisId: string,
     email: string,
   ) {
-    const response = await account.agent
-      .post(`/api/v1/theses/${thesisId}/members`)
-      .set('x-csrf-token', account.csrf)
-      .send({ email, role: 'SUPERVISOR' });
-    expect(response.status).toBe(201);
+    await inviteSupervisor(prisma, account, thesisId, email);
   }
 });

@@ -136,16 +136,28 @@ describe('authentication and thesis membership', () => {
     expect(hidden.status).toBe(404);
 
     const forbidden = await owner
-      .post(`/api/v1/theses/${thesis.id}/members`)
+      .post(`/api/v1/theses/${thesis.id}/invitations`)
       .set('x-csrf-token', csrf)
       .send({ email: outsiderEmail, role: 'DOCTORAL_STUDENT' });
     expect(forbidden.status).toBe(403);
 
     const invited = await owner
-      .post(`/api/v1/theses/${thesis.id}/members`)
+      .post(`/api/v1/theses/${thesis.id}/invitations`)
       .set('x-csrf-token', csrf)
       .send({ email: outsiderEmail, role: 'SUPERVISOR' });
     expect(invited.status).toBe(201);
+    expect(invited.body.status).toBe('PENDING');
+    expect((await outsider.get(`/api/v1/theses/${thesis.id}`)).status).toBe(404);
+
+    const inviteToken = tokenFrom(mailer, `Invitation ThesisPartner — ${thesis.title}`);
+    const outsiderCsrf = csrfFrom(outsiderAccount);
+    const accepted = await outsider
+      .post('/api/v1/invitations/accept')
+      .set('x-csrf-token', outsiderCsrf)
+      .send({ token: inviteToken });
+    expect(accepted.status).toBe(200);
+    expect(accepted.body.status).toBe('ACCEPTED');
+
     const visible = await outsider.get(`/api/v1/theses/${thesis.id}`);
     expect(visible.status).toBe(200);
     expect(visible.body.role).toBe('SUPERVISOR');

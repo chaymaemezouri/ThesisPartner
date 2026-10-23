@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { MEMBERSHIP_ROLES, type MembershipRole } from '@thesispartner/types';
+import { MEMBERSHIP_ROLES } from '@thesispartner/types';
 import type {
   createThesisSchema,
   inviteMemberSchema,
@@ -11,9 +11,9 @@ import { cleared, formatDay, parseDay } from '../common/dates';
 import { AppException } from '../common/errors/app.exception';
 import { ThesisAccessService } from '../common/thesis-access/thesis-access.service';
 import { PrismaService } from '../infrastructure/prisma/prisma.service';
+import { InvitationsService } from '../invitations/invitations.service';
 import { StandardPathService } from '../objectives/standard-path.service';
 import { resolveAvatarUrl } from '../profile/profile.service';
-import { assertCanInvite } from './invite.policy';
 
 type CreateThesisBody = z.infer<typeof createThesisSchema>;
 type InviteBody = z.infer<typeof inviteMemberSchema>;
@@ -26,6 +26,7 @@ export class ThesesService {
     private readonly access: ThesisAccessService,
     private readonly audit: AuditService,
     private readonly standardPath: StandardPathService,
+    private readonly invitations: InvitationsService,
   ) {}
 
   async list(userId: string) {
@@ -206,66 +207,8 @@ export class ThesesService {
     return { applied: true, created };
   }
 
+  /** @deprecated Prefer POST /theses/:id/invitations — kept for compatibility. */
   async invite(actorId: string, thesisId: string, body: InviteBody, requestId?: string) {
-    await this.access.assertCanAccess({
-      actorId,
-      thesisId,
-      allowedRoles: MEMBERSHIP_ROLES,
-    });
-    const actor = await this.prisma.thesisMembership.findUnique({
-      where: { thesisId_userId: { thesisId, userId: actorId } },
-    });
-    if (!actor) throw new AppException(404, 'NOT_FOUND', 'Resource not found');
-    assertCanInvite(actor.role, body.role);
-
-    const invitee = await this.prisma.user.findUnique({ where: { email: body.email } });
-    if (!invitee || invitee.disabledAt) {
-      throw new AppException(404, 'NOT_FOUND', 'No active account matches this email');
-    }
-    if (invitee.id === actorId) {
-      throw new AppException(409, 'CONFLICT', 'This person is already a member');
-    }
-
-    try {
-      const membership = await this.prisma.$transaction(async (tx) => {
-        if (body.role === 'SUPERVISOR') {
-          const existingSupervisor = await tx.thesisMembership.findFirst({
-            where: { thesisId, role: 'SUPERVISOR' },
-            select: { id: true },
-          });
-          if (existingSupervisor) {
-            throw new AppException(
-              409,
-              'CONFLICT',
-              'Cette thèse a déjà un encadrant. Le co-encadrement n’est pas disponible dans cette version.',
-            );
-          }
-        }
-        const created = await tx.thesisMembership.create({
-          data: { thesisId, userId: invitee.id, role: body.role as MembershipRole },
-        });
-        await this.audit.record(tx, {
-          actorId,
-          thesisId,
-          action: 'membership.create',
-          entityType: 'thesis_membership',
-          entityId: created.id,
-          requestId,
-        });
-        return created;
-      });
-      return { id: membership.id, role: membership.role };
-    } catch (error) {
-      if (error instanceof AppException) throw error;
-      if (
-        typeof error === 'object' &&
-        error !== null &&
-        'code' in error &&
-        (error as { code: string }).code === 'P2002'
-      ) {
-        throw new AppException(409, 'CONFLICT', 'This person is already a member');
-      }
-      throw error;
-    }
+    return this.invitations.create(actorId, thesisId, body, requestId);
   }
 }

@@ -65,6 +65,11 @@ const schema = z.object({
   FILE_SCAN_MODE: z.preprocess(emptyToUndefined, z.enum(['stub']).default('stub')),
   OPENAI_API_KEY: z.preprocess(emptyToUndefined, z.string().min(10).max(200).optional()),
   OPENAI_MODEL: z.preprocess(emptyToUndefined, z.string().min(1).max(80).default('gpt-4o-mini')),
+  /** Optional. Promotes this existing account to SUPER_ADMIN when none exists yet. */
+  SUPER_ADMIN_BOOTSTRAP_EMAIL: z.preprocess(
+    emptyToUndefined,
+    z.string().trim().toLowerCase().email().max(320).optional(),
+  ),
 });
 
 export type Env = z.infer<typeof schema>;
@@ -99,6 +104,7 @@ export function parseEnv(source: NodeJS.ProcessEnv): Env {
     FILE_SCAN_MODE: source.FILE_SCAN_MODE,
     OPENAI_API_KEY: source.OPENAI_API_KEY,
     OPENAI_MODEL: source.OPENAI_MODEL,
+    SUPER_ADMIN_BOOTSTRAP_EMAIL: source.SUPER_ADMIN_BOOTSTRAP_EMAIL,
   });
 
   if (!result.success) {

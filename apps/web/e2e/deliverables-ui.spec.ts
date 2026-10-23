@@ -91,6 +91,7 @@ async function workspace(page: Page, supervisor = false, withFile = true) {
           displayName: 'Camille Martin',
           email: 'camille@example.test',
           emailVerified: true,
+          platformRole: 'USER',
         },
       };
     else if (path.endsWith('/dashboard'))

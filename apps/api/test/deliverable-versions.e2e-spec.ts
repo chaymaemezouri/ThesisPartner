@@ -8,6 +8,7 @@ import {
 } from '@thesispartner/validation';
 import request from 'supertest';
 import { createApp } from '../src/app.factory';
+import { inviteSupervisor } from './helpers/invite-supervisor';
 import { PrismaService } from '../src/infrastructure/prisma/prisma.service';
 
 const password = 'phrase-secrete-12';
@@ -315,11 +316,7 @@ describe('deliverable versions', () => {
     thesisId: string,
     email: string,
   ) {
-    const response = await account.agent
-      .post(`/api/v1/theses/${thesisId}/members`)
-      .set('x-csrf-token', account.csrf)
-      .send({ email, role: 'SUPERVISOR' });
-    expect(response.status).toBe(201);
+    await inviteSupervisor(prisma, account, thesisId, email);
   }
 
   async function createDeliverable(

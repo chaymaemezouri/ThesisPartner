@@ -294,7 +294,7 @@ export function InviteForm({ thesisId, stacked = false }: { thesisId: string; st
         setMessage(null);
 
         try {
-          await apiSend(`/api/v1/theses/${thesisId}/members`, inviteResponseSchema, values);
+          await apiSend(`/api/v1/theses/${thesisId}/invitations`, inviteResponseSchema, values);
 
           form.reset({ email: '', role: 'SUPERVISOR' });
 

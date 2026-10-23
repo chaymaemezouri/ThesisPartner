@@ -128,6 +128,7 @@ async function mockDocuments(page: Page) {
           displayName: profile.displayName,
           email: 'demo@example.test',
           emailVerified: true,
+          platformRole: 'USER',
         },
       };
     else if (path.endsWith('/resources')) body = { canShare: supervisor, resources: [] };

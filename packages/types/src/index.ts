@@ -2,6 +2,21 @@ export const MEMBERSHIP_ROLES = ['DOCTORAL_STUDENT', 'SUPERVISOR', 'ADMIN'] as c
 
 export type MembershipRole = (typeof MEMBERSHIP_ROLES)[number];
 
+/** Global platform role on User — independent of ThesisMembership. */
+export const PLATFORM_ROLES = ['USER', 'SUPER_ADMIN'] as const;
+
+export type PlatformRole = (typeof PLATFORM_ROLES)[number];
+
+export const INVITATION_STATUSES = [
+  'PENDING',
+  'ACCEPTED',
+  'REJECTED',
+  'EXPIRED',
+  'CANCELLED',
+] as const;
+
+export type InvitationStatus = (typeof INVITATION_STATUSES)[number];
+
 export const API_ERROR_CODES = [
   'VALIDATION_ERROR',
   'BAD_REQUEST',

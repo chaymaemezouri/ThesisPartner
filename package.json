@@ -26,7 +26,8 @@
     "db:migrate:dev": "node infrastructure/scripts/run-with-env.mjs npm exec -w @thesispartner/api -- prisma migrate dev",
     "db:reset": "node infrastructure/scripts/run-with-env.mjs npm exec -w @thesispartner/api -- prisma migrate reset --force",
     "db:seed:demo": "node infrastructure/scripts/run-with-env.mjs npm exec -w @thesispartner/api -- tsx scripts/seed-demo.ts",
-    "db:demo:accounts": "node infrastructure/scripts/run-with-env.mjs node apps/api/scripts/ensure-demo-accounts.mjs"
+    "db:demo:accounts": "node infrastructure/scripts/run-with-env.mjs node apps/api/scripts/ensure-demo-accounts.mjs",
+    "admin:promote": "node infrastructure/scripts/run-with-env.mjs node apps/api/scripts/promote-super-admin.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^9.36.0",

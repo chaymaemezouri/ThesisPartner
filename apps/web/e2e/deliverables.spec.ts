@@ -15,7 +15,7 @@ test('a doctoral student creates a deliverable that only the thesis supervisor c
   const noa = await register(request, `e2e-del-noa-${stamp}@example.test`, 'Noa', 'Bernard');
   const thesisId = await createThesis(request, ada.cookie, `These livrables ${stamp}`);
   await createThesis(request, bea.cookie, `These bea ${stamp}`);
-  await invite(request, ada.cookie, thesisId, noa.email);
+  await invite(request, ada.cookie, noa.cookie, thesisId, noa.email);
 
   await login(page, noa.email);
   await page.goto('/encadrement');
@@ -90,7 +90,7 @@ test('a doctoral student records versions that the supervisor can only read', as
   const ada = await register(request, `e2e-ver-ada-${stamp}@example.test`, 'Ada', 'Martin');
   const noa = await register(request, `e2e-ver-noa-${stamp}@example.test`, 'Noa', 'Bernard');
   const thesisId = await createThesis(request, ada.cookie, `These versions ${stamp}`);
-  await invite(request, ada.cookie, thesisId, noa.email);
+  await invite(request, ada.cookie, noa.cookie, thesisId, noa.email);
   await createPlainDeliverable(request, ada.cookie, thesisId, title);
 
   await login(page, ada.email);
@@ -153,7 +153,7 @@ test('a doctoral student uploads a file the supervisor can only download', async
   const ada = await register(request, `e2e-file-ada-${stamp}@example.test`, 'Ada', 'Martin');
   const noa = await register(request, `e2e-file-noa-${stamp}@example.test`, 'Noa', 'Bernard');
   const thesisId = await createThesis(request, ada.cookie, `These fichier ${stamp}`);
-  await invite(request, ada.cookie, thesisId, noa.email);
+  await invite(request, ada.cookie, noa.cookie, thesisId, noa.email);
   await createPlainDeliverable(request, ada.cookie, thesisId, title);
 
   await login(page, ada.email);
@@ -199,7 +199,7 @@ test('deliverable filters stay in the address bar', async ({ page, request }) =>
   const ada = await register(request, `e2e-filter-ada-${stamp}@example.test`, 'Ines', 'Martin');
   const noa = await register(request, `e2e-filter-noa-${stamp}@example.test`, 'Noa', 'Bernard');
   const thesisId = await createThesis(request, ada.cookie, `These filtres ${stamp}`);
-  await invite(request, ada.cookie, thesisId, noa.email);
+  await invite(request, ada.cookie, noa.cookie, thesisId, noa.email);
   const objectiveId = await createObjective(request, noa.cookie, thesisId, objectiveTitle);
   await createDeliverable(request, ada.cookie, thesisId, title, objectiveId);
 
@@ -249,12 +249,24 @@ async function createThesis(request: APIRequestContext, cookie: string, title: s
   return body.id;
 }
 
-async function invite(request: APIRequestContext, cookie: string, thesisId: string, email: string) {
-  const response = await request.post(`/api/v1/theses/${thesisId}/members`, {
-    headers: { cookie, 'x-csrf-token': csrf(cookie) },
+async function invite(
+  request: APIRequestContext,
+  inviterCookie: string,
+  inviteeCookie: string,
+  thesisId: string,
+  email: string,
+) {
+  const created = await request.post(`/api/v1/theses/${thesisId}/invitations`, {
+    headers: { cookie: inviterCookie, 'x-csrf-token': csrf(inviterCookie) },
     data: { email, role: 'SUPERVISOR' },
   });
-  expect(response.status()).toBe(201);
+  expect(created.status()).toBe(201);
+  const body = (await created.json()) as { id: string };
+  const accepted = await request.post(`/api/v1/invitations/${body.id}/accept`, {
+    headers: { cookie: inviteeCookie, 'x-csrf-token': csrf(inviteeCookie) },
+    data: {},
+  });
+  expect(accepted.status()).toBe(200);
 }
 
 async function createObjective(

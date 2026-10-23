@@ -11,6 +11,7 @@ const account = {
     id: '11111111-1111-4111-8111-111111111111',
     email: 'demo@example.test',
     emailVerified: true,
+    platformRole: 'USER',
     givenName: 'Nora',
     familyName: 'Bernard',
     displayName: 'Nora Bernard',

@@ -40,12 +40,14 @@ export type PublicUser = {
   familyName: string;
   displayName: string;
   avatarUrl: string | null;
+  platformRole: 'USER' | 'SUPER_ADMIN';
 };
 
 type UserWithProfile = {
   id: string;
   email: string;
   emailVerifiedAt: Date | null;
+  platformRole: 'USER' | 'SUPER_ADMIN';
   profile: {
     givenName: string;
     familyName: string;
@@ -133,6 +135,11 @@ export class AuthService {
     const passwordOk = await this.passwords.verify(body.password, passwordHash);
     if (!user || !user.profile || user.disabledAt || !passwordOk) {
       this.attempts.recordFailure(body.email);
+      await this.audit.record(this.prisma, {
+        action: 'auth.login_failed',
+        entityType: 'auth',
+        requestId: meta.requestId,
+      });
       throw new AppException(401, 'UNAUTHORIZED', INVALID_LOGIN);
     }
     this.attempts.clear(body.email);
@@ -315,5 +322,6 @@ function toPublicUser(user: UserWithProfile): PublicUser {
     familyName: user.profile.familyName,
     displayName: user.profile.displayName,
     avatarUrl: resolveAvatarUrl(user.id, user.profile.avatarUrl, true),
+    platformRole: user.platformRole,
   };
 }

@@ -18,6 +18,7 @@ export type AuthContext = {
   givenName: string;
   familyName: string;
   displayName: string;
+  platformRole: 'USER' | 'SUPER_ADMIN';
 };
 
 export type IssuedSession = {
@@ -71,6 +72,7 @@ export class SessionService {
       givenName: session.user.profile.givenName,
       familyName: session.user.profile.familyName,
       displayName: session.user.profile.displayName,
+      platformRole: session.user.platformRole,
     };
   }
 

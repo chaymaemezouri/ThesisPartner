@@ -13,7 +13,8 @@ import { apiGet, apiSend } from '../../api/client';
 import { applyFieldErrors, formErrorMessage } from '../../forms/api-errors';
 import { useZodForm } from '../../forms/use-zod-form';
 import { useT } from '../../i18n/LocaleContext';
-import { InviteForm, ThesisEditForm } from '../theses/ThesisForms';
+import { ThesisInvitationsPanel } from '../invitations/ThesisInvitationsPanel';
+import { ThesisEditForm } from '../theses/ThesisForms';
 import { primaryThesis } from '../theses/primary-thesis';
 
 const deletedSchema = z.object({ id: z.string().uuid() });
@@ -164,7 +165,13 @@ function Dossier({ thesisId, canDelete }: { thesisId: string; canDelete: boolean
           </div>
         ) : null}
       </div>
-      {canEdit ? <InviteForm thesisId={thesis.id} /> : null}
+      {canEdit ? (
+        <ThesisInvitationsPanel
+          thesisId={thesis.id}
+          hasSupervisor={Boolean(supervisor)}
+          canManage={thesis.role === 'DOCTORAL_STUDENT'}
+        />
+      ) : null}
       <Modal
         open={editing}
         title={t('profile.editThesis')}

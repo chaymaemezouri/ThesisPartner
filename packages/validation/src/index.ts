@@ -1,9 +1,13 @@
-import { MEMBERSHIP_ROLES } from '@thesispartner/types';
+import { INVITATION_STATUSES, MEMBERSHIP_ROLES, PLATFORM_ROLES } from '@thesispartner/types';
 import { z } from 'zod';
 
 export const uuidSchema = z.string().uuid();
 
 export const membershipRoleSchema = z.enum(MEMBERSHIP_ROLES);
+
+export const platformRoleSchema = z.enum(PLATFORM_ROLES);
+
+export const invitationStatusSchema = z.enum(INVITATION_STATUSES);
 
 export const boundedTextSchema = (max: number) => z.string().trim().min(1).max(max);
 
@@ -105,6 +109,7 @@ export const currentUserSchema = z
     familyName: boundedTextSchema(80),
     displayName: boundedTextSchema(160),
     avatarUrl: z.string().max(500).nullable().optional(),
+    platformRole: platformRoleSchema,
   })
   .strict();
 
@@ -182,7 +187,105 @@ export const inviteMemberSchema = z
 export const inviteResponseSchema = z
   .object({
     id: uuidSchema,
+    email: z.string().email(),
     role: membershipRoleSchema,
+    status: invitationStatusSchema,
+    expiresAt: z.string().datetime(),
+    replacesSupervisor: z.boolean(),
+  })
+  .strict();
+
+export const invitationSummarySchema = z
+  .object({
+    id: uuidSchema,
+    thesisId: uuidSchema,
+    thesisTitle: boundedTextSchema(300),
+    email: z.string().email(),
+    role: membershipRoleSchema,
+    status: invitationStatusSchema,
+    replacesSupervisor: z.boolean(),
+    changeReason: z.string().max(500).nullable(),
+    invitedByName: boundedTextSchema(160),
+    expiresAt: z.string().datetime(),
+    createdAt: z.string().datetime(),
+    respondedAt: z.string().datetime().nullable(),
+  })
+  .strict();
+
+export const invitationListSchema = z
+  .object({
+    invitations: z.array(invitationSummarySchema).max(100),
+  })
+  .strict();
+
+export const invitationPreviewSchema = z
+  .object({
+    thesisTitle: boundedTextSchema(300),
+    role: membershipRoleSchema,
+    email: z.string().email(),
+    status: invitationStatusSchema,
+    replacesSupervisor: z.boolean(),
+    invitedByName: boundedTextSchema(160),
+    expiresAt: z.string().datetime(),
+    requiresAccount: z.boolean(),
+  })
+  .strict();
+
+export const invitationTokenBodySchema = z
+  .object({
+    token: z.string().trim().min(20).max(200),
+  })
+  .strict();
+
+export const supervisorChangeBodySchema = z
+  .object({
+    email: emailSchema,
+    reason: boundedTextSchema(500),
+  })
+  .strict();
+
+export const supervisionHistoryItemSchema = z
+  .object({
+    id: uuidSchema,
+    supervisorUserId: uuidSchema,
+    supervisorName: boundedTextSchema(160),
+    supervisorEmail: z.string().email(),
+    startedAt: z.string().datetime(),
+    endedAt: z.string().datetime(),
+    endedReason: boundedTextSchema(80),
+    changeReason: z.string().max(500).nullable(),
+  })
+  .strict();
+
+export const adminThesisRelationsSchema = z
+  .object({
+    thesisId: uuidSchema,
+    thesisTitle: boundedTextSchema(300),
+    thesisStatus: thesisStatusSchema,
+    members: z
+      .array(
+        z
+          .object({
+            userId: uuidSchema,
+            email: z.string().email(),
+            displayName: boundedTextSchema(160),
+            role: membershipRoleSchema,
+            since: z.string().datetime(),
+          })
+          .strict(),
+      )
+      .max(50),
+    invitations: z.array(invitationSummarySchema).max(100),
+    supervisionHistory: z.array(supervisionHistoryItemSchema).max(100),
+  })
+  .strict();
+
+export const adminInvitationListSchema = z
+  .object({
+    invitations: z.array(invitationSummarySchema).max(100),
+    page: z.number().int().min(1),
+    pageSize: z.number().int().min(1).max(100),
+    total: z.number().int().nonnegative(),
   })
   .strict();
 
@@ -1631,3 +1734,168 @@ export const researchAiSynthesisSchema = z
     sections: z.array(researchAiSectionSchema).max(120),
   })
   .strict();
+
+export const adminAccountStatusSchema = z.enum(['ACTIVE', 'DISABLED']);
+
+export const adminTimeSeriesPointSchema = z
+  .object({
+    date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+    count: z.number().int().nonnegative(),
+  })
+  .strict();
+
+export const adminHealthChecksSchema = z
+  .object({
+    api: z.literal('ok'),
+    database: z.enum(['ok', 'error']),
+    redis: z.enum(['ok', 'error']),
+  })
+  .strict();
+
+export const adminStatsSchema = z
+  .object({
+    totalUsers: z.number().int().nonnegative(),
+    activeAccounts: z.number().int().nonnegative(),
+    suspendedAccounts: z.number().int().nonnegative(),
+    doctoralStudents: z.number().int().nonnegative(),
+    supervisors: z.number().int().nonnegative(),
+    theses: z.number().int().nonnegative(),
+    activeTheses: z.number().int().nonnegative(),
+    invitationsPending: z.number().int().nonnegative(),
+    invitationsAccepted: z.number().int().nonnegative(),
+    invitationsRejected: z.number().int().nonnegative(),
+    invitationsExpired: z.number().int().nonnegative(),
+    registrationsLast7Days: z.number().int().nonnegative(),
+    registrationsLast30Days: z.number().int().nonnegative(),
+    registrationsLast12Months: z.number().int().nonnegative(),
+    registrationsByDay: z.array(adminTimeSeriesPointSchema).max(400),
+    health: z
+      .object({
+        status: z.enum(['ok', 'degraded']),
+        checks: adminHealthChecksSchema,
+      })
+      .strict(),
+  })
+  .strict();
+
+export const adminAnalyticsSchema = z
+  .object({
+    registrationsByDay: z.array(adminTimeSeriesPointSchema).max(100),
+    registrationsByMonth: z.array(adminTimeSeriesPointSchema).max(24),
+    activityByDay: z.array(adminTimeSeriesPointSchema).max(100),
+    thesesWithoutSupervisor: z.number().int().nonnegative(),
+    pendingInvitationsOlderThan7Days: z.number().int().nonnegative(),
+    expiredInvitations: z.number().int().nonnegative(),
+    activeSessions: z.number().int().nonnegative(),
+    loginsLast30Days: z.number().int().nonnegative(),
+    supervisorChangesLast30Days: z.number().int().nonnegative(),
+  })
+  .strict();
+
+export const adminAuditEntrySchema = z
+  .object({
+    id: uuidSchema,
+    action: boundedTextSchema(120),
+    entityType: boundedTextSchema(80),
+    entityId: uuidSchema.nullable(),
+    actorId: uuidSchema.nullable(),
+    actorEmail: z.string().email().nullable(),
+    actorDisplayName: boundedTextSchema(160).nullable(),
+    thesisId: uuidSchema.nullable(),
+    thesisTitle: boundedTextSchema(300).nullable(),
+    requestId: z.string().max(64).nullable(),
+    metadata: z.record(z.unknown()).nullable(),
+    createdAt: z.string().datetime(),
+  })
+  .strict();
+
+export const adminAuditListSchema = z
+  .object({
+    entries: z.array(adminAuditEntrySchema).max(100),
+    page: z.number().int().min(1),
+    pageSize: z.number().int().min(1).max(100),
+    total: z.number().int().nonnegative(),
+  })
+  .strict();
+
+export const adminSystemSchema = z
+  .object({
+    health: z
+      .object({
+        status: z.enum(['ok', 'degraded']),
+        checks: adminHealthChecksSchema,
+      })
+      .strict(),
+    checkedAt: z.string().datetime(),
+    nodeEnv: z.enum(['development', 'test', 'production']),
+    activeSessions: z.number().int().nonnegative(),
+    auditEventsLast24Hours: z.number().int().nonnegative(),
+    failedLoginsLast24Hours: z.number().int().nonnegative(),
+    invitationsPending: z.number().int().nonnegative(),
+  })
+  .strict();
+
+export const adminMembershipSummarySchema = z
+  .object({
+    thesisId: uuidSchema,
+    thesisTitle: boundedTextSchema(300),
+    thesisStatus: thesisStatusSchema,
+    role: membershipRoleSchema,
+  })
+  .strict();
+
+export const adminUserSummarySchema = z
+  .object({
+    id: uuidSchema,
+    email: z.string().email(),
+    emailVerified: z.boolean(),
+    displayName: boundedTextSchema(160),
+    givenName: boundedTextSchema(80),
+    familyName: boundedTextSchema(80),
+    platformRole: platformRoleSchema,
+    disabledAt: z.string().datetime().nullable(),
+    createdAt: z.string().datetime(),
+    membershipRoles: z.array(membershipRoleSchema).max(3),
+  })
+  .strict();
+
+export const adminUserListSchema = z
+  .object({
+    users: z.array(adminUserSummarySchema).max(100),
+    page: z.number().int().min(1),
+    pageSize: z.number().int().min(1).max(100),
+    total: z.number().int().nonnegative(),
+  })
+  .strict();
+
+export const adminUserDetailSchema = z
+  .object({
+    id: uuidSchema,
+    email: z.string().email(),
+    emailVerified: z.boolean(),
+    displayName: boundedTextSchema(160),
+    givenName: boundedTextSchema(80),
+    familyName: boundedTextSchema(80),
+    institution: z.string().max(200).nullable(),
+    academicTitle: z.string().max(80).nullable(),
+    platformRole: platformRoleSchema,
+    disabledAt: z.string().datetime().nullable(),
+    createdAt: z.string().datetime(),
+    memberships: z.array(adminMembershipSummarySchema).max(50),
+  })
+  .strict();
+
+export const adminSuspendBodySchema = z
+  .object({
+    reason: boundedTextSchema(500),
+  })
+  .strict();
+
+export const adminReactivateBodySchema = z
+  .object({
+    reason: z.string().trim().max(500).optional(),
+  })
+  .strict();
+
+export type AdminSuspendBody = z.infer<typeof adminSuspendBodySchema>;
+export type AdminReactivateBody = z.infer<typeof adminReactivateBodySchema>;

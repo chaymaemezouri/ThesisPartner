@@ -13,7 +13,7 @@ test('a supervisor creates an objective that only that doctoral student can see'
   const noa = await register(request, `e2e-noa-${stamp}@example.test`, 'Noa', 'Bernard');
   const thesisA = await createThesis(request, ada.cookie, `These Ada ${stamp}`);
   const thesisB = await createThesis(request, bea.cookie, `These Bea ${stamp}`);
-  await invite(request, ada.cookie, thesisA, noa.email);
+  await invite(request, ada.cookie, noa.cookie, thesisA, noa.email);
 
   await login(page, noa.email);
   await page.goto('/encadrement');
@@ -84,12 +84,24 @@ async function createThesis(request: APIRequestContext, cookie: string, title: s
   return body.id;
 }
 
-async function invite(request: APIRequestContext, cookie: string, thesisId: string, email: string) {
-  const response = await request.post(`/api/v1/theses/${thesisId}/members`, {
-    headers: { cookie, 'x-csrf-token': csrf(cookie) },
+async function invite(
+  request: APIRequestContext,
+  inviterCookie: string,
+  inviteeCookie: string,
+  thesisId: string,
+  email: string,
+) {
+  const created = await request.post(`/api/v1/theses/${thesisId}/invitations`, {
+    headers: { cookie: inviterCookie, 'x-csrf-token': csrf(inviterCookie) },
     data: { email, role: 'SUPERVISOR' },
   });
-  expect(response.status()).toBe(201);
+  expect(created.status()).toBe(201);
+  const body = (await created.json()) as { id: string };
+  const accepted = await request.post(`/api/v1/invitations/${body.id}/accept`, {
+    headers: { cookie: inviteeCookie, 'x-csrf-token': csrf(inviteeCookie) },
+    data: {},
+  });
+  expect(accepted.status()).toBe(200);
 }
 
 function csrf(cookie: string): string {

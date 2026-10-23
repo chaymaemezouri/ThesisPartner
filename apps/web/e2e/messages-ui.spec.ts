@@ -59,6 +59,7 @@ test('messaging stays readable for both participants on desktop and mobile', asy
           familyName: actor.displayName.split(' ').slice(1).join(' '),
           email: 'demo@example.test',
           emailVerified: true,
+          platformRole: 'USER',
         },
       };
     else if (path.endsWith('/supervision/theses'))

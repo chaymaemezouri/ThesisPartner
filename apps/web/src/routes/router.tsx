@@ -47,6 +47,18 @@ import { SettingsPage } from '../features/settings/SettingsPage';
 import { DashboardPage } from '../pages/DashboardPage';
 import { ModulePage } from '../pages/ModulePage';
 import { NotFoundPage } from '../pages/NotFoundPage';
+import { AdminShell } from '../features/admin/AdminShell';
+import { AdminAnalyticsPage } from '../features/admin/AdminAnalyticsPage';
+import { AdminAuditPage } from '../features/admin/AdminAuditPage';
+import { AdminDashboardPage } from '../features/admin/AdminDashboardPage';
+import { AdminInvitationsPage } from '../features/admin/AdminInvitationsPage';
+import { AdminSystemPage } from '../features/admin/AdminSystemPage';
+import { AdminThesisRelationsPage } from '../features/admin/AdminThesisRelationsPage';
+import { AdminUserDetailPage } from '../features/admin/AdminUserDetailPage';
+import { AdminUsersPage } from '../features/admin/AdminUsersPage';
+import { RequireSuperAdmin } from '../features/admin/RequireSuperAdmin';
+import { InvitationRespondPage } from '../features/invitations/InvitationRespondPage';
+import { InvitationsInboxPage } from '../features/invitations/InvitationsInboxPage';
 import { useT } from '../i18n/LocaleContext';
 import { NAV_ITEMS } from './nav';
 
@@ -131,12 +143,26 @@ export function AppRoutes() {
       <Route path="/mot-de-passe-oublie" element={<ForgotPasswordPage />} />
       <Route path="/reinitialiser-mot-de-passe" element={<ResetPasswordPage />} />
       <Route path="/verifier-email" element={<VerifyEmailPage />} />
+      <Route path="/invitation" element={<InvitationRespondPage />} />
       <Route element={<RequireAuth />}>
+        <Route element={<RequireSuperAdmin />}>
+          <Route path="admin" element={<AdminShell />}>
+            <Route index element={<AdminDashboardPage />} />
+            <Route path="analytics" element={<AdminAnalyticsPage />} />
+            <Route path="utilisateurs" element={<AdminUsersPage />} />
+            <Route path="utilisateurs/:userId" element={<AdminUserDetailPage />} />
+            <Route path="invitations" element={<AdminInvitationsPage />} />
+            <Route path="theses/:thesisId" element={<AdminThesisRelationsPage />} />
+            <Route path="audit" element={<AdminAuditPage />} />
+            <Route path="system" element={<AdminSystemPage />} />
+          </Route>
+        </Route>
         <Route element={<AppShell />}>
           <Route index element={<DashboardPage />} />
           <Route path="these" element={<Navigate to="/profil" replace />} />
           <Route path="profil" element={<ProfilePage />} />
           <Route path="parametres" element={<SettingsPage />} />
+          <Route path="invitations" element={<InvitationsInboxPage />} />
           <Route path="objectifs" element={<DoctoralObjectivesPage />} />
           <Route path="objectifs/:objectiveId" element={<DoctoralObjectiveDetailPage />} />
           <Route path="livrables" element={<DeliverablesEntry />} />

@@ -34,6 +34,7 @@ describe('application shell', () => {
                 id: '11111111-1111-4111-8111-111111111111',
                 email: 'camille.martin@example.edu',
                 emailVerified: true,
+                platformRole: 'USER',
                 givenName: 'Camille',
                 familyName: 'Martin',
                 displayName: 'Camille Martin',
