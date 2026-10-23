@@ -1,8 +1,7 @@
 import { useT } from '../../../i18n/LocaleContext';
+import type { Objective } from '../hooks/use-objectives';
 
-const STATUS = ['PLANNED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED'] as const;
-
-export function ObjectiveStatusBadge({ status }: { status: (typeof STATUS)[number] }) {
+export function ObjectiveStatusBadge({ status }: { status: Objective['status'] }) {
   const t = useT();
   return (
     <span className="whitespace-nowrap text-[11px] font-medium text-muted">
