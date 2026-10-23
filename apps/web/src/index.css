@@ -4,15 +4,15 @@
 @theme {
   --font-sans: Inter, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
   --font-serif: 'Source Serif 4', Georgia, 'Iowan Old Style', Palatino, serif;
-  --color-canvas: #f4f7fb;
+  --color-canvas: #fafafa;
   --color-surface: #ffffff;
-  --color-ink: #172034;
-  --color-muted: #66738a;
-  --color-faint: #8a97aa;
-  --color-line: #dfe7f0;
-  --color-brand: #2457a7;
-  --color-brand-strong: #193f7d;
-  --color-brand-soft: #eaf2ff;
+  --color-ink: #202124;
+  --color-muted: #6b6b73;
+  --color-faint: #929298;
+  --color-line: #e7e7eb;
+  --color-brand: #2463c5;
+  --color-brand-strong: #1c4f9e;
+  --color-brand-soft: #eff4ff;
   --color-mark: #0f766e;
   --color-danger: #c72e3a;
   --color-danger-soft: #fff1f2;
@@ -25,15 +25,15 @@
   --color-violet: #6650b8;
   --color-violet-soft: #f0edff;
   --radius-xs: 6px;
-  --radius-sm: 6px;
-  --radius-md: 6px;
-  --radius-lg: 6px;
-  --radius-xl: 6px;
-  --radius-2xl: 6px;
-  --radius-3xl: 6px;
-  --radius-4xl: 6px;
-  --shadow-card: 0 1px 2px rgb(15 23 42 / 0.04), 0 10px 28px rgb(15 23 42 / 0.06);
-  --shadow-control: 0 1px 2px rgb(15 23 42 / 0.05);
+  --radius-sm: 8px;
+  --radius-md: 10px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-2xl: 20px;
+  --radius-3xl: 24px;
+  --radius-4xl: 28px;
+  --shadow-card: 0 2px 10px rgb(20 20 30 / 0.025);
+  --shadow-control: 0 1px 2px rgb(20 20 30 / 0.025);
 }
 
 html {
@@ -48,7 +48,7 @@ body,
 
 body {
   margin: 0;
-  background: linear-gradient(180deg, #f8fafc 0%, var(--color-canvas) 18rem);
+  background: var(--color-canvas);
   color: var(--color-ink);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
@@ -127,8 +127,9 @@ dialog.modal-dialog {
   width: min(34rem, calc(100vw - 2rem));
   max-height: min(90vh, 44rem);
   border: 1px solid var(--color-line);
-  border-radius: 6px;
+  border-radius: 20px;
   padding: 0;
+  overflow: hidden;
   background: transparent;
   color: var(--color-ink);
   box-shadow: none;
@@ -139,10 +140,10 @@ dialog.modal-dialog .modal-dialog__panel {
   max-height: min(90vh, 44rem);
   flex-direction: column;
   overflow: hidden;
-  border-radius: 6px;
+  border-radius: 20px;
   border: 1px solid var(--color-line);
   background: var(--color-surface);
-  box-shadow: 0 18px 50px rgb(15 23 42 / 0.18);
+  box-shadow: 0 18px 50px rgb(20 20 30 / 0.14);
 }
 
 dialog.modal-dialog .modal-dialog__handle {
@@ -150,15 +151,17 @@ dialog.modal-dialog .modal-dialog__handle {
 }
 
 dialog.modal-dialog .modal-dialog__body {
+  min-height: 0;
   flex: 1;
   overflow: auto;
+  overscroll-behavior: contain;
   padding: 1rem;
 }
 
 dialog::backdrop {
-  background: rgb(15 23 42 / 0.42);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  background: rgb(20 20 30 / 0.38);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
 }
 
 @media (max-width: 639px) {
@@ -166,17 +169,17 @@ dialog::backdrop {
     margin: auto 0 0;
     width: 100vw;
     max-width: 100vw;
-    max-height: min(92dvh, 100%);
+    max-height: 92dvh;
     border: 0;
     border-radius: 0;
     box-shadow: none;
   }
 
   dialog.modal-dialog .modal-dialog__panel {
-    max-height: min(92dvh, 100%);
+    max-height: 92dvh;
     border: 0;
     border-top: 1px solid var(--color-line);
-    border-radius: 6px 6px 0 0;
+    border-radius: 20px 20px 0 0;
     box-shadow: 0 -10px 40px rgb(15 23 42 / 0.16);
     animation: sheet-up 220ms ease-out;
   }

@@ -156,6 +156,47 @@ export class ThesisDocumentsController {
     );
   }
 
+  @Post(':documentId/synthesis/file')
+  @HttpCode(200)
+  @UseInterceptors(SingleFileUploadInterceptor)
+  @ApiOperation({ summary: 'Attach a Word or PDF synthesis file' })
+  uploadSynthesis(
+    @Param('thesisId', ParseUUIDPipe) thesisId: string,
+    @Param('documentId', ParseUUIDPipe) documentId: string,
+    @Req() request: Request,
+  ) {
+    const uploaded = request.file;
+    return this.documents.attachSynthesisFile(
+      actorId(request),
+      thesisId,
+      documentId,
+      uploaded
+        ? {
+            path: uploaded.path,
+            originalName: uploaded.originalname,
+            declaredMime: uploaded.mimetype,
+          }
+        : undefined,
+      request.requestId,
+    );
+  }
+
+  @Get(':documentId/synthesis/file')
+  @ApiOperation({ summary: 'Open or download the synthesis file' })
+  downloadSynthesis(
+    @Param('thesisId', ParseUUIDPipe) thesisId: string,
+    @Param('documentId', ParseUUIDPipe) documentId: string,
+    @Query('inline') inline: string | undefined,
+    @Req() request: Request,
+  ) {
+    return this.documents.downloadSynthesisFile(
+      actorId(request),
+      thesisId,
+      documentId,
+      inline === '1',
+    );
+  }
+
   @Post(':documentId/review')
   @HttpCode(200)
   @ValidateBody(documentReviewSchema)

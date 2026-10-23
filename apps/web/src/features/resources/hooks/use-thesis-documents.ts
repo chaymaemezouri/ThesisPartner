@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   documentDeskSchema,
   fileDownloadSchema,
@@ -20,6 +20,35 @@ export function useThesisDocuments(thesisId: string | null) {
     queryKey: key(thesisId ?? 'none'),
     enabled: Boolean(thesisId),
     queryFn: () => apiGet(`/api/v1/theses/${thesisId}/documents`, documentDeskSchema),
+  });
+}
+
+export function useSupervisorDocuments(thesisIds: string[]) {
+  return useQueries({
+    queries: thesisIds.map((thesisId) => ({
+      queryKey: key(thesisId),
+      enabled: thesisId.length > 0,
+      queryFn: () => apiGet(`/api/v1/theses/${thesisId}/documents`, documentDeskSchema),
+    })),
+  });
+}
+
+export function useShareDocuments() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: { thesisIds: string[]; body: DocumentDraft; file: File | null }) => {
+      for (const thesisId of input.thesisIds) {
+        const base = `/api/v1/theses/${thesisId}/documents`;
+        const before = await apiGet(base, documentDeskSchema);
+        const after = await apiSend(base, documentDeskSchema, input.body);
+        const known = new Set(before.documents.map((item) => item.id));
+        const created = after.documents.find((item) => !known.has(item.id));
+        if (input.file && created) {
+          await apiUpload(`${base}/${created.id}/file`, documentDeskSchema, input.file);
+        }
+      }
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['thesis-documents'] }),
   });
 }
 
@@ -55,6 +84,11 @@ export function useThesisDocumentActions(thesisId: string) {
         apiSend(`${base}/${input.id}/synthesis`, documentDeskSchema, input.body),
       onSuccess: refresh,
     }),
+    uploadSynthesis: useMutation({
+      mutationFn: (input: { id: string; file: File }) =>
+        apiUpload(`${base}/${input.id}/synthesis/file`, documentDeskSchema, input.file),
+      onSuccess: refresh,
+    }),
     review: useMutation({
       mutationFn: (input: {
         id: string;
@@ -70,6 +104,13 @@ export function useThesisDocumentActions(thesisId: string) {
     openFile: async (id: string, inline: boolean) => {
       const download = await apiGet(
         `${base}/${id}/file${inline ? '?inline=1' : ''}`,
+        fileDownloadSchema,
+      );
+      window.open(download.url, '_blank', 'noopener');
+    },
+    openSynthesisFile: async (id: string, inline: boolean) => {
+      const download = await apiGet(
+        `${base}/${id}/synthesis/file${inline ? '?inline=1' : ''}`,
         fileDownloadSchema,
       );
       window.open(download.url, '_blank', 'noopener');

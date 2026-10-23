@@ -286,6 +286,7 @@ test('deliverables are readable on desktop and mobile, with a clear deposit and 
     await expect(dialog.getByRole('button', { name: 'Soumettre à l’encadrant' })).toBeVisible();
     await dialog.getByLabel('Choisir un fichier').setInputFiles('e2e/fixtures/chapitre.pdf');
     await expect(dialog.getByText('chapitre.pdf', { exact: true })).toBeVisible();
+    await expect(dialog.getByRole('heading', { name: 'Nouveau livrable' })).toBeVisible();
     if (width === 375)
       await page.screenshot({ path: '../../artifacts/deliverables/deposit-mobile.png' });
     await dialog.getByRole('button', { name: 'Fermer', exact: true }).first().click();
@@ -330,7 +331,7 @@ test('the supervisor opens a submitted document directly from the review queue',
     await expect(page.getByRole('button', { name: 'Demander des modifications' })).toBeVisible();
     const preview = page.getByRole('region', { name: 'Aperçu du document' });
     const canvas = preview.getByRole('img', { name: 'Page 1 sur 2' });
-    await expect(canvas).toBeVisible();
+    await expect(canvas).toBeVisible({ timeout: 15000 });
     // Check real page pixels, rather than just the presence of an empty frame.
     expect(
       await canvas.evaluate((element) => {

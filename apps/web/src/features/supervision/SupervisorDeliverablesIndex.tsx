@@ -33,10 +33,7 @@ export function SupervisorDeliverablesIndex() {
 
   return (
     <div className="min-w-0">
-      <header className="mb-5">
-        <h1 className="text-base font-semibold text-ink">{t('supervision.deliverables')}</h1>
-        <p className="mt-1 text-xs text-muted">{t('deliverables.reviewHelp')}</p>
-      </header>
+      <h1 className="sr-only">{t('supervision.deliverables')}</h1>
       <div
         role="tablist"
         aria-label={t('supervision.deliverables')}

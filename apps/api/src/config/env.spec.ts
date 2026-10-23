@@ -18,6 +18,8 @@ describe('parseEnv', () => {
     expect(env.SIGNED_URL_TTL_SECONDS).toBe(300);
     expect(env.S3_FORCE_PATH_STYLE).toBe(true);
     expect(env.FILE_SCAN_MODE).toBe('stub');
+    expect(env.OPENAI_API_KEY).toBeUndefined();
+    expect(env.OPENAI_MODEL).toBe('gpt-4o-mini');
   });
 
   it('rejects a missing database url without echoing secrets', () => {

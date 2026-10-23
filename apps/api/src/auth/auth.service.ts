@@ -13,6 +13,7 @@ import { ENV, type Env } from '../config/env';
 import { AuditService } from '../audit/audit.service';
 import { StructuredLogger } from '../infrastructure/logger/logger';
 import { PrismaService } from '../infrastructure/prisma/prisma.service';
+import { resolveAvatarUrl } from '../profile/profile.service';
 import { AuthMailer } from './auth-mailer';
 import { LoginAttemptTracker } from './login-attempts';
 import { SessionService, type AuthContext, type IssuedSession } from './session.service';
@@ -38,13 +39,19 @@ export type PublicUser = {
   givenName: string;
   familyName: string;
   displayName: string;
+  avatarUrl: string | null;
 };
 
 type UserWithProfile = {
   id: string;
   email: string;
   emailVerifiedAt: Date | null;
-  profile: { givenName: string; familyName: string; displayName: string } | null;
+  profile: {
+    givenName: string;
+    familyName: string;
+    displayName: string;
+    avatarUrl: string | null;
+  } | null;
 };
 
 @Injectable()
@@ -307,5 +314,6 @@ function toPublicUser(user: UserWithProfile): PublicUser {
     givenName: user.profile.givenName,
     familyName: user.profile.familyName,
     displayName: user.profile.displayName,
+    avatarUrl: resolveAvatarUrl(user.id, user.profile.avatarUrl, true),
   };
 }

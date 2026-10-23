@@ -61,12 +61,15 @@ export function DeliverableVersionHistory({
   }
 
   return (
-    <section className="mt-4 min-w-0 border-t border-line pt-2" aria-labelledby="versions-titre">
+    <section
+      className="mt-3 min-w-0 rounded-2xl border border-line/80 bg-surface px-3 shadow-[0_1px_4px_rgba(15,23,42,0.03)]"
+      aria-labelledby="versions-titre"
+    >
       <h2 id="versions-titre" className="text-sm font-semibold text-ink">
         {hasVersions ? (
           <button
             type="button"
-            className="flex w-full items-center gap-2 py-2 text-left text-xs font-medium text-muted hover:text-ink"
+            className="flex w-full items-center gap-2 py-3 text-left text-xs font-medium text-muted hover:text-ink"
             aria-label={t('deliverables.historyAria')}
             aria-expanded={historyOpen}
             aria-controls="deliverable-version-history"

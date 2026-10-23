@@ -242,44 +242,46 @@ export function DeliverableDetailView({
       <div
         className={
           hasCurrentFile
-            ? 'mt-4 grid items-start gap-5 lg:grid-cols-[minmax(0,1.6fr)_minmax(18rem,0.8fr)]'
-            : 'mt-4 space-y-4'
+            ? 'mt-4 grid items-start gap-3 lg:grid-cols-[minmax(0,1.6fr)_minmax(18rem,0.8fr)]'
+            : 'mt-4 grid items-start gap-3'
         }
       >
         <DeliverableDocument thesisId={thesisId} deliverableId={deliverableId} />
-        <aside className="min-w-0 border-t border-line pt-4 lg:border-t-0 lg:pt-0">
-          <div className="pb-3">
-            <h2 className="text-sm font-semibold text-ink">{t('deliverables.nextStep')}</h2>
-            <p className="mt-2 text-[11px] leading-relaxed text-muted">
-              {t(`deliverables.statusHelp.${data.status}`)}
-              {overdueHint ? ` ${overdueHint}` : ''}
-            </p>
+        <aside className="min-w-0 rounded-2xl border border-line/80 bg-surface p-4 shadow-[0_1px_4px_rgba(15,23,42,0.03)]">
+          <div className="flex flex-col gap-3">
+            <div>
+              <h2 className="text-sm font-semibold text-ink">{t('deliverables.nextStep')}</h2>
+              <p className="mt-1.5 text-xs leading-relaxed text-muted">
+                {t(`deliverables.statusHelp.${data.status}`)}
+                {overdueHint ? ` ${overdueHint}` : ''}
+              </p>
+            </div>
             {editable ? (
               <Button
                 type="button"
                 variant="secondary"
-                className="mt-3 h-8 px-3 text-xs shadow-none"
+                className="h-9 w-full px-3 text-xs shadow-none sm:w-auto"
                 onClick={() => setAddingVersion(true)}
               >
                 {t(data.versionCount > 0 ? 'deliverables.addVersion' : 'deliverables.firstVersion')}
               </Button>
             ) : null}
+            <ReviewPanel
+              deliverable={data}
+              canEdit={canEdit}
+              canReview={Boolean(canReview)}
+              canSubmit={canSubmitAction}
+              reason={reason}
+              onReason={setReason}
+              submitPending={submit.isPending}
+              approvePending={approve.isPending}
+              changesPending={requestChanges.isPending}
+              error={submit.error ?? approve.error ?? requestChanges.error}
+              onSubmit={() => submit.mutate()}
+              onApprove={() => approve.mutate()}
+              onChanges={() => requestChanges.mutate(reason)}
+            />
           </div>
-          <ReviewPanel
-            deliverable={data}
-            canEdit={canEdit}
-            canReview={Boolean(canReview)}
-            canSubmit={canSubmitAction}
-            reason={reason}
-            onReason={setReason}
-            submitPending={submit.isPending}
-            approvePending={approve.isPending}
-            changesPending={requestChanges.isPending}
-            error={submit.error ?? approve.error ?? requestChanges.error}
-            onSubmit={() => submit.mutate()}
-            onApprove={() => approve.mutate()}
-            onChanges={() => requestChanges.mutate(reason)}
-          />
         </aside>
       </div>
       <DeliverableVersionHistory
@@ -388,31 +390,31 @@ function ReviewPanel({
   }
 
   return (
-    <section className="space-y-3" aria-label={t('deliverables.reviewAria')}>
+    <section className="space-y-3 border-t border-line/70 pt-3" aria-label={t('deliverables.reviewAria')}>
       {showDraft ? (
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-2">
           <p className="text-xs text-muted">{t('deliverables.submitHint')}</p>
-          <div className="flex flex-col items-start gap-1">
-            <Button
-              className="h-8 px-3 text-xs"
-              disabled={!canSubmit || submitPending}
-              onClick={onSubmit}
-            >
-              {t('deliverables.submit')}
-            </Button>
-            {!canSubmit ? (
-              <p className="text-[11px] text-muted">{t('deliverables.submitNeedVersion')}</p>
-            ) : null}
-          </div>
+          <Button
+            className="h-9 w-full px-3 text-xs sm:w-auto"
+            disabled={!canSubmit || submitPending}
+            onClick={onSubmit}
+          >
+            {t('deliverables.submit')}
+          </Button>
+          {!canSubmit ? (
+            <p className="text-[11px] text-muted">{t('deliverables.submitNeedVersion')}</p>
+          ) : null}
         </div>
       ) : null}
 
       {showSubmittedWaiting ? (
-        <p className="text-xs font-medium text-ink">{t('deliverables.submittedWaiting')}</p>
+        <p className="rounded-xl bg-violet-soft/70 px-3 py-2.5 text-xs font-medium text-violet">
+          {t('deliverables.submittedWaiting')}
+        </p>
       ) : null}
 
       {showReview ? (
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-2.5">
           <p className="text-xs font-medium text-ink">{t('deliverables.submittedWaiting')}</p>
           <Textarea
             id="deliverable-review-message"
@@ -422,17 +424,17 @@ function ReviewPanel({
             className="min-h-20 text-xs"
             onChange={(event) => onReason(event.target.value)}
           />
-          <div className="flex flex-wrap gap-1.5">
+          <div className="flex flex-wrap gap-2">
             <Button
               variant="secondary"
-              className="h-8 px-3 text-xs"
+              className="h-9 px-3 text-xs"
               disabled={changesPending || approvePending}
               onClick={onChanges}
             >
               {t('deliverables.requestChanges')}
             </Button>
             <Button
-              className="h-8 px-3 text-xs"
+              className="h-9 px-3 text-xs"
               disabled={approvePending || changesPending}
               onClick={onApprove}
             >
@@ -443,20 +445,24 @@ function ReviewPanel({
       ) : null}
 
       {showSubmittedReadonly ? (
-        <p className="text-xs text-ink">{t('deliverables.status.SUBMITTED')}</p>
+        <p className="rounded-xl bg-violet-soft/70 px-3 py-2.5 text-xs text-violet">
+          {t('deliverables.status.SUBMITTED')}
+        </p>
       ) : null}
 
       {showChanges ? (
         <div className="flex flex-col gap-3">
-          <div className="min-w-0">
-            <p className="text-xs font-medium text-ink">{t('deliverables.lastFeedback')}</p>
+          <div className="rounded-xl border border-warn/20 bg-warn-soft/70 px-3 py-3">
+            <p className="text-[11px] font-semibold tracking-wide text-warn uppercase">
+              {t('deliverables.lastFeedback')}
+            </p>
             {deliverable.reviewMessage ? (
-              <p className="mt-1 break-words whitespace-pre-wrap text-xs text-ink">
+              <p className="mt-1.5 break-words whitespace-pre-wrap text-sm text-ink">
                 {deliverable.reviewMessage}
               </p>
             ) : null}
             {deliverable.reviewedBy ? (
-              <p className="mt-1 text-[11px] text-muted">
+              <p className="mt-2 text-[11px] text-muted">
                 {t('deliverables.by', {
                   name: `${deliverable.reviewedBy.givenName} ${deliverable.reviewedBy.familyName}`,
                 })}
@@ -465,7 +471,7 @@ function ReviewPanel({
           </div>
           {canEdit ? (
             <Button
-              className="h-8 self-start px-3 text-xs"
+              className="h-9 w-full px-3 text-xs sm:w-auto"
               disabled={!canSubmit || submitPending}
               onClick={onSubmit}
             >

@@ -83,7 +83,7 @@ export function SupervisorDeskPage() {
                 aria-current={section === item ? 'page' : undefined}
                 className={
                   section === item
-                    ? 'flex shrink-0 items-center gap-2.5 rounded-lg border border-brand/15 bg-brand-soft/75 px-2.5 py-2.5 text-left text-sm font-medium text-brand'
+                    ? 'flex shrink-0 items-center gap-2.5 rounded-lg border border-transparent bg-ink/6 px-2.5 py-2.5 text-left text-sm font-semibold text-ink'
                     : 'flex shrink-0 items-center gap-2.5 rounded-lg border border-transparent px-2.5 py-2.5 text-left text-sm text-muted transition-colors hover:bg-canvas hover:text-ink'
                 }
                 onClick={() => {
@@ -100,8 +100,8 @@ export function SupervisorDeskPage() {
             ))}
           </nav>
           <section className="min-w-0">
-            <header className="mb-4 flex items-start gap-3 rounded-[12px] border border-brand/10 bg-gradient-to-r from-brand-soft/55 via-surface to-surface p-4">
-              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-[10px] bg-brand-soft text-brand">
+            <header className="mb-4 flex items-start gap-3 rounded-xl border border-line bg-surface p-4">
+              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-ink/5 text-ink">
                 <Icon name={SECTION_ICON[section]} className="h-5 w-5" />
               </span>
               <div className="min-w-0">

@@ -18,16 +18,16 @@ export function IconAction({
 }) {
   const toneClass =
     tone === 'danger'
-      ? 'border-danger/30 bg-surface text-danger hover:bg-danger-soft'
+      ? 'border-transparent bg-transparent text-danger hover:bg-danger-soft'
       : tone === 'neutral'
-        ? 'border-line bg-surface text-brand hover:bg-brand-soft'
+        ? 'border-transparent bg-transparent text-ink hover:bg-canvas'
         : 'border-brand bg-brand text-white hover:bg-brand-strong';
   return (
     <button
       type={type}
       aria-label={label}
       title={label}
-      className={`inline-flex min-h-9 shrink-0 items-center justify-center gap-2 rounded-md border shadow-control transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${showLabel ? 'px-3 py-2 text-sm font-medium' : 'h-9 w-9'} ${toneClass} ${className}`}
+      className={`inline-flex min-h-9 shrink-0 items-center justify-center gap-2 border transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${showLabel ? 'rounded-lg px-3 py-2 text-sm font-medium' : 'h-9 w-9 rounded-full'} ${toneClass} ${className}`}
       {...props}
     >
       <Icon name={icon} className="h-4 w-4" />

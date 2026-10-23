@@ -41,43 +41,55 @@ export function PortfolioWorkspace() {
     <div className="min-w-0">
       <h1 className="sr-only">{t('portfolio.title')}</h1>
       <div
-        className="mb-4 flex gap-1 overflow-x-auto rounded-[12px] border border-line bg-surface p-1.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        className="mb-4 flex gap-1 overflow-x-auto rounded-2xl border border-line/80 bg-line/45 p-1.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         role="tablist"
         aria-label={t('portfolio.title')}
       >
-        {tabs.map((id, index) => (
-          <button
-            key={id}
-            type="button"
-            role="tab"
-            aria-selected={tab === id}
-            tabIndex={tab === id ? 0 : -1}
-            className={
-              tab === id
-                ? 'inline-flex shrink-0 items-center gap-2 rounded-lg bg-brand-soft/80 px-3 py-2 text-xs font-semibold text-brand'
-                : 'inline-flex shrink-0 items-center gap-2 rounded-lg px-3 py-2 text-xs text-muted transition-colors hover:bg-canvas hover:text-ink'
-            }
-            onClick={() => navigate(id)}
-            onKeyDown={(event) => {
-              if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
-              event.preventDefault();
-              const next =
-                event.key === 'Home'
-                  ? 0
-                  : event.key === 'End'
-                    ? tabs.length - 1
-                    : (index + (event.key === 'ArrowRight' ? 1 : -1) + tabs.length) % tabs.length;
-              const nextTab = tabs[next];
-              if (nextTab) navigate(nextTab);
-              event.currentTarget.parentElement
-                ?.querySelectorAll<HTMLButtonElement>('[role="tab"]')
-                [next]?.focus();
-            }}
-          >
-            <Icon name={TAB_ICONS[id]} className="h-3.5 w-3.5" />
-            {t(`portfolio.tab.${id}`)}
-          </button>
-        ))}
+        {tabs.map((id, index) => {
+          const selected = tab === id;
+          return (
+            <button
+              key={id}
+              type="button"
+              role="tab"
+              aria-selected={selected}
+              tabIndex={selected ? 0 : -1}
+              className={`flex shrink-0 items-center gap-2 rounded-xl px-2.5 py-2 text-left transition-[background-color,box-shadow,color] duration-150 ${
+                selected
+                  ? 'bg-surface text-ink shadow-[0_1px_3px_rgba(15,23,42,0.08)]'
+                  : 'text-ink/80 hover:bg-surface/70'
+              }`}
+              onClick={() => navigate(id)}
+              onKeyDown={(event) => {
+                if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+                event.preventDefault();
+                const next =
+                  event.key === 'Home'
+                    ? 0
+                    : event.key === 'End'
+                      ? tabs.length - 1
+                      : (index + (event.key === 'ArrowRight' ? 1 : -1) + tabs.length) % tabs.length;
+                const nextTab = tabs[next];
+                if (nextTab) navigate(nextTab);
+                event.currentTarget.parentElement
+                  ?.querySelectorAll<HTMLButtonElement>('[role="tab"]')
+                  [next]?.focus();
+              }}
+            >
+              <span
+                aria-hidden="true"
+                className={`grid h-8 w-8 shrink-0 place-items-center rounded-lg ${
+                  selected ? 'bg-brand-soft text-brand' : 'bg-surface/80 text-muted'
+                }`}
+              >
+                <Icon name={TAB_ICONS[id]} className="h-4 w-4" />
+              </span>
+              <span className={`whitespace-nowrap text-sm ${selected ? 'font-semibold' : 'font-medium'}`}>
+                {t(`portfolio.tab.${id}`)}
+              </span>
+            </button>
+          );
+        })}
       </div>
       {portfolio.isLoading ? (
         <div aria-busy="true">
@@ -115,7 +127,7 @@ function CvPanel({
     : (data.profile.academicTitle ?? t('portfolio.roleFallback'));
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-4 overflow-hidden rounded-[14px] border border-brand/15 bg-gradient-to-r from-brand-soft/70 via-surface to-surface p-4 sm:p-5">
+      <div className="flex flex-wrap items-center justify-between gap-4 overflow-hidden rounded-xl border border-line bg-surface p-4 sm:p-5">
         <div className="flex min-w-0 flex-1 basis-56 items-center gap-3">
           <span className="shrink-0">
             <Avatar label={data.profile.displayName} imageUrl={data.profile.avatarUrl} size="md" />
@@ -129,7 +141,7 @@ function CvPanel({
           to="/profil"
           aria-label={t('portfolio.editProfile')}
           title={t('portfolio.editProfile')}
-          className="inline-flex items-center gap-2 rounded-lg border border-line bg-surface/90 p-2 text-xs text-brand transition-colors hover:border-brand/30 hover:bg-brand-soft sm:px-3"
+          className="inline-flex items-center gap-2 rounded-lg bg-ink/5 p-2 text-xs font-medium text-ink transition-colors hover:bg-ink/10 sm:px-3"
         >
           <Icon name="pencil" className="h-3.5 w-3.5" />
           <span className="hidden sm:inline">{t('portfolio.editProfile')}</span>
@@ -140,21 +152,21 @@ function CvPanel({
           label={t('portfolio.count.publications')}
           value={data.counts.publications}
           icon="library"
-          tone="bg-brand-soft text-brand"
+          tone="bg-ink/5 text-ink"
           onClick={() => onNavigate('publications', 'ARTICLE')}
         />
         <Stat
           label={t('portfolio.count.conferences')}
           value={data.counts.conferences}
           icon="meetings"
-          tone="bg-violet-soft text-violet"
+          tone="bg-ink/5 text-ink"
           onClick={() => onNavigate('publications', 'CONFERENCE')}
         />
         <Stat
           label={t('portfolio.count.projects')}
           value={data.counts.projects}
           icon="portfolio"
-          tone="bg-teal-soft text-teal"
+          tone="bg-ink/5 text-ink"
           onClick={() => onNavigate('projects')}
         />
       </div>

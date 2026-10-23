@@ -1,7 +1,8 @@
-import { Button, EmptyState, Input, Modal, Skeleton } from '@thesispartner/ui';
-import { IconAction } from '../../components/IconAction';
-import { useEffect, useRef, useState } from 'react';
+import { Button, Input, Modal, Skeleton } from '@thesispartner/ui';
+import { Fragment, useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
+import { IconAction } from '../../components/IconAction';
+import { Icon } from '../../components/Icon';
 import { useMeQuery } from '../../hooks/use-session';
 import { useLocale, useT } from '../../i18n/LocaleContext';
 import { QueryError, queryErrorMessage } from '../objectives/components/QueryError';
@@ -20,6 +21,7 @@ export function MessagesPage() {
   const navigate = useNavigate();
   const mailbox = useConversations();
   const me = useMeQuery();
+  const [drafts, setDrafts] = useState<Record<string, string>>({});
   const actorId = me.data?.user.id;
   const known =
     !conversationId ||
@@ -32,7 +34,7 @@ export function MessagesPage() {
   }, [conversationId, known, mailbox.data, navigate]);
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col bg-surface">
+    <div className="flex min-h-0 min-w-0 flex-1 flex-col bg-surface">
       {mailbox.isLoading ? (
         <div aria-busy="true" className="p-4">
           <Skeleton className="h-40" />
@@ -44,18 +46,24 @@ export function MessagesPage() {
         </div>
       ) : null}
       {mailbox.data ? (
-        <div className="flex min-h-0 flex-1">
+        <div className="flex min-h-0 flex-1 overflow-hidden bg-surface">
           <ConversationList
             conversations={mailbox.data.conversations}
             students={mailbox.data.students}
             selectedId={conversationId}
             actorId={actorId}
+            accountName={me.data?.user.displayName}
             hiddenOnMobile={Boolean(conversationId)}
           />
           <Thread
+            key={conversationId ?? 'inbox'}
             conversationId={conversationId}
             actorId={actorId}
             students={mailbox.data.students}
+            body={drafts[conversationId ?? ''] ?? ''}
+            onBodyChange={(value) => {
+              if (conversationId) setDrafts((current) => ({ ...current, [conversationId]: value }));
+            }}
           />
         </div>
       ) : null}
@@ -68,45 +76,123 @@ function ConversationList({
   students,
   selectedId,
   actorId,
+  accountName,
   hiddenOnMobile,
 }: {
   conversations: ConversationSummary[];
   students: { userId: string; displayName: string }[];
   selectedId?: string;
   actorId?: string;
+  accountName?: string;
   hiddenOnMobile: boolean;
 }) {
   const t = useT();
   const { dateLocale } = useLocale();
   const [creating, setCreating] = useState(false);
-
+  const [search, setSearch] = useState('');
+  const [unreadOnly, setUnreadOnly] = useState(false);
   const names = conversations.map((item) => labelFor(item, actorId, t('messages.conversation')));
+  const needle = search.trim().toLocaleLowerCase(dateLocale);
+  const unreadCount = conversations.filter((item) => item.unread).length;
+  const visible = conversations.filter((item, index) => {
+    const matches = `${names[index]} ${item.thesisTitle ?? ''} ${item.lastMessage?.body ?? ''}`
+      .toLocaleLowerCase(dateLocale)
+      .includes(needle);
+    return matches && (!unreadOnly || item.unread || item.id === selectedId);
+  });
 
   return (
     <section
       className={
         hiddenOnMobile
-          ? 'hidden min-h-0 w-full flex-col border-line lg:flex lg:w-[20rem] lg:border-r'
-          : 'flex min-h-0 w-full flex-1 flex-col'
+          ? 'hidden min-h-0 w-full shrink-0 flex-col border-line/70 lg:flex lg:w-[22rem] lg:border-r xl:w-[24rem]'
+          : 'flex min-h-0 w-full shrink-0 flex-col border-line/70 lg:w-[22rem] lg:border-r xl:w-[24rem]'
       }
     >
-      <h2 className="sr-only">{t('messages.title')}</h2>
-      {students.length > 0 ? (
-        <div className="flex items-center justify-end border-b border-line px-4 py-3">
-          <IconAction
-            label={t('messages.newGroup')}
-            icon="plus"
-            onClick={() => setCreating(true)}
-          />
+      <div className="shrink-0 space-y-4 px-5 pt-5 pb-3">
+        <div className="flex items-center justify-between gap-3">
+          <p className="min-w-0 truncate text-sm font-semibold text-ink">
+            {accountName ?? t('messages.title')}
+          </p>
+          {students.length > 0 ? (
+            <IconAction
+              label={t('messages.newGroup')}
+              icon="pencil"
+              showLabel={false}
+              tone="neutral"
+              className="rounded-full border-transparent! shadow-none! hover:bg-canvas"
+              onClick={() => setCreating(true)}
+            />
+          ) : null}
         </div>
-      ) : null}
+        <label className="flex items-center gap-2 rounded-xl bg-[#f3f4f6] px-3.5 focus-within:ring-2 focus-within:ring-brand/20">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.7"
+            aria-hidden="true"
+            className="h-4 w-4 shrink-0 text-muted"
+          >
+            <circle cx="10.5" cy="10.5" r="6.5" />
+            <path d="m16 16 4 4" />
+          </svg>
+          <span className="sr-only">{t('messages.search')}</span>
+          <input
+            type="search"
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder={t('messages.search')}
+            className="h-9 min-w-0 flex-1 bg-transparent text-xs text-ink outline-none placeholder:text-muted focus-visible:outline-none!"
+          />
+        </label>
+        <div className="flex items-center justify-between gap-2">
+          <h2 className="flex items-center gap-1.5 text-sm font-semibold text-ink">
+            {t('messages.title')}
+            <span aria-hidden="true" className="text-[11px] font-normal tabular-nums text-muted">
+              {conversations.length}
+            </span>
+          </h2>
+          <div className="flex gap-1" role="group" aria-label={t('messages.filter')}>
+            {([false, true] as const).map((unread) => (
+              <button
+                key={String(unread)}
+                type="button"
+                aria-pressed={unreadOnly === unread}
+                onClick={() => setUnreadOnly(unread)}
+                className={`rounded-full px-3 py-1.5 text-xs transition-colors ${unreadOnly === unread ? 'bg-ink/7 font-semibold text-ink' : 'text-muted hover:bg-canvas'}`}
+              >
+                {t(unread ? 'messages.unread' : 'messages.all')}
+                {unread && unreadCount > 0 ? (
+                  <span className="ml-1.5 tabular-nums">{unreadCount}</span>
+                ) : null}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
       {conversations.length === 0 ? (
         <p className="px-4 py-6 text-sm text-muted">{t('messages.empty')}</p>
       ) : (
-        <ul className="min-h-0 flex-1 overflow-y-auto" aria-label={t('messages.inbox')}>
-          {conversations.map((item, index) => {
+        <ul className="min-h-0 flex-1 overflow-y-auto py-1" aria-label={t('messages.inbox')}>
+          {visible.length === 0 ? (
+            <li className="px-3 py-6 text-center text-xs text-muted">
+              <p>{t('messages.noMatches')}</p>
+              <button
+                type="button"
+                className="mt-2 text-brand hover:underline"
+                onClick={() => {
+                  setSearch('');
+                  setUnreadOnly(false);
+                }}
+              >
+                {t('messages.resetFilters')}
+              </button>
+            </li>
+          ) : null}
+          {visible.map((item) => {
             const active = item.id === selectedId;
-            const name = names[index] ?? t('messages.conversation');
+            const name = labelFor(item, actorId, t('messages.conversation'));
             const shared = names.filter((value) => value === name).length > 1;
             const preview = item.lastMessage?.body ?? (shared ? item.thesisTitle : null);
             return (
@@ -116,29 +202,48 @@ function ConversationList({
                   aria-current={active ? 'page' : undefined}
                   className={
                     active
-                      ? 'flex items-center gap-3 bg-brand-soft/60 px-4 py-3'
-                      : 'flex items-center gap-3 px-4 py-3 hover:bg-canvas'
+                      ? 'flex items-center gap-3 bg-[#f3f4f6] px-5 py-3'
+                      : 'flex items-center gap-3 px-5 py-3 transition-colors hover:bg-[#f8f9fb]'
                   }
                 >
-                  <ChatAvatar label={name} />
+                  <ChatAvatar
+                    label={name}
+                    imageUrl={avatarFor(item, actorId)}
+                    group={item.kind === 'GROUP'}
+                    size="list"
+                  />
                   <span className="min-w-0 flex-1">
                     <span className="flex items-baseline justify-between gap-2">
-                      <span className="truncate text-sm font-medium text-ink">{name}</span>
+                      <span
+                        className={`truncate text-sm text-ink ${item.unread ? 'font-semibold' : 'font-medium'}`}
+                      >
+                        {name}
+                      </span>
                       {item.lastMessage ? (
                         <time
                           dateTime={item.lastMessage.createdAt}
                           className="shrink-0 text-[10px] text-muted"
                         >
-                          {formatClock(item.lastMessage.createdAt, dateLocale)}
+                          {dayKey(item.lastMessage.createdAt) === dayKey(new Date().toISOString())
+                            ? formatClock(item.lastMessage.createdAt, dateLocale)
+                            : new Date(item.lastMessage.createdAt).toLocaleDateString(dateLocale, {
+                                day: 'numeric',
+                                month: 'short',
+                              })}
                         </time>
                       ) : null}
                     </span>
                     <span className="mt-0.5 flex items-center gap-1.5">
                       {item.unread ? (
-                        <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-brand" />
+                        <span
+                          className="h-1.5 w-1.5 shrink-0 rounded-full bg-brand"
+                          role="img"
+                          aria-label={t('messages.unread')}
+                        />
                       ) : null}
                       <span className="truncate text-xs text-muted">
-                        {preview ?? (item.kind === 'GROUP' ? t('messages.group') : '')}
+                        {item.lastMessage?.authorId === actorId ? `${t('messages.you')}: ` : ''}
+                        {preview ?? t(item.kind === 'GROUP' ? 'messages.group' : 'messages.direct')}
                       </span>
                     </span>
                   </span>
@@ -164,51 +269,76 @@ function Thread({
   conversationId,
   actorId,
   students,
+  body,
+  onBodyChange,
 }: {
   conversationId?: string;
   actorId?: string;
   students: { userId: string; displayName: string }[];
+  body: string;
+  onBodyChange: (value: string) => void;
 }) {
   const t = useT();
   const { dateLocale } = useLocale();
   const conversation = useConversation(conversationId);
   const send = useSendMessage(conversationId ?? '');
-  const [body, setBody] = useState('');
   const [editing, setEditing] = useState(false);
+  const [detailsOpen, setDetailsOpen] = useState(false);
+  const [showLatest, setShowLatest] = useState(false);
   const bottomRef = useRef<HTMLLIElement>(null);
-  const messageCount = conversation.data?.messages.length ?? 0;
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const nearBottom = useRef(true);
+  const sending = useRef(false);
+  const latestMessageId = conversation.data?.messages.at(-1)?.id;
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView?.({ block: 'end' });
-  }, [conversationId, messageCount]);
+    if (nearBottom.current) bottomRef.current?.scrollIntoView?.({ block: 'end' });
+    else setShowLatest(true);
+  }, [conversationId, latestMessageId]);
 
-  if (!conversationId) {
+  useEffect(() => {
+    const field = textareaRef.current;
+    if (!field) return;
+    field.style.height = 'auto';
+    field.style.height = `${Math.min(field.scrollHeight, 128)}px`;
+  }, [body, conversation.isSuccess]);
+
+  if (!conversationId)
     return (
-      <div className="hidden min-h-0 flex-1 items-center justify-center bg-canvas lg:flex">
-        <EmptyState title={t('messages.pickTitle')} description={t('messages.pickDescription')} />
+      <div className="hidden min-h-0 min-w-0 flex-1 flex-col items-center justify-center gap-4 bg-surface p-6 lg:flex">
+        <span className="grid h-20 w-20 place-items-center rounded-full border-2 border-ink text-ink">
+          <SendIcon />
+        </span>
+        <div className="text-center">
+          <h2 className="text-sm font-semibold text-ink">{t('messages.pickTitle')}</h2>
+          <p className="mt-2 text-xs text-muted">{t('messages.pickDescription')}</p>
+        </div>
       </div>
     );
-  }
 
   const data = conversation.data;
   const canManage = data?.kind === 'GROUP' && actorId !== undefined && data.createdById === actorId;
   const name = data ? labelFor(data, actorId, t('messages.conversation')) : '';
 
   return (
-    <section className="flex min-h-0 min-w-0 flex-1 flex-col bg-canvas">
-      <header className="flex items-center gap-3 border-b border-line bg-surface px-3 py-2.5">
+    <section className="relative flex min-h-0 min-w-0 flex-1 flex-col bg-surface">
+      <header className="flex shrink-0 items-center gap-3 border-b border-line/70 bg-surface px-4 py-3 sm:px-6">
         <Link
           to="/messagerie"
-          className="text-sm text-brand lg:hidden"
+          className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-ink hover:bg-canvas lg:hidden"
           aria-label={t('messages.back')}
         >
-          ‹
+          <Icon name="back" className="h-4 w-4" />
         </Link>
         {conversation.isLoading ? <Skeleton className="h-8 flex-1" /> : null}
         {conversation.isError ? <QueryError error={conversation.error} /> : null}
         {data ? (
           <>
-            <ChatAvatar label={name} />
+            <ChatAvatar
+              label={name}
+              imageUrl={avatarFor(data, actorId)}
+              group={data.kind === 'GROUP'}
+            />
             <div className="min-w-0 flex-1">
               <h2 className="truncate text-sm font-semibold text-ink">{name}</h2>
               <p className="truncate text-[11px] text-muted">
@@ -226,77 +356,194 @@ function Thread({
                 {t('messages.editGroup')}
               </Button>
             ) : null}
+            <button
+              type="button"
+              aria-label={t('messages.details')}
+              title={t('messages.details')}
+              aria-haspopup="dialog"
+              onClick={() => setDetailsOpen(true)}
+              className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-ink transition-colors hover:bg-canvas focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+            >
+              <MessageIcon name="info" className="h-5 w-5" />
+            </button>
           </>
         ) : null}
       </header>
       <ol
-        className="flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto px-4 py-4"
+        className="flex min-h-0 flex-1 flex-col overflow-x-hidden overflow-y-auto px-3 py-4 sm:px-6"
         aria-label={t('messages.thread')}
+        onScroll={(event) => {
+          const list = event.currentTarget;
+          nearBottom.current = list.scrollHeight - list.scrollTop - list.clientHeight < 96;
+          if (nearBottom.current) setShowLatest(false);
+        }}
       >
         {data && data.messages.length === 0 ? (
-          <li className="m-auto text-sm text-muted">{t('messages.noMessages')}</li>
+          <li className="m-auto flex max-w-sm flex-col items-center gap-3 px-5 py-8 text-center">
+            <ChatAvatar
+              label={name}
+              imageUrl={avatarFor(data, actorId)}
+              group={data.kind === 'GROUP'}
+              size="profile"
+            />
+            <p className="text-sm font-semibold text-ink">{name}</p>
+            <p className="text-xs text-muted">{t('messages.noMessages')}</p>
+          </li>
         ) : null}
-        {data?.messages.map((message) => {
+        {data?.messages.map((message, index) => {
           const own = message.authorId === actorId;
+          const previous = data.messages[index - 1];
+          const next = data.messages[index + 1];
+          const newDay = !previous || dayKey(previous.createdAt) !== dayKey(message.createdAt);
+          const continuesPrevious =
+            !newDay &&
+            previous.authorId === message.authorId &&
+            new Date(message.createdAt).getTime() - new Date(previous.createdAt).getTime() <
+              5 * 60_000;
+          const continuesNext = Boolean(
+            next &&
+            next.authorId === message.authorId &&
+            dayKey(next.createdAt) === dayKey(message.createdAt) &&
+            new Date(next.createdAt).getTime() - new Date(message.createdAt).getTime() < 5 * 60_000,
+          );
           return (
-            <li key={message.id} className={own ? 'flex justify-end' : 'flex justify-start'}>
-              <div
-                className={
-                  own
-                    ? 'max-w-[min(32rem,78%)] rounded-[1.15rem] rounded-br-[0.3rem] bg-brand px-3 py-2 text-white'
-                    : 'max-w-[min(32rem,78%)] rounded-[1.15rem] rounded-bl-[0.3rem] border border-line bg-surface px-3 py-2 text-ink'
-                }
-              >
-                {!own && data.kind === 'GROUP' ? (
-                  <p className="mb-0.5 text-[11px] font-medium text-brand">{message.authorName}</p>
-                ) : null}
-                <p className="whitespace-pre-wrap break-words text-sm leading-relaxed">
-                  {message.body}
-                </p>
-                <time
-                  dateTime={message.createdAt}
-                  className={
-                    own
-                      ? 'mt-1 block text-[10px] text-white/75'
-                      : 'mt-1 block text-[10px] text-muted'
-                  }
+            <Fragment key={message.id}>
+              {newDay ? (
+                <li
+                  className="flex justify-center pt-6 pb-5"
+                  aria-label={t('messages.dateSeparator')}
                 >
-                  {formatClock(message.createdAt, dateLocale)}
-                </time>
-              </div>
-            </li>
+                  <time
+                    dateTime={dayKey(message.createdAt)}
+                    className="shrink-0 text-[11px] font-medium text-muted"
+                  >
+                    {dayKey(message.createdAt) === dayKey(new Date().toISOString())
+                      ? t('messages.today')
+                      : new Date(message.createdAt).toLocaleDateString(dateLocale, {
+                          day: 'numeric',
+                          month: 'long',
+                          year: 'numeric',
+                        })}
+                  </time>
+                </li>
+              ) : null}
+              <li
+                className={`flex items-end gap-2 ${own ? 'justify-end' : 'justify-start'} ${continuesPrevious ? 'mt-0.5' : 'mt-3'}`}
+              >
+                {!own ? (
+                  <span className="mb-4 w-6 shrink-0">
+                    {!continuesNext ? (
+                      <ChatAvatar
+                        label={message.authorName}
+                        imageUrl={
+                          data.participants.find((person) => person.userId === message.authorId)
+                            ?.avatarUrl
+                        }
+                        size="message"
+                      />
+                    ) : null}
+                  </span>
+                ) : null}
+                <div className="min-w-0 max-w-[min(36rem,82%)] sm:max-w-[72%]">
+                  <div
+                    className={`rounded-[20px] px-3.5 py-2.5 ${own ? `bg-gradient-to-br from-[#8061f2] via-[#6956e9] to-[#5368e8] text-white ${continuesPrevious ? 'rounded-tr-md' : ''} ${continuesNext ? 'rounded-br-md' : ''}` : `bg-[#f1f2f5] text-ink ${continuesPrevious ? 'rounded-tl-md' : ''} ${continuesNext ? 'rounded-bl-md' : ''}`}`}
+                  >
+                    {!own && data.kind === 'GROUP' && !continuesPrevious ? (
+                      <p className="mb-1 text-[11px] font-medium text-muted">
+                        {message.authorName}
+                      </p>
+                    ) : null}
+                    <p className="whitespace-pre-wrap text-sm leading-relaxed [overflow-wrap:anywhere]">
+                      {message.body}
+                    </p>
+                  </div>
+                  {!continuesNext ? (
+                    <time
+                      dateTime={message.createdAt}
+                      className={`mt-1 block px-1 text-[10px] text-muted ${own ? 'text-right' : 'text-left'}`}
+                    >
+                      {formatClock(message.createdAt, dateLocale)}
+                    </time>
+                  ) : null}
+                </div>
+              </li>
+            </Fragment>
           );
         })}
         <li aria-hidden="true" ref={bottomRef} />
       </ol>
+      {showLatest ? (
+        <div className="flex justify-center pb-2">
+          <button
+            type="button"
+            className="rounded-full border border-line bg-surface px-3 py-1.5 text-xs font-medium text-brand shadow-control"
+            onClick={() => {
+              nearBottom.current = true;
+              bottomRef.current?.scrollIntoView?.({ block: 'end' });
+              setShowLatest(false);
+            }}
+          >
+            {t('messages.latest')}
+          </button>
+        </div>
+      ) : null}
       {data ? (
-        <div className="border-t border-line bg-surface">
+        <div className="shrink-0 bg-surface p-3 sm:px-5 sm:pb-4">
           {send.isError ? (
-            <p className="px-4 pt-2 text-xs text-warn">{queryErrorMessage(send.error, t)}</p>
+            <p className="mb-2 text-xs text-danger" role="alert">
+              {queryErrorMessage(send.error, t)}
+            </p>
           ) : null}
           <form
-            className="flex items-end gap-2 px-3 py-2.5"
+            className="flex items-end gap-2 rounded-[26px] border border-line bg-surface px-3 py-1.5 focus-within:border-brand/40 focus-within:ring-2 focus-within:ring-brand/10"
             onSubmit={async (event) => {
               event.preventDefault();
               const text = body.trim();
-              if (!text) return;
-              await send.mutateAsync(text);
-              setBody('');
+              if (!text || sending.current || send.isPending) return;
+              sending.current = true;
+              try {
+                await send.mutateAsync(text);
+                nearBottom.current = true;
+                onBodyChange('');
+                bottomRef.current?.scrollIntoView?.({ block: 'end' });
+                setShowLatest(false);
+              } catch {
+                // Keep the draft for retry; the mutation error is displayed above.
+              } finally {
+                sending.current = false;
+              }
             }}
           >
+            <EmojiPicker
+              disabled={send.isPending}
+              onChoose={(emoji) => {
+                const field = textareaRef.current;
+                const start = field?.selectionStart ?? body.length;
+                const end = field?.selectionEnd ?? body.length;
+                const next = body.slice(0, start) + emoji + body.slice(end);
+                if (next.length > 4000) return;
+                onBodyChange(next);
+                setTimeout(() => {
+                  field?.focus();
+                  field?.setSelectionRange(start + emoji.length, start + emoji.length);
+                }, 0);
+              }}
+            />
             <label className="sr-only" htmlFor="message-body">
               {t('messages.body')}
             </label>
             <textarea
               id="message-body"
+              ref={textareaRef}
               value={body}
               rows={1}
               maxLength={4000}
               placeholder={t('messages.placeholder')}
-              className="max-h-32 min-h-10 flex-1 resize-none rounded-[1.25rem] border border-line bg-canvas px-4 py-2.5 text-sm text-ink outline-none focus:border-brand"
-              onChange={(event) => setBody(event.target.value)}
+              disabled={send.isPending}
+              className="max-h-32 min-h-10 min-w-0 flex-1 resize-none bg-transparent px-2 py-2.5 text-sm text-ink outline-none placeholder:text-muted focus-visible:outline-none! disabled:opacity-60"
+              onChange={(event) => onBodyChange(event.target.value)}
               onKeyDown={(event) => {
-                if (event.key === 'Enter' && !event.shiftKey) {
+                if (event.key === 'Enter' && !event.shiftKey && !event.nativeEvent.isComposing) {
                   event.preventDefault();
                   event.currentTarget.form?.requestSubmit();
                 }
@@ -306,12 +553,53 @@ function Thread({
               type="submit"
               aria-label={t('messages.send')}
               disabled={send.isPending || body.trim().length === 0}
-              className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand text-white disabled:opacity-40"
+              className="inline-flex h-10 shrink-0 items-center justify-center rounded-full px-2 text-xs font-semibold text-brand transition-colors hover:bg-brand-soft focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand disabled:cursor-not-allowed disabled:opacity-40"
             >
-              <SendIcon />
+              {t('messages.send')}
             </button>
           </form>
+          <p className="mt-2 hidden text-[10px] text-muted sm:block">
+            {t('messages.keyboardHint')}
+          </p>
         </div>
+      ) : null}
+      {data && detailsOpen ? (
+        <Modal
+          open
+          title={t('messages.details')}
+          closeLabel={t('common.close')}
+          onClose={() => setDetailsOpen(false)}
+        >
+          <div className="flex flex-col items-center gap-3 border-b border-line pb-5 text-center">
+            <ChatAvatar
+              label={name}
+              imageUrl={avatarFor(data, actorId)}
+              group={data.kind === 'GROUP'}
+              size="profile"
+            />
+            <p className="text-sm font-semibold text-ink">{name}</p>
+            <p className="text-xs text-muted">
+              {data.kind === 'GROUP' ? t('messages.group') : t('messages.directHelp')}
+            </p>
+          </div>
+          {data.thesisTitle ? (
+            <p className="mt-4 text-xs leading-relaxed text-muted">{data.thesisTitle}</p>
+          ) : null}
+          <h3 className="mt-5 text-xs font-semibold text-ink">{t('messages.participants')}</h3>
+          <ul className="mt-2 space-y-3">
+            {data.participants.map((person) => (
+              <li key={person.userId} className="flex items-center gap-3">
+                <ChatAvatar label={person.displayName} imageUrl={person.avatarUrl} />
+                <span className="min-w-0 break-words text-sm text-ink">
+                  {person.displayName}
+                  {person.userId === actorId ? (
+                    <span className="ml-1 text-xs text-muted">({t('messages.you')})</span>
+                  ) : null}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </Modal>
       ) : null}
       {data && canManage && editing ? (
         <GroupDialog
@@ -329,6 +617,94 @@ function Thread({
         />
       ) : null}
     </section>
+  );
+}
+
+function EmojiPicker({
+  disabled,
+  onChoose,
+}: {
+  disabled: boolean;
+  onChoose: (emoji: string) => void;
+}) {
+  const t = useT();
+  const [open, setOpen] = useState(false);
+  const rootRef = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    function outside(event: PointerEvent) {
+      if (!rootRef.current?.contains(event.target as Node)) setOpen(false);
+    }
+    function escape(event: KeyboardEvent) {
+      if (event.key === 'Escape') {
+        setOpen(false);
+        buttonRef.current?.focus();
+      }
+    }
+    document.addEventListener('pointerdown', outside);
+    document.addEventListener('keydown', escape);
+    return () => {
+      document.removeEventListener('pointerdown', outside);
+      document.removeEventListener('keydown', escape);
+    };
+  }, [open]);
+  return (
+    <div ref={rootRef} className="relative shrink-0">
+      <button
+        ref={buttonRef}
+        type="button"
+        disabled={disabled}
+        aria-label={t('messages.emojis')}
+        aria-expanded={open}
+        aria-controls="message-emojis"
+        onClick={() => setOpen((value) => !value)}
+        className="grid h-10 w-8 place-items-center rounded-full text-ink transition-colors hover:bg-canvas disabled:opacity-40"
+      >
+        <MessageIcon name="smile" className="h-5 w-5" />
+      </button>
+      {open ? (
+        <div
+          id="message-emojis"
+          role="group"
+          aria-label={t('messages.emojis')}
+          className="absolute bottom-full left-0 z-20 mb-3 w-52 rounded-2xl border border-line bg-surface p-2 shadow-[0_8px_30px_rgba(15,23,42,0.12)]"
+        >
+          <div className="mb-1 flex items-center justify-between px-1">
+            <p className="text-xs font-medium text-muted">{t('messages.emojis')}</p>
+            <button
+              type="button"
+              aria-label={t('common.close')}
+              onClick={() => {
+                setOpen(false);
+                buttonRef.current?.focus();
+              }}
+              className="grid h-6 w-6 place-items-center rounded-full text-muted hover:bg-canvas"
+            >
+              <Icon name="close" className="h-3.5 w-3.5" />
+            </button>
+          </div>
+          <div className="grid grid-cols-6 gap-0.5">
+            {['🙂', '😊', '👍', '🙏', '✅', '🎉', '📚', '💡', '👋', '👏', '✨', '💬'].map(
+              (emoji) => (
+                <button
+                  key={emoji}
+                  type="button"
+                  disabled={disabled}
+                  onClick={() => {
+                    onChoose(emoji);
+                    setOpen(false);
+                  }}
+                  className="grid h-8 w-8 place-items-center rounded-lg text-sm hover:bg-canvas"
+                >
+                  {emoji}
+                </button>
+              ),
+            )}
+          </div>
+        </div>
+      ) : null}
+    </div>
   );
 }
 
@@ -354,14 +730,12 @@ function GroupDialog({
   const mutation = conversationId ? update : create;
   const [groupTitle, setGroupTitle] = useState(initial?.title ?? '');
   const [selected, setSelected] = useState<string[]>(initial?.studentIds ?? []);
-
   function close() {
     setGroupTitle(initial?.title ?? '');
     setSelected(initial?.studentIds ?? []);
     mutation.reset();
     onClose();
   }
-
   return (
     <Modal open title={title} closeLabel={t('common.close')} onClose={close}>
       <form
@@ -433,11 +807,35 @@ function labelFor(
   return item.participants.find((person) => person.userId !== actorId)?.displayName ?? fallback;
 }
 
+function avatarFor(
+  item: Pick<ConversationSummary, 'kind' | 'participants'>,
+  actorId?: string,
+): string | null {
+  if (item.kind === 'GROUP' || !actorId) return null;
+  return item.participants.find((person) => person.userId !== actorId)?.avatarUrl ?? null;
+}
+
 function formatClock(value: string, locale: string): string {
   return new Date(value).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
 }
 
-function ChatAvatar({ label }: { label: string }) {
+function dayKey(value: string): string {
+  const date = new Date(value);
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+}
+
+function ChatAvatar({
+  label,
+  imageUrl,
+  group = false,
+  size = 'header',
+}: {
+  label: string;
+  imageUrl?: string | null;
+  group?: boolean;
+  size?: 'header' | 'list' | 'message' | 'profile';
+}) {
+  const [failedSrc, setFailedSrc] = useState<string | null>(null);
   const initials = label
     .split(' ')
     .filter(Boolean)
@@ -447,17 +845,59 @@ function ChatAvatar({ label }: { label: string }) {
   return (
     <span
       aria-hidden="true"
-      className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-soft text-xs font-semibold text-brand"
+      className={`inline-flex shrink-0 items-center justify-center overflow-hidden rounded-full font-semibold ${size === 'profile' ? 'h-16 w-16 text-xs' : size === 'list' ? 'h-12 w-12 text-xs' : size === 'message' ? 'h-6 w-6 text-[9px]' : 'h-10 w-10 text-xs'} ${group ? 'bg-violet-soft text-violet' : 'bg-brand-soft text-brand'}`}
     >
-      {initials}
+      {group ? (
+        <Icon name="supervision" className="h-4 w-4" />
+      ) : imageUrl && failedSrc !== imageUrl ? (
+        <img
+          src={imageUrl}
+          alt=""
+          className="h-full w-full object-cover"
+          onError={() => setFailedSrc(imageUrl)}
+        />
+      ) : (
+        initials
+      )}
     </span>
+  );
+}
+
+function MessageIcon({ name, className }: { name: 'info' | 'smile'; className: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      className={className}
+    >
+      <circle cx="12" cy="12" r="9" />
+      {name === 'info' ? (
+        <path d="M12 11v6M12 7h.01" />
+      ) : (
+        <path d="M8 14s1.5 3 4 3 4-3 4-3M8.5 8.5h.01M15.5 8.5h.01" />
+      )}
+    </svg>
   );
 }
 
 function SendIcon() {
   return (
-    <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true">
-      <path d="M3.2 11.2 20.4 4.1c.7-.3 1.4.4 1.1 1.1l-7.1 17.2c-.3.8-1.5.7-1.7-.1l-2.2-7.7-7.7-2.2c-.8-.2-.9-1.4-.1-1.7z" />
+    <svg
+      viewBox="0 0 24 24"
+      width="34"
+      height="34"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="m3 4 18 1-8 16-3-9-7-8ZM10 12 21 5" />
     </svg>
   );
 }

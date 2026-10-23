@@ -24,7 +24,8 @@ export type IconName =
   | 'close'
   | 'back'
   | 'eye'
-  | 'download';
+  | 'download'
+  | 'signOut';
 
 export type NavItem = {
   to: string;
@@ -77,12 +78,6 @@ export const PRIMARY_NAV: NavItem[] = [
     labelKey: 'nav.messages',
     descriptionKey: 'nav.messagesDesc',
     icon: 'messages',
-  },
-  {
-    to: '/veille',
-    labelKey: 'nav.watch',
-    descriptionKey: 'nav.watchDesc',
-    icon: 'watch',
   },
   {
     to: '/radar',
@@ -172,7 +167,7 @@ export function navigationGroups(items: NavItem[]): { labelKey?: MessageKey; ite
         : ['/objectifs', '/livrables', '/remarques'],
     },
     { labelKey: 'nav.groupExchanges', paths: ['/reunions', '/messagerie'] },
-    { labelKey: 'nav.groupResearch', paths: ['/ressources', '/veille', '/radar', '/portfolio'] },
+    { labelKey: 'nav.groupResearch', paths: ['/ressources', '/radar', '/portfolio'] },
   ];
   return groups
     .map(({ labelKey, paths }) => ({

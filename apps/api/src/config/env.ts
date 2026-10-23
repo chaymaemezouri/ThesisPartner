@@ -63,6 +63,11 @@ const schema = z.object({
     z.coerce.number().int().min(1000).max(3_600_000).default(60_000),
   ),
   FILE_SCAN_MODE: z.preprocess(emptyToUndefined, z.enum(['stub']).default('stub')),
+  OPENAI_API_KEY: z.preprocess(emptyToUndefined, z.string().min(10).max(200).optional()),
+  OPENAI_MODEL: z.preprocess(
+    emptyToUndefined,
+    z.string().min(1).max(80).default('gpt-4o-mini'),
+  ),
 });
 
 export type Env = z.infer<typeof schema>;
@@ -95,6 +100,8 @@ export function parseEnv(source: NodeJS.ProcessEnv): Env {
     UPLOAD_RATE_LIMIT_MAX: source.UPLOAD_RATE_LIMIT_MAX,
     UPLOAD_RATE_LIMIT_TTL_MS: source.UPLOAD_RATE_LIMIT_TTL_MS,
     FILE_SCAN_MODE: source.FILE_SCAN_MODE,
+    OPENAI_API_KEY: source.OPENAI_API_KEY,
+    OPENAI_MODEL: source.OPENAI_MODEL,
   });
 
   if (!result.success) {

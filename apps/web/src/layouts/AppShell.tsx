@@ -2,8 +2,11 @@ import { useEffect, useState } from 'react';
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
 import { Avatar, Button, Dropdown, Modal } from '@thesispartner/ui';
 import { Icon } from '../components/Icon';
+import { BrandLogo } from '../components/BrandLogo';
+import { StudentNotificationsBell } from '../features/resources/StudentNotificationsBell';
 import { useLogout, useMeQuery } from '../hooks/use-session';
 import { useSupervisedTheses } from '../features/supervision/hooks/use-supervised-theses';
+import { portraitUrl } from '../features/supervision/temporary-portraits';
 import { useT } from '../i18n/LocaleContext';
 import {
   navItemForPath,
@@ -14,10 +17,50 @@ import {
   type NavItem,
 } from '../routes/nav';
 
+type SidebarPreference = { density: 'auto' | 'expanded' | 'collapsed'; hidden: boolean };
+const SIDEBAR_PREFERENCE_KEY = 'tp_sidebar';
+
+function readSidebarPreference(): SidebarPreference {
+  try {
+    const value: unknown = JSON.parse(localStorage.getItem(SIDEBAR_PREFERENCE_KEY) ?? 'null');
+    if (
+      value &&
+      typeof value === 'object' &&
+      'density' in value &&
+      'hidden' in value &&
+      (value.density === 'auto' || value.density === 'expanded' || value.density === 'collapsed') &&
+      typeof value.hidden === 'boolean'
+    ) {
+      return { density: value.density, hidden: value.hidden };
+    }
+  } catch {
+    /* Use the responsive layout if browser storage is unavailable. */
+  }
+  return { density: 'auto', hidden: false };
+}
+
 export function AppShell() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [sidebar, setSidebar] = useState(readSidebarPreference);
   const location = useLocation();
   const t = useT();
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(SIDEBAR_PREFERENCE_KEY, JSON.stringify(sidebar));
+    } catch {
+      /* Keep the choice for this session when storage is unavailable. */
+    }
+  }, [sidebar]);
+
+  const toggleSidebarSize = () => {
+    setSidebar((current) => {
+      const expanded =
+        current.density === 'expanded' ||
+        (current.density === 'auto' && window.matchMedia('(min-width: 1280px)').matches);
+      return { density: expanded ? 'collapsed' : 'expanded', hidden: false };
+    });
+  };
 
   useEffect(() => {
     setMenuOpen(false);
@@ -29,9 +72,11 @@ export function AppShell() {
   return (
     <div
       className={
-        dashboard || chat
-          ? 'min-h-screen overflow-x-clip bg-canvas text-ink lg:h-dvh lg:overflow-hidden'
-          : 'min-h-screen overflow-x-clip bg-canvas text-ink'
+        chat
+          ? 'h-dvh min-h-0 overflow-hidden bg-canvas text-ink'
+          : dashboard
+            ? 'min-h-screen overflow-x-clip bg-canvas text-ink lg:h-dvh lg:overflow-hidden'
+            : 'min-h-screen overflow-x-clip bg-canvas text-ink'
       }
     >
       <a href="#contenu" className="skip-link">
@@ -39,11 +84,27 @@ export function AppShell() {
       </a>
       <div
         className={
-          dashboard || chat ? 'flex min-h-screen lg:h-full lg:min-h-0' : 'flex min-h-screen'
+          chat
+            ? 'flex h-full min-h-0'
+            : dashboard
+              ? 'flex min-h-screen lg:h-full lg:min-h-0'
+              : 'flex min-h-screen'
         }
       >
-        <aside className="hidden shrink-0 border-r border-line bg-surface/95 shadow-[1px_0_0_rgba(15,23,42,0.03)] backdrop-blur lg:sticky lg:top-0 lg:flex lg:h-dvh lg:w-[4.5rem] lg:flex-col lg:self-start lg:overflow-hidden xl:w-60">
-          <Sidebar variant="responsive" />
+        <aside
+          id="desktop-sidebar"
+          className={`hidden shrink-0 border-r border-line bg-surface lg:sticky lg:top-0 lg:h-dvh lg:flex-col lg:self-start lg:overflow-hidden ${sidebar.hidden ? '' : 'lg:flex'} ${sidebar.density === 'expanded' ? 'lg:w-60' : sidebar.density === 'collapsed' ? 'lg:w-[4.5rem]' : 'lg:w-[4.5rem] xl:w-60'}`}
+        >
+          <Sidebar
+            variant={
+              sidebar.density === 'expanded'
+                ? 'full'
+                : sidebar.density === 'collapsed'
+                  ? 'compact'
+                  : 'responsive'
+            }
+            onResize={toggleSidebarSize}
+          />
         </aside>
         <div
           className={
@@ -52,7 +113,13 @@ export function AppShell() {
               : 'flex min-w-0 flex-1 flex-col'
           }
         >
-          <Topbar onOpenMenu={() => setMenuOpen(true)} />
+          <Topbar
+            onOpenMenu={() => setMenuOpen(true)}
+            sidebarHidden={sidebar.hidden}
+            onToggleSidebar={() =>
+              setSidebar((current) => ({ ...current, hidden: !current.hidden }))
+            }
+          />
           <main
             id="contenu"
             className={
@@ -60,7 +127,7 @@ export function AppShell() {
                 ? 'flex min-h-0 w-full flex-1 flex-col px-4 py-2 lg:overflow-hidden lg:px-5 lg:py-1.5'
                 : chat
                   ? 'flex min-h-0 w-full flex-1 flex-col overflow-hidden'
-                  : 'w-full min-w-0 flex-1 px-4 py-5 md:px-6 lg:py-6'
+                  : 'w-full min-w-0 flex-1 px-4 py-3 md:px-6 lg:py-3'
             }
           >
             <Outlet />
@@ -80,12 +147,29 @@ export function AppShell() {
   );
 }
 
-function Topbar({ onOpenMenu }: { onOpenMenu: () => void }) {
+function Topbar({
+  onOpenMenu,
+  sidebarHidden,
+  onToggleSidebar,
+}: {
+  onOpenMenu: () => void;
+  sidebarHidden: boolean;
+  onToggleSidebar: () => void;
+}) {
   const location = useLocation();
   const me = useMeQuery();
   const logout = useLogout();
   const supervised = useSupervisedTheses();
   const t = useT();
+  const [desktopNav, setDesktopNav] = useState(false);
+  useEffect(() => {
+    if (typeof window.matchMedia !== 'function') return;
+    const media = window.matchMedia('(min-width: 1024px)');
+    const update = () => setDesktopNav(media.matches);
+    update();
+    media.addEventListener('change', update);
+    return () => media.removeEventListener('change', update);
+  }, []);
   const navigation =
     (supervised.data?.theses.length ?? 0) > 0
       ? [...SUPERVISOR_NAV, ...SECONDARY_NAV]
@@ -93,26 +177,49 @@ function Topbar({ onOpenMenu }: { onOpenMenu: () => void }) {
   const current = navItemForPath(location.pathname, navigation);
   const accountLabel = me.data?.user.displayName ?? t('common.account');
   const currentLabel = current ? t(current.labelKey) : t('common.appName');
+  const isSupervisor = (supervised.data?.theses.length ?? 0) > 0;
 
   return (
-    <header className="sticky top-0 z-10 flex h-14 items-center justify-between gap-3 border-b border-line bg-surface/90 px-4 shadow-[0_1px_2px_rgba(15,23,42,0.04)] backdrop-blur md:px-6">
+    <header className="sticky top-0 z-10 flex h-14 shrink-0 items-center justify-between gap-3 border-b border-line bg-surface px-4 md:px-6">
       <div className="flex min-w-0 items-center gap-2">
-        <Button
-          variant="ghost"
-          className="px-2 lg:hidden"
-          aria-label={t('common.openMenu')}
-          onClick={onOpenMenu}
+        {desktopNav ? (
+          <Button
+            variant="ghost"
+            className="px-2"
+            aria-label={t(sidebarHidden ? 'common.showMenu' : 'common.hideMenu')}
+            title={t(sidebarHidden ? 'common.showMenu' : 'common.hideMenu')}
+            aria-controls="desktop-sidebar"
+            aria-expanded={!sidebarHidden}
+            onClick={onToggleSidebar}
+          >
+            <Icon name="menu" />
+          </Button>
+        ) : (
+          <Button
+            variant="ghost"
+            className="px-2"
+            aria-label={t('common.openMenu')}
+            onClick={onOpenMenu}
+          >
+            <Icon name="menu" />
+          </Button>
+        )}
+        <Link
+          to="/"
+          aria-label={t('common.appName')}
+          className={sidebarHidden || !desktopNav ? 'shrink-0' : 'hidden'}
         >
-          <Icon name="menu" />
-        </Button>
+          <BrandLogo className="h-8 w-8" />
+        </Link>
         <p className="truncate text-sm font-semibold tracking-tight">{currentLabel}</p>
       </div>
       <div className="flex shrink-0 items-center gap-2">
+        {!isSupervisor ? <StudentNotificationsBell /> : null}
         <Link
           to="/messagerie"
           aria-label={t('nav.messages')}
           title={t('nav.messages')}
-          className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-line bg-surface text-muted shadow-control transition-[background-color,border-color,color,box-shadow] duration-150 hover:border-brand/30 hover:bg-brand-soft hover:text-brand"
+          className="inline-flex h-9 w-9 items-center justify-center rounded-full text-ink transition-colors duration-150 hover:bg-canvas"
         >
           <Icon name="messages" />
         </Link>
@@ -120,28 +227,33 @@ function Topbar({ onOpenMenu }: { onOpenMenu: () => void }) {
           menuLabel={t('common.account')}
           label={
             <>
-              <Avatar label={accountLabel} decorative />
+              <Avatar
+                label={accountLabel}
+                imageUrl={portraitUrl(accountLabel, me.data?.user.avatarUrl)}
+                decorative
+              />
               <span className="sr-only max-w-40 truncate sm:not-sr-only">{accountLabel}</span>
             </>
           }
         >
           {(close) => (
             <>
-              <AccountLink to="/profil" onSelect={close}>
+              <AccountLink to="/profil" icon="profile" onSelect={close}>
                 {t('common.profile')}
               </AccountLink>
-              <AccountLink to="/parametres" onSelect={close}>
+              <AccountLink to="/parametres" icon="settings" onSelect={close}>
                 {t('common.settings')}
               </AccountLink>
               <button
                 type="button"
                 role="menuitem"
-                className="block w-full px-3 py-2 text-left text-sm text-ink transition-colors hover:bg-canvas"
+                className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm text-ink transition-colors hover:bg-canvas"
                 onClick={() => {
                   close();
                   logout.mutate();
                 }}
               >
+                <Icon name="signOut" className="h-4 w-4 shrink-0 text-muted" />
                 {t('common.signOut')}
               </button>
             </>
@@ -154,10 +266,12 @@ function Topbar({ onOpenMenu }: { onOpenMenu: () => void }) {
 
 function AccountLink({
   to,
+  icon,
   onSelect,
   children,
 }: {
   to: string;
+  icon: 'profile' | 'settings';
   onSelect: () => void;
   children: string;
 }) {
@@ -166,8 +280,9 @@ function AccountLink({
       role="menuitem"
       to={to}
       onClick={onSelect}
-      className="block px-3 py-2 text-sm text-ink transition-colors hover:bg-canvas"
+      className="flex items-center gap-2.5 px-3 py-2 text-sm text-ink transition-colors hover:bg-canvas"
     >
+      <Icon name={icon} className="h-4 w-4 shrink-0 text-muted" />
       {children}
     </Link>
   );
@@ -176,23 +291,28 @@ function AccountLink({
 function Sidebar({
   variant,
   onNavigate,
+  onResize,
 }: {
-  variant: 'responsive' | 'full';
+  variant: 'responsive' | 'full' | 'compact';
   onNavigate?: () => void;
+  onResize?: () => void;
 }) {
-  const compact = variant === 'responsive';
+  const labelClass =
+    variant === 'compact'
+      ? 'sr-only'
+      : variant === 'responsive'
+        ? 'sr-only xl:not-sr-only'
+        : undefined;
   const supervised = useSupervisedTheses();
   const t = useT();
   const primary = (supervised.data?.theses.length ?? 0) > 0 ? SUPERVISOR_NAV : PRIMARY_NAV;
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <div className="border-b border-line px-3 py-4">
+      <div className="px-3 pt-5 pb-4">
         <Link to="/" onClick={onNavigate} className="flex items-center gap-2.5 px-1">
-          <span className="grid h-8 w-8 shrink-0 place-items-center rounded-md bg-brand text-white shadow-[0_8px_18px_rgba(36,87,167,0.18)]">
-            <Icon name="thesis" className="h-4 w-4" />
-          </span>
-          <span className={compact ? 'sr-only xl:not-sr-only' : undefined}>
+          <BrandLogo />
+          <span className={labelClass}>
             <span className="block text-sm font-semibold leading-none tracking-tight text-ink">
               {t('common.appName')}
             </span>
@@ -203,38 +323,57 @@ function Sidebar({
         {navigationGroups(primary).map((group) => (
           <div key={group.labelKey ?? 'home'} className="mb-3 flex flex-col gap-1">
             {group.labelKey ? (
-              <p
-                className={
-                  compact
-                    ? 'sr-only px-2.5 pb-1 pt-2 text-xs font-medium tracking-wide text-muted uppercase xl:not-sr-only'
-                    : 'px-2.5 pb-1 pt-2 text-xs font-medium tracking-wide text-muted uppercase'
-                }
-              >
+              <p className={`${labelClass ?? ''} px-2.5 pb-1 pt-2 text-xs font-medium text-muted`}>
                 {t(group.labelKey)}
               </p>
             ) : null}
             {group.items.map((item) => (
-              <SidebarLink key={item.to} item={item} compact={compact} onNavigate={onNavigate} />
+              <SidebarLink
+                key={item.to}
+                item={item}
+                labelClass={labelClass}
+                onNavigate={onNavigate}
+              />
             ))}
           </div>
         ))}
         <div className="mt-auto flex flex-col gap-1 border-t border-line pt-2">
           {SECONDARY_NAV.map((item) => (
-            <SidebarLink key={item.to} item={item} compact={compact} onNavigate={onNavigate} />
+            <SidebarLink
+              key={item.to}
+              item={item}
+              labelClass={labelClass}
+              onNavigate={onNavigate}
+            />
           ))}
         </div>
       </nav>
+      {onResize ? (
+        <button
+          type="button"
+          aria-label={t('common.resizeMenu')}
+          title={t('common.resizeMenu')}
+          onClick={onResize}
+          className="mx-2 mb-2 inline-flex min-h-9 shrink-0 items-center gap-3 rounded-lg border border-line px-2.5 py-2 text-xs text-muted transition-colors hover:bg-canvas hover:text-ink"
+        >
+          <Icon
+            name="chevron"
+            className={`h-4 w-4 shrink-0 ${variant === 'full' ? 'rotate-180' : variant === 'responsive' ? 'xl:rotate-180' : ''}`}
+          />
+          <span className={labelClass}>{t('common.compactMenu')}</span>
+        </button>
+      ) : null}
     </div>
   );
 }
 
 function SidebarLink({
   item,
-  compact,
+  labelClass,
   onNavigate,
 }: {
   item: NavItem;
-  compact: boolean;
+  labelClass?: string;
   onNavigate?: () => void;
 }) {
   const t = useT();
@@ -248,15 +387,15 @@ function SidebarLink({
       onClick={onNavigate}
       className={({ isActive }) =>
         [
-          'relative flex items-center gap-3 rounded-md px-2.5 py-2 text-sm font-medium transition-[background-color,color,box-shadow] duration-150',
+          'relative flex items-center gap-3 rounded-xl px-2.5 py-2 text-sm font-medium transition-colors duration-150',
           isActive
-            ? 'bg-brand-soft font-semibold text-brand shadow-[inset_3px_0_0_var(--color-brand),0_1px_2px_rgba(15,23,42,0.04)]'
-            : 'text-muted hover:bg-canvas hover:text-ink',
+            ? 'bg-ink/6 font-semibold text-ink'
+            : 'text-ink/80 hover:bg-ink/4 hover:text-ink',
         ].join(' ')
       }
     >
-      <Icon name={item.icon} />
-      <span className={compact ? 'sr-only xl:not-sr-only' : undefined}>{label}</span>
+      <Icon name={item.icon} className="shrink-0" />
+      <span className={labelClass}>{label}</span>
     </NavLink>
   );
 }

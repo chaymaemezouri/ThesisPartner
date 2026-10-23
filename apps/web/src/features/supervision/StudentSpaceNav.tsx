@@ -11,6 +11,7 @@ const SECTIONS = [
   { id: 'deliverables', to: '/livrables', icon: 'deliverables' },
   { id: 'remarks', to: '/remarques', icon: 'remarks' },
   { id: 'meetings', to: '/reunions', icon: 'meetings' },
+  { id: 'researchAi', to: '/radar', icon: 'radar' },
   { id: 'profile', to: '/profil', icon: 'profile' },
 ] as const;
 
@@ -26,48 +27,48 @@ export function StudentSpaceNav({ thesisId }: { thesisId: string }) {
   )?.progressPercentage;
 
   return (
-    <div className="mb-4 flex items-center gap-2">
-      <Link
-        to="/"
-        aria-label={t('supervision.back')}
-        title={t('supervision.back')}
-        className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-line bg-surface text-brand shadow-control hover:bg-brand-soft"
-      >
-        <Icon name="back" className="h-4 w-4" />
-      </Link>
-      {name ? (
-        <div className="flex shrink-0 items-center gap-2">
-          <span className="relative inline-flex">
-            <Avatar
-              label={name}
-              imageUrl={portraitUrl(name, student?.avatarUrl)}
-              size="sm"
-              decorative
-              className="!h-14 !w-14"
-            />
-            {progress != null ? (
-              <span
-                className="absolute -right-0.5 -bottom-0.5 h-6 w-6 rounded-full shadow-control"
-                style={{
-                  background: `conic-gradient(#e9a23b ${progress * 3.6}deg, #e7edf4 0deg)`,
-                }}
-                role="img"
-                aria-label={`${t('supervision.progressOf', { name })} ${progress}%`}
-              >
-                <span className="absolute inset-[2.5px] grid place-items-center rounded-full bg-surface text-[7px] font-semibold leading-none text-ink tabular-nums">
-                  {progress}%
+    <div className="mb-4 min-w-0 overflow-hidden rounded-xl border border-line bg-surface">
+      <div className="flex min-w-0 items-center gap-3 px-3 py-3">
+        <Link
+          to="/"
+          aria-label={t('supervision.back')}
+          title={t('supervision.back')}
+          className="grid h-8 w-8 shrink-0 place-items-center rounded-md border border-line text-muted transition-colors hover:bg-brand-soft hover:text-brand focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+        >
+          <Icon name="back" className="h-4 w-4" />
+        </Link>
+        {name ? (
+          <div className="flex min-w-0 items-center gap-3">
+            <span className="relative inline-flex shrink-0">
+              <Avatar
+                label={name}
+                imageUrl={portraitUrl(name, student?.avatarUrl)}
+                size="sm"
+                decorative
+                className="!h-10 !w-10"
+              />
+              {progress != null ? (
+                <span
+                  className="absolute -right-0.5 -bottom-0.5 h-6 w-6 rounded-full shadow-control"
+                  style={{
+                    background: `conic-gradient(#295bb1 ${progress * 3.6}deg, #e7edf4 0deg)`,
+                  }}
+                  role="img"
+                  aria-label={`${t('supervision.progressOf', { name })} ${progress}%`}
+                >
+                  <span className="absolute inset-[2.5px] grid place-items-center rounded-full bg-surface text-[7px] font-semibold leading-none text-ink tabular-nums">
+                    {progress}%
+                  </span>
                 </span>
-              </span>
-            ) : null}
-          </span>
-          <span className="max-w-36 truncate text-sm font-semibold text-ink sm:max-w-44">
-            {name}
-          </span>
-        </div>
-      ) : null}
+              ) : null}
+            </span>
+            <span className="min-w-0 truncate text-sm font-semibold text-ink">{name}</span>
+          </div>
+        ) : null}
+      </div>
       <nav
         aria-label={t('supervision.title')}
-        className="flex min-w-0 flex-1 gap-1 overflow-x-auto rounded-md border border-line bg-surface p-1.5 shadow-control [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        className="flex min-w-0 gap-1 overflow-x-auto border-t border-line p-1.5 [scrollbar-width:thin]"
       >
         {SECTIONS.map((section) => (
           <NavLink
@@ -76,24 +77,12 @@ export function StudentSpaceNav({ thesisId }: { thesisId: string }) {
             end={section.to === ''}
             className={({ isActive }) =>
               isActive
-                ? 'inline-flex shrink-0 items-center gap-2 rounded-full bg-brand-soft py-1 pr-3 pl-1 text-sm font-semibold text-brand'
-                : 'inline-flex shrink-0 items-center gap-2 rounded-full py-1 pr-3 pl-1 text-sm font-medium text-ink hover:bg-canvas'
+                ? 'inline-flex shrink-0 items-center gap-2 rounded-full bg-ink/6 px-3 py-2 text-sm font-semibold text-ink'
+                : 'inline-flex shrink-0 items-center gap-2 rounded-full px-3 py-2 text-sm font-medium text-muted transition-colors hover:bg-canvas hover:text-ink'
             }
           >
-            {({ isActive }) => (
-              <>
-                <span
-                  className={
-                    isActive
-                      ? 'grid h-6 w-6 place-items-center rounded-full bg-surface text-brand shadow-control'
-                      : 'grid h-6 w-6 place-items-center rounded-full bg-brand-soft text-brand'
-                  }
-                >
-                  <Icon name={section.icon} className="h-3.5 w-3.5" />
-                </span>
-                {t(`supervision.section.${section.id}`)}
-              </>
-            )}
+            <Icon name={section.icon} className="h-3.5 w-3.5" />
+            {t(`supervision.section.${section.id}`)}
           </NavLink>
         ))}
       </nav>

@@ -3,6 +3,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { forwardRef, useState, type InputHTMLAttributes, type ReactNode } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { apiSend } from '../../api/client';
+import { BrandLogo } from '../../components/BrandLogo';
 import { applyFieldErrors, formErrorMessage } from '../../forms/api-errors';
 import { useZodForm } from '../../forms/use-zod-form';
 import { useT } from '../../i18n/LocaleContext';
@@ -136,11 +137,8 @@ export function LoginPage() {
 function BrandMark({ light = false }: { light?: boolean }) {
   return (
     <div className="flex items-center gap-2.5">
-      <span
-        className={`grid h-9 w-9 place-items-center rounded-xl ${light ? 'bg-white/15' : 'bg-brand'}`}
-        aria-hidden="true"
-      >
-        <span className={`h-3.5 w-3.5 rounded-[4px] ${light ? 'bg-white' : 'bg-white'}`} />
+      <span className={light ? 'rounded-xl bg-white p-1' : undefined}>
+        <BrandLogo />
       </span>
       <span
         className={`text-base font-semibold tracking-tight ${light ? 'text-white' : 'text-ink'}`}

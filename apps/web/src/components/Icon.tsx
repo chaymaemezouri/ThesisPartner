@@ -2,13 +2,13 @@ import type { SVGProps } from 'react';
 import type { IconName } from '../routes/nav';
 
 const paths: Record<IconName, string> = {
-  dashboard: 'M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z',
+  dashboard: 'M3 10l9-7 9 7M5 9v12h5v-7h4v7h5V9',
   thesis: 'M6 4h9l3 3v13H6zM15 4v3h3',
   objectives: 'M12 4v16M6 8h12M6 16h12',
   deliverables: 'M7 4h10v16H7zM9 8h6M9 12h6M9 16h4',
   remarks: 'M5 6h14v9H8l-3 3z',
   meetings: 'M6 5h12v14H6zM6 9h12M9 3v4M15 3v4',
-  messages: 'M4 6h16v12H4zM4 6l8 7 8-7',
+  messages: 'm3 4 18 1-8 16-3-9-7-8ZM10 12 21 5',
   watch: 'M12 4a8 8 0 1 0 0 16 8 8 0 0 0 0-16zM12 8v5l3 2',
   radar: 'M12 4a8 8 0 1 0 8 8M12 12l5-3',
   portfolio: 'M4 8h16v10H4zM8 8V6h8v2',
@@ -27,6 +27,7 @@ const paths: Record<IconName, string> = {
   back: 'M15 6l-6 6 6 6',
   eye: 'M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12zM12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z',
   download: 'M12 4v10M8 10l4 4 4-4M5 19h14',
+  signOut: 'M10 5H5v14h5M14 16l5-4-5-4M9 12h10',
 };
 
 export function Icon({ name, ...props }: SVGProps<SVGSVGElement> & { name: IconName }) {
@@ -37,7 +38,7 @@ export function Icon({ name, ...props }: SVGProps<SVGSVGElement> & { name: IconN
       height="20"
       fill="none"
       stroke="currentColor"
-      strokeWidth="1.75"
+      strokeWidth="1.65"
       strokeLinecap="round"
       strokeLinejoin="round"
       aria-hidden="true"

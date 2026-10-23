@@ -123,6 +123,75 @@ test('uses a drawer on a narrow viewport', async ({ page }) => {
   await expect(page.getByRole('heading', { name: 'Portfolio' })).toBeVisible();
 });
 
+test('remembers the chosen menu size and visibility across pages and reloads', async ({ page }) => {
+  await stubWorkspace(page);
+  await page.route('**/api/v1/supervision/theses', (route) =>
+    route.fulfill({ json: { theses: [] } }),
+  );
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto('/');
+  const sidebar = page.locator('#desktop-sidebar');
+  const resize = sidebar.getByRole('button', { name: 'Agrandir ou réduire le menu' });
+  await expect(sidebar).toBeVisible();
+  const expandedWidth = (await sidebar.boundingBox())!.width;
+  await resize.click();
+  const collapsedWidth = (await sidebar.boundingBox())!.width;
+  expect(collapsedWidth).toBeLessThan(expandedWidth / 2);
+  await sidebar.getByRole('link', { name: 'Objectifs', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Objectifs', exact: true })).toBeVisible();
+  expect((await sidebar.boundingBox())!.width).toBe(collapsedWidth);
+  await page.reload();
+  await expect(resize).toBeVisible();
+  expect((await sidebar.boundingBox())!.width).toBe(collapsedWidth);
+
+  const hide = page.getByRole('button', { name: 'Masquer le menu', exact: true });
+  await hide.click();
+  await expect(sidebar).not.toBeVisible();
+  const show = page.getByRole('button', { name: 'Afficher le menu', exact: true });
+  await expect(show).toHaveAttribute('aria-expanded', 'false');
+  await page.reload();
+  await expect(sidebar).not.toBeVisible();
+  await show.click();
+  await expect(hide).toHaveAttribute('aria-expanded', 'true');
+  expect((await sidebar.boundingBox())!.width).toBe(collapsedWidth);
+  await resize.click();
+  expect((await sidebar.boundingBox())!.width).toBe(expandedWidth);
+  await page.reload();
+  await expect(resize).toBeVisible();
+  expect((await sidebar.boundingBox())!.width).toBe(expandedWidth);
+
+  // The desktop preference must not prevent opening the mobile drawer.
+  await hide.click();
+  await page.setViewportSize({ width: 375, height: 812 });
+  await page.getByRole('button', { name: 'Ouvrir le menu', exact: true }).click();
+  const drawer = page.getByRole('dialog', { name: 'Menu', exact: true });
+  await expect(drawer.getByRole('link', { name: 'Objectifs', exact: true })).toBeVisible();
+  await drawer.getByRole('button', { name: 'Fermer', exact: true }).click();
+  await expect(drawer).not.toBeVisible();
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await expect(sidebar).not.toBeVisible();
+  await show.click();
+  expect((await sidebar.boundingBox())!.width).toBe(expandedWidth);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+});
+
+test('lets the user expand the compact menu on a medium screen', async ({ page }) => {
+  await stubWorkspace(page);
+  await page.route('**/api/v1/supervision/theses', (route) =>
+    route.fulfill({ json: { theses: [] } }),
+  );
+  await page.setViewportSize({ width: 1024, height: 900 });
+  await page.goto('/');
+  const sidebar = page.locator('#desktop-sidebar');
+  const compactWidth = (await sidebar.boundingBox())!.width;
+  await sidebar.getByRole('button', { name: 'Agrandir ou réduire le menu' }).click();
+  expect((await sidebar.boundingBox())!.width).toBeGreaterThan(compactWidth * 2);
+  await page.reload();
+  await expect(sidebar.getByRole('button', { name: 'Agrandir ou réduire le menu' })).toBeVisible();
+  expect((await sidebar.boundingBox())!.width).toBeGreaterThan(compactWidth * 2);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+});
+
 test('shows objectives without a horizontal scrollbar', async ({ page }) => {
   await stubWorkspace(page);
   await page.route('**/api/v1/dashboard', (route) =>

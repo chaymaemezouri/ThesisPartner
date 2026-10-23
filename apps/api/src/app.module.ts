@@ -21,6 +21,7 @@ import { MeetingsModule } from './meetings/meetings.module';
 import { MessagesModule } from './messages/messages.module';
 import { PortfolioModule } from './portfolio/portfolio.module';
 import { RemarksModule } from './remarks/remarks.module';
+import { ResearchAiModule } from './research-ai/research-ai.module';
 import { ResourcesModule } from './resources/resources.module';
 import { SupervisionModule } from './supervision/supervision.module';
 import { LoggerModule } from './infrastructure/logger/logger.module';
@@ -47,6 +48,7 @@ import { ThesesModule } from './theses/theses.module';
     ObjectivesModule,
     DeliverablesModule,
     RemarksModule,
+    ResearchAiModule,
     ResourcesModule,
     MeetingsModule,
     MessagesModule,

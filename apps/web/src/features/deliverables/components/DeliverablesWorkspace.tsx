@@ -118,13 +118,14 @@ export function DeliverablesWorkspace({
 
   const statusTabs = (
     <div
-      className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6"
+      className="flex gap-1 overflow-x-auto rounded-2xl border border-line/80 bg-line/45 p-1.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       role="tablist"
       aria-label={t('deliverables.title')}
     >
       {FILTER_TABS.map((id, index) => {
         const selected = id === tab;
         const style = STATUS_PRESENTATION[id];
+        const count = counts ? (counts[id] ?? 0) : null;
         return (
           <button
             key={id}
@@ -132,11 +133,15 @@ export function DeliverablesWorkspace({
             role="tab"
             aria-label={t(`deliverables.tabs.${id}`)}
             aria-description={
-              counts ? t('deliverables.resultCount', { count: counts[id] ?? 0 }) : undefined
+              count !== null ? t('deliverables.resultCount', { count }) : undefined
             }
             aria-selected={selected}
             tabIndex={selected ? 0 : -1}
-            className={`group relative min-w-0 overflow-hidden rounded-[12px] border p-3 text-left transition-[background-color,border-color,box-shadow,transform] duration-200 motion-safe:hover:-translate-y-0.5 ${style.soft} ${style.ink} ${selected ? `${style.border} shadow-[0_3px_12px_rgba(36,87,167,0.12)] ring-1 ring-current/10` : 'border-transparent hover:border-current/20'}`}
+            className={`group flex shrink-0 items-center gap-2 rounded-xl px-2.5 py-2 text-left transition-[background-color,box-shadow,color] duration-150 ${
+              selected
+                ? 'bg-surface text-ink shadow-[0_1px_3px_rgba(15,23,42,0.08)]'
+                : 'text-ink/80 hover:bg-surface/70'
+            }`}
             onClick={() => selectStatus(id)}
             onKeyDown={(event) => {
               if (!['ArrowRight', 'ArrowLeft', 'Home', 'End'].includes(event.key)) return;
@@ -155,23 +160,24 @@ export function DeliverablesWorkspace({
                 [next]?.focus();
             }}
           >
-            <span className="flex items-center justify-between gap-2" aria-hidden="true">
-              <span className="grid h-8 w-8 shrink-0 place-items-center rounded-[9px] bg-surface/80">
-                <Icon name={style.icon} className="h-4 w-4" />
-              </span>
-              <span className="text-base font-semibold tabular-nums">
-                {counts ? counts[id] : '-'}
-              </span>
+            <span
+              aria-hidden="true"
+              className={`grid h-8 w-8 shrink-0 place-items-center rounded-lg ${
+                selected ? 'bg-brand-soft text-brand' : 'bg-surface/80 text-muted'
+              }`}
+            >
+              <Icon name={style.icon} className="h-4 w-4" />
             </span>
-            <span className="mt-2 block text-xs font-medium leading-snug">
-              {t(`deliverables.tabs.${id}`)}
-            </span>
-            {selected ? (
+            <span className="flex min-w-0 items-baseline gap-1.5 whitespace-nowrap">
+              <span className={`text-sm ${selected ? 'font-semibold' : 'font-medium'}`}>
+                {t(`deliverables.tabs.${id}`)}
+              </span>
               <span
-                aria-hidden="true"
-                className="absolute inset-x-3 bottom-0 h-0.5 rounded-full bg-current"
-              />
-            ) : null}
+                className={`text-xs tabular-nums ${selected ? 'text-brand' : 'text-muted'}`}
+              >
+                {count !== null ? count : '–'}
+              </span>
+            </span>
           </button>
         );
       })}
@@ -180,32 +186,18 @@ export function DeliverablesWorkspace({
 
   return (
     <div className="min-w-0">
-      <header className="mb-4 flex flex-wrap items-center justify-between gap-4 rounded-[14px] border border-brand/10 bg-linear-to-r from-brand-soft via-surface to-violet-soft/80 p-4 sm:p-5">
-        <div className="flex min-w-0 items-center gap-3">
-          <span
-            aria-hidden="true"
-            className="grid h-10 w-10 shrink-0 place-items-center rounded-[12px] bg-linear-to-br from-brand to-violet text-white shadow-[0_6px_16px_rgba(80,70,160,0.20)]"
-          >
-            <Icon name="deliverables" className="h-5 w-5" />
-          </span>
-          <div className="min-w-0">
-            <h2 className="text-base font-semibold text-ink">
-              {t(canCreate ? 'deliverables.myDeliverables' : 'deliverables.title')}
-            </h2>
-            <p className="mt-1 text-xs text-muted">{t('deliverables.workspaceCaption')}</p>
-          </div>
-        </div>
+      <div className="mb-3 flex min-w-0 items-center gap-2">
+        <div className="min-w-0 flex-1">{statusTabs}</div>
         {canCreate ? (
           <IconAction
-            className="bg-linear-to-r from-brand to-violet shadow-[0_5px_14px_rgba(80,70,160,0.18)] transition-transform active:scale-[0.98]"
+            className="shrink-0"
             label={t('deliverables.new')}
             icon="plus"
             onClick={() => setCreating(true)}
           />
         ) : null}
-      </header>
-      {statusTabs}
-      <div className="mt-4 min-w-0 rounded-[14px] border border-line bg-surface p-3 shadow-[0_3px_18px_rgba(15,23,42,0.03)] sm:p-4">
+      </div>
+      <div className="min-w-0 rounded-[14px] border border-line bg-surface p-3 shadow-[0_3px_18px_rgba(15,23,42,0.03)] sm:p-4">
         <div className="flex flex-col gap-3">
           <div className="flex flex-wrap items-center gap-3">
             <label className="relative min-w-40 flex-1 text-[11px] sm:max-w-sm sm:text-xs">
@@ -370,7 +362,7 @@ export function DeliverablesWorkspace({
           </div>
         </div>
 
-        <div className="mt-4 flex flex-wrap items-center justify-between gap-2 border-t border-line pt-3 text-xs text-muted">
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-muted">
           <p role="status">
             {deliverables.data
               ? t('deliverables.resultCount', { count: visibleRows.length })

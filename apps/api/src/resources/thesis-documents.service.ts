@@ -58,9 +58,23 @@ export class ThesisDocumentsService {
         take: 200,
       }),
     ]);
+    const creatorIds = [...new Set(documents.map((row) => row.createdById))];
+    const memberships =
+      creatorIds.length === 0
+        ? []
+        : await this.prisma.thesisMembership.findMany({
+            where: { thesisId, userId: { in: creatorIds } },
+            select: { userId: true, role: true },
+          });
+    const roleByUser = new Map(memberships.map((row) => [row.userId, row.role]));
     const canManage = role === 'SUPERVISOR';
     const rows = documents
-      .map((row) => this.toDto(row, canManage))
+      .map((row) =>
+        this.toDto(row, canManage, {
+          actorId,
+          source: roleByUser.get(row.createdById) === 'SUPERVISOR' ? 'SUPERVISOR' : 'STUDENT',
+        }),
+      )
       .sort(
         (a, b) =>
           PRIORITY_RANK[a.priority] - PRIORITY_RANK[b.priority] || a.title.localeCompare(b.title),
@@ -79,10 +93,11 @@ export class ThesisDocumentsService {
 
   async create(actorId: string, thesisId: string, body: DocumentBody, requestId?: string) {
     const role = await this.role(actorId, thesisId);
-    if (role !== 'SUPERVISOR') {
-      throw new AppException(403, 'FORBIDDEN', 'Seul le superviseur peut proposer un document');
+    if (role !== 'SUPERVISOR' && role !== 'DOCTORAL_STUDENT') {
+      throw new AppException(403, 'FORBIDDEN', 'Vous ne pouvez pas ajouter un document');
     }
     const link = await this.resolveLink(thesisId, body.objectiveId, body.taskId);
+    const studentOwned = role === 'DOCTORAL_STUDENT';
     await this.prisma.$transaction(async (tx) => {
       const row = await tx.thesisDocument.create({
         data: {
@@ -95,17 +110,17 @@ export class ThesisDocumentsService {
           url: blank(body.url),
           objectiveId: link.objectiveId,
           taskId: link.taskId,
-          importance: body.importance,
-          priority: body.priority,
-          access: body.access,
-          dueDate: body.dueDate ? parseDay(body.dueDate) : null,
-          instructions: blank(body.instructions),
+          importance: studentOwned ? 'MEDIUM' : body.importance,
+          priority: studentOwned ? 'NORMAL' : body.priority,
+          access: studentOwned ? 'SHARED' : body.access,
+          dueDate: studentOwned ? null : body.dueDate ? parseDay(body.dueDate) : null,
+          instructions: studentOwned ? null : blank(body.instructions),
         },
       });
       await this.audit.record(tx, {
         actorId,
         thesisId,
-        action: 'document.proposed',
+        action: studentOwned ? 'document.added_by_student' : 'document.proposed',
         entityType: 'thesis_document',
         entityId: row.id,
         requestId,
@@ -122,13 +137,17 @@ export class ThesisDocumentsService {
     requestId?: string,
   ) {
     const role = await this.role(actorId, thesisId);
-    if (role !== 'SUPERVISOR') {
-      throw new AppException(403, 'FORBIDDEN', 'Seul le superviseur peut modifier un document');
+    const existing = await this.prisma.thesisDocument.findFirst({
+      where: { id: documentId, thesisId },
+    });
+    if (!existing) throw new AppException(404, 'NOT_FOUND', 'Ce document est introuvable');
+    const mine = existing.createdById === actorId;
+    if (role !== 'SUPERVISOR' && !(role === 'DOCTORAL_STUDENT' && mine)) {
+      throw new AppException(403, 'FORBIDDEN', 'Vous ne pouvez pas modifier ce document');
     }
     const link = await this.resolveLink(thesisId, body.objectiveId, body.taskId);
+    const studentOwned = role === 'DOCTORAL_STUDENT';
     await this.prisma.$transaction(async (tx) => {
-      const existing = await tx.thesisDocument.findFirst({ where: { id: documentId, thesisId } });
-      if (!existing) throw new AppException(404, 'NOT_FOUND', 'Ce document est introuvable');
       await tx.thesisDocument.update({
         where: { id: documentId },
         data: {
@@ -139,11 +158,15 @@ export class ThesisDocumentsService {
           url: blank(body.url),
           objectiveId: link.objectiveId,
           taskId: link.taskId,
-          importance: body.importance,
-          priority: body.priority,
-          access: body.access,
-          dueDate: body.dueDate ? parseDay(body.dueDate) : null,
-          instructions: blank(body.instructions),
+          importance: studentOwned ? existing.importance : body.importance,
+          priority: studentOwned ? existing.priority : body.priority,
+          access: studentOwned ? 'SHARED' : body.access,
+          dueDate: studentOwned
+            ? existing.dueDate
+            : body.dueDate
+              ? parseDay(body.dueDate)
+              : null,
+          instructions: studentOwned ? existing.instructions : blank(body.instructions),
         },
       });
       await this.audit.record(tx, {
@@ -160,13 +183,14 @@ export class ThesisDocumentsService {
 
   async remove(actorId: string, thesisId: string, documentId: string, requestId?: string) {
     const role = await this.role(actorId, thesisId);
-    if (role !== 'SUPERVISOR') {
-      throw new AppException(403, 'FORBIDDEN', 'Seul le superviseur peut supprimer un document');
-    }
     const existing = await this.prisma.thesisDocument.findFirst({
       where: { id: documentId, thesisId },
     });
     if (!existing) throw new AppException(404, 'NOT_FOUND', 'Ce document est introuvable');
+    const mine = existing.createdById === actorId;
+    if (role !== 'SUPERVISOR' && !(role === 'DOCTORAL_STUDENT' && mine)) {
+      throw new AppException(403, 'FORBIDDEN', 'Vous ne pouvez pas supprimer ce document');
+    }
     await this.prisma.$transaction(async (tx) => {
       await tx.thesisDocument.delete({ where: { id: documentId } });
       await this.audit.record(tx, {
@@ -190,9 +214,6 @@ export class ThesisDocumentsService {
     requestId?: string,
   ) {
     const role = await this.role(actorId, thesisId);
-    if (role !== 'SUPERVISOR') {
-      throw new AppException(403, 'FORBIDDEN', 'Seul le superviseur peut joindre un fichier');
-    }
     if (!file) throw new AppException(400, 'VALIDATION_ERROR', 'Aucun fichier');
     if (!acceptedFile(file.originalName, file.declaredMime)) {
       throw new AppException(400, 'VALIDATION_ERROR', 'Formats acceptés : PDF, DOC ou DOCX');
@@ -205,6 +226,10 @@ export class ThesisDocumentsService {
       where: { id: documentId, thesisId },
     });
     if (!existing) throw new AppException(404, 'NOT_FOUND', 'Ce document est introuvable');
+    const mine = existing.createdById === actorId;
+    if (role !== 'SUPERVISOR' && !(role === 'DOCTORAL_STUDENT' && mine)) {
+      throw new AppException(403, 'FORBIDDEN', 'Vous ne pouvez pas joindre un fichier');
+    }
     const key = `theses/${thesisId}/documents/${documentId}/${randomUUID()}`;
     try {
       try {
@@ -320,12 +345,25 @@ export class ThesisDocumentsService {
       throw new AppException(403, 'FORBIDDEN', 'Cette synthèse ne peut plus être modifiée');
     }
     const summary = blank(body.summary);
-    if (body.submit && !summary) {
+    const hasSynthesisFile = Boolean(existing.study?.synthesisFileKey);
+    if (body.submit && !summary && !hasSynthesisFile) {
       throw new AppException(
         400,
         'VALIDATION_ERROR',
-        'Le résumé est requis pour soumettre la synthèse',
+        'Ajoutez un fichier Word/PDF ou un résumé pour soumettre la synthèse',
         [{ field: 'summary', message: 'Champ requis' }],
+      );
+    }
+    const subjectRelevance =
+      body.subjectRelevance === 'IMPORTANT' || body.subjectRelevance === 'NOT_IMPORTANT'
+        ? body.subjectRelevance
+        : (existing.study?.subjectRelevance ?? 'UNSET');
+    if (body.submit && subjectRelevance === 'UNSET') {
+      throw new AppException(
+        400,
+        'VALIDATION_ERROR',
+        'Indiquez si ce document est important pour votre sujet',
+        [{ field: 'subjectRelevance', message: 'Champ requis' }],
       );
     }
     const link = await this.resolveLink(thesisId, body.objectiveId, body.taskId);
@@ -355,6 +393,7 @@ export class ThesisDocumentsService {
           limits: blank(body.limits),
           thesisLink: blank(body.thesisLink),
           exploitation: blank(body.exploitation),
+          subjectRelevance,
           submittedAt: body.submit ? now : null,
         },
         update: {
@@ -366,6 +405,7 @@ export class ThesisDocumentsService {
           limits: blank(body.limits),
           thesisLink: blank(body.thesisLink),
           exploitation: blank(body.exploitation),
+          subjectRelevance,
           submittedAt: body.submit ? now : existing.study?.submittedAt,
         },
       });
@@ -423,6 +463,111 @@ export class ThesisDocumentsService {
       });
     });
     return this.list(actorId, thesisId);
+  }
+
+  async attachSynthesisFile(
+    actorId: string,
+    thesisId: string,
+    documentId: string,
+    file: { path: string; originalName: string; declaredMime: string } | undefined,
+    requestId?: string,
+  ) {
+    const role = await this.role(actorId, thesisId);
+    if (role !== 'DOCTORAL_STUDENT') {
+      throw new AppException(403, 'FORBIDDEN', 'Seul le doctorant joint une synthèse');
+    }
+    if (!file) throw new AppException(400, 'VALIDATION_ERROR', 'Aucun fichier');
+    if (!acceptedFile(file.originalName, file.declaredMime)) {
+      throw new AppException(400, 'VALIDATION_ERROR', 'Formats acceptés : PDF, DOC ou DOCX');
+    }
+    const info = await stat(file.path);
+    if (info.size > this.env.MAX_UPLOAD_SIZE_MB * 1024 * 1024) {
+      throw new AppException(400, 'VALIDATION_ERROR', 'Le fichier dépasse la taille autorisée');
+    }
+    const existing = await this.prisma.thesisDocument.findFirst({
+      where: { id: documentId, thesisId },
+      include: { study: true },
+    });
+    if (!existing) throw new AppException(404, 'NOT_FOUND', 'Ce document est introuvable');
+    const status = existing.study?.status ?? 'TO_READ';
+    if (!EDITABLE.has(status) && status !== 'SUBMITTED') {
+      throw new AppException(403, 'FORBIDDEN', 'Cette synthèse ne peut plus être modifiée');
+    }
+    const key = `theses/${thesisId}/documents/${documentId}/synthesis/${randomUUID()}`;
+    const now = new Date();
+    const nextStatus =
+      status === 'CHANGES_REQUESTED' || status === 'SUBMITTED' || status === 'VALIDATED'
+        ? status
+        : 'SYNTHESIS_DRAFT';
+    try {
+      try {
+        await this.storage.putObject({
+          key,
+          body: createReadStream(file.path),
+          contentType: file.declaredMime || 'application/octet-stream',
+          contentLength: info.size,
+          downloadName: file.originalName,
+        });
+      } catch {
+        throw new AppException(503, 'INTERNAL_ERROR', 'Le stockage est indisponible.');
+      }
+      await this.prisma.documentStudy.upsert({
+        where: { documentId },
+        create: {
+          documentId,
+          studentId: actorId,
+          status: nextStatus,
+          consultedAt: now,
+          synthesisFileKey: key,
+          synthesisFileName: file.originalName.slice(0, 180),
+          synthesisFileMime: file.declaredMime.slice(0, 160),
+        },
+        update: {
+          status: nextStatus === 'SYNTHESIS_DRAFT' ? nextStatus : status,
+          consultedAt: existing.study?.consultedAt ?? now,
+          synthesisFileKey: key,
+          synthesisFileName: file.originalName.slice(0, 180),
+          synthesisFileMime: file.declaredMime.slice(0, 160),
+        },
+      });
+      await this.audit.record(this.prisma, {
+        actorId,
+        thesisId,
+        action: 'document.synthesis_file_attached',
+        entityType: 'thesis_document',
+        entityId: documentId,
+        requestId,
+      });
+      if (existing.study?.synthesisFileKey) {
+        await this.storage.deleteObject(existing.study.synthesisFileKey).catch(() => undefined);
+      }
+    } finally {
+      await unlink(file.path).catch(() => undefined);
+    }
+    return this.list(actorId, thesisId);
+  }
+
+  async downloadSynthesisFile(
+    actorId: string,
+    thesisId: string,
+    documentId: string,
+    inline: boolean,
+  ) {
+    await this.role(actorId, thesisId);
+    const existing = await this.prisma.thesisDocument.findFirst({
+      where: { id: documentId, thesisId },
+      include: { study: true },
+    });
+    if (!existing?.study?.synthesisFileKey || !existing.study.synthesisFileName) {
+      throw new AppException(404, 'NOT_FOUND', 'Aucune synthèse n’est jointe');
+    }
+    return this.storage.createSignedDownloadUrl({
+      key: existing.study.synthesisFileKey,
+      downloadName: existing.study.synthesisFileName,
+      contentType: existing.study.synthesisFileMime || 'application/octet-stream',
+      ttlSeconds: this.env.SIGNED_URL_TTL_SECONDS,
+      inline,
+    });
   }
 
   private async markRead(actorId: string, documentId: string) {
@@ -505,21 +650,31 @@ export class ThesisDocumentsService {
       priority: 'LOW' | 'NORMAL' | 'HIGH' | 'URGENT';
       dueDate: Date | null;
       instructions: string | null;
+      createdAt: Date;
+      createdById: string;
       objective: { id: string; title: string } | null;
       task: { id: string; title: string } | null;
       study: {
         status:
-          'TO_READ' | 'READ' | 'SYNTHESIS_DRAFT' | 'SUBMITTED' | 'CHANGES_REQUESTED' | 'VALIDATED';
+          | 'TO_READ'
+          | 'READ'
+          | 'SYNTHESIS_DRAFT'
+          | 'SUBMITTED'
+          | 'CHANGES_REQUESTED'
+          | 'VALIDATED';
         summary: string | null;
         methodology: string | null;
         results: string | null;
         limits: string | null;
         thesisLink: string | null;
         exploitation: string | null;
+        subjectRelevance: 'UNSET' | 'IMPORTANT' | 'NOT_IMPORTANT';
+        synthesisFileName: string | null;
         reviewMessage: string | null;
       } | null;
     },
     canManage: boolean,
+    meta: { actorId: string; source: 'SUPERVISOR' | 'STUDENT' },
   ) {
     const hidden = row.access === 'PROTECTED' && !canManage;
     const dueDate = formatDay(row.dueDate);
@@ -552,7 +707,12 @@ export class ThesisDocumentsService {
       limits: row.study?.limits ?? null,
       thesisLink: row.study?.thesisLink ?? null,
       exploitation: row.study?.exploitation ?? null,
+      subjectRelevance: row.study?.subjectRelevance ?? 'UNSET',
+      synthesisFileName: row.study?.synthesisFileName ?? null,
+      source: meta.source,
+      mine: row.createdById === meta.actorId,
       reviewMessage: row.study?.reviewMessage ?? null,
+      sharedOn: formatDay(row.createdAt) ?? new Date().toISOString().slice(0, 10),
     };
   }
 }

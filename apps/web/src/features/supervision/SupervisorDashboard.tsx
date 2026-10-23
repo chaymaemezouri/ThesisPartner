@@ -30,16 +30,6 @@ export function SupervisorDashboard({ layout = 'cards' }: { layout?: 'cards' | '
 
   const theses = useMemo(() => supervised.data?.theses ?? [], [supervised.data?.theses]);
   const stats = layout === 'cards' ? rosterStats(theses) : null;
-  const reviewQueue =
-    layout === 'cards'
-      ? theses.flatMap((thesis) =>
-          thesis.pendingDeliverables.map((item) => ({
-            ...item,
-            thesisId: thesis.thesisId,
-            student: studentName(thesis, t('supervision.studentUnset')),
-          })),
-        )
-      : [];
   const visible = useMemo(
     () =>
       sortRoster(
@@ -61,94 +51,72 @@ export function SupervisorDashboard({ layout = 'cards' }: { layout?: 'cards' | '
   if (supervised.isError) return <QueryError error={supervised.error} />;
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-4">
+    <div className="flex min-h-0 flex-1 flex-col gap-5">
       <h1 className="sr-only">{t('supervision.dashboardTitle')}</h1>
-      <div
-        className={
-          stats && reviewQueue.length > 0
-            ? 'grid shrink-0 items-stretch gap-3 md:grid-cols-[minmax(0,1.15fr)_minmax(16rem,0.85fr)]'
-            : 'contents'
-        }
-      >
-        {stats ? (
-          <section
-            className={
-              reviewQueue.length > 0
-                ? 'grid content-start gap-3 sm:grid-cols-2'
-                : 'grid shrink-0 gap-3 sm:grid-cols-2 xl:grid-cols-4'
+      {stats ? (
+        <section className="grid shrink-0 gap-2.5 sm:grid-cols-2 xl:grid-cols-4">
+          <Stat
+            icon="supervision"
+            label={t('supervision.statsStudents')}
+            value={String(stats.students)}
+          />
+          <Stat
+            icon="dashboard"
+            label={t('supervision.statsProgress')}
+            value={`${stats.averageProgress} %`}
+          />
+          <Stat
+            icon="objectives"
+            tone={stats.overdue > 0 ? 'danger' : 'brand'}
+            label={t('supervision.statsObjectives')}
+            value={t('supervision.statsInProgress', { count: stats.inProgress })}
+            detail={
+              stats.overdue > 0 ? t('supervision.statsOverdue', { count: stats.overdue }) : undefined
             }
-          >
-            <Stat
-              icon="supervision"
-              label={t('supervision.statsStudents')}
-              value={String(stats.students)}
-            />
-            <Stat
-              icon="dashboard"
-              label={t('supervision.statsProgress')}
-              value={`${stats.averageProgress} %`}
-            />
-            <Stat
-              icon="objectives"
-              tone="danger"
-              label={t('supervision.statsObjectives')}
-              value={t('supervision.statsInProgress', { count: stats.inProgress })}
-              detail={t('supervision.statsOverdue', { count: stats.overdue })}
-            />
-            <Stat
-              icon="deliverables"
-              tone={stats.pending > 0 ? 'warn' : 'brand'}
-              label={t('supervision.statsPending')}
-              value={String(stats.pending)}
-            />
-          </section>
-        ) : null}
+          />
+          <Stat
+            icon="deliverables"
+            tone={stats.pending > 0 ? 'warn' : 'brand'}
+            label={t('supervision.statsPending')}
+            value={String(stats.pending)}
+          />
+        </section>
+      ) : null}
 
-        {reviewQueue.length > 0 ? (
-          <section className="flex max-h-52 flex-col overflow-hidden rounded-md border border-line bg-surface md:h-0 md:max-h-none md:min-h-full">
-            <header className="flex shrink-0 items-baseline justify-between gap-3 border-b border-line px-3 py-2">
-              <h2 className="text-sm font-semibold text-ink">
-                {t('supervision.reviewQueue')} ({reviewQueue.length})
-              </h2>
-              <p className="text-xs text-muted">{t('supervision.reviewQueueHelp')}</p>
-            </header>
-            <ul className="min-h-0 flex-1 divide-y divide-line overflow-y-auto">
-              {reviewQueue.map((item) => (
-                <li key={item.id}>
-                  <Link
-                    to={`/encadrement/${item.thesisId}/livrables/${item.id}`}
-                    className="flex items-center justify-between gap-3 px-3 py-2 hover:bg-canvas"
-                  >
-                    <span className="min-w-0">
-                      <span className="block truncate text-sm font-medium text-ink">
-                        {item.title}
-                      </span>
-                      <span className="block truncate text-xs text-muted">{item.student}</span>
-                    </span>
-                    <span className="shrink-0 rounded-full bg-warn-soft px-2 py-0.5 text-xs font-medium text-warn">
-                      {t('supervision.statusReview')}
-                    </span>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </section>
-        ) : null}
-      </div>
-
-      <section className="flex min-h-0 flex-1 flex-col gap-3">
-        <div className="flex shrink-0 items-baseline justify-between gap-3">
-          <h2 className="text-sm font-semibold text-ink">
-            {t('supervision.title')}
-            {stats ? <span className="ml-1 font-normal text-muted">({stats.students})</span> : null}
-          </h2>
+      <section className="flex min-h-0 flex-1 flex-col gap-3.5">
+        <div className="flex shrink-0 items-center justify-between gap-3">
+          <div className="min-w-0">
+            <h2 className="text-[15px] font-semibold tracking-tight text-ink">
+              {t('supervision.title')}
+              {stats ? (
+                <span className="ml-1.5 text-sm font-normal text-muted">({stats.students})</span>
+              ) : (
+                <span className="ml-2 rounded-md bg-brand-soft px-2 py-0.5 text-xs font-medium tabular-nums text-brand">
+                  {theses.length}
+                </span>
+              )}
+            </h2>
+            {layout === 'list' ? (
+              <p className="mt-1 text-sm text-muted">{t('supervision.subtitle')}</p>
+            ) : null}
+          </div>
           {layout === 'cards' ? (
-            <Link to="/encadrement" className="text-xs font-medium text-brand hover:underline">
+            <Link
+              to="/encadrement"
+              className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-md border border-line bg-surface px-3 text-sm font-medium text-ink shadow-control transition-colors hover:border-brand/35 hover:bg-brand-soft/60 hover:text-brand"
+            >
               {t('supervision.seeAll')}
+              <Icon name="chevron" className="h-3.5 w-3.5" />
             </Link>
           ) : null}
         </div>
-        <div className="grid shrink-0 gap-3 md:grid-cols-[minmax(0,1fr)_11rem_13rem]">
+        <div
+          className={`grid shrink-0 gap-3 md:grid-cols-[minmax(0,1fr)_11rem_13rem] ${
+            layout === 'list'
+              ? 'rounded-xl border border-line bg-surface p-3'
+              : 'rounded-[12px] border border-line bg-surface p-3 shadow-[0_1px_2px_rgba(15,23,42,0.03)]'
+          }`}
+        >
           <Input
             id="student-search"
             label={t('supervision.search')}
@@ -220,7 +188,7 @@ function SquareCard({ thesis, name }: { thesis: SupervisedThesis; name: string }
     <li className="min-w-0">
       <Link
         to={`/encadrement/${thesis.thesisId}`}
-        className="flex h-full flex-col items-center rounded-md border border-line bg-surface px-3 py-4 text-center shadow-[0_2px_12px_rgba(15,23,42,0.04)] hover:border-brand"
+        className="flex h-full flex-col items-center rounded-[12px] border border-line bg-surface px-3 py-4 text-center shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition-[border-color,box-shadow,transform] duration-150 hover:-translate-y-0.5 hover:border-brand/40 hover:shadow-[0_8px_20px_rgba(15,23,42,0.06)]"
       >
         <Avatar
           label={name}
@@ -248,7 +216,9 @@ function SquareCard({ thesis, name }: { thesis: SupervisedThesis; name: string }
             total: thesis.objectiveSummary.total,
           })}
         </p>
-        <span className={`mt-2 rounded-full px-2 py-0.5 text-[11px] font-medium ${chip.className}`}>
+        <span
+          className={`mt-2.5 rounded-md px-2 py-0.5 text-[11px] font-medium tracking-wide ${chip.className}`}
+        >
           {chip.label}
         </span>
       </Link>
@@ -261,16 +231,18 @@ function ListCard({ thesis, name }: { thesis: SupervisedThesis; name: string }) 
   const late = thesis.objectiveSummary.overdue > 0;
   const pending = thesis.pendingValidationCount > 0;
   return (
-    <li className="rounded-2xl border border-line bg-surface p-3 shadow-[0_2px_12px_rgba(15,23,42,0.04)]">
-      <div className="flex items-start gap-3">
-        <Avatar label={name} imageUrl={portraitUrl(name, thesis.doctoralStudent?.avatarUrl)} />
+    <li className="min-w-0 overflow-hidden rounded-xl border border-line bg-surface transition-shadow hover:shadow-[0_4px_16px_rgba(15,23,42,0.05)]">
+      <div className="flex items-start gap-3 p-4">
+        <span className="shrink-0">
+          <Avatar label={name} imageUrl={portraitUrl(name, thesis.doctoralStudent?.avatarUrl)} />
+        </span>
         <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-start justify-between gap-2">
-            <div className="min-w-0">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0 flex-1">
               <p className="truncate font-medium text-ink">{name}</p>
               <p className="line-clamp-2 text-sm text-muted">{thesis.title}</p>
             </div>
-            <p className="text-lg font-semibold tabular-nums text-brand">
+            <p className="shrink-0 rounded-md bg-brand-soft px-2 py-1 text-sm font-semibold tabular-nums text-brand">
               {thesis.progressPercentage} %
             </p>
           </div>
@@ -287,13 +259,13 @@ function ListCard({ thesis, name }: { thesis: SupervisedThesis; name: string }) 
               style={{ width: `${thesis.progressPercentage}%` }}
             />
           </div>
-          <p className="mt-2 text-sm text-muted">
+          <p className="mt-2 text-xs text-muted">
             {t('supervision.objectivesDone', {
               done: thesis.objectiveSummary.completed,
               total: thesis.objectiveSummary.total,
             })}
           </p>
-          <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
             <p className="flex flex-wrap gap-2 text-xs">
               {late ? (
                 <span className="rounded-full bg-danger-soft px-2 py-0.5 font-medium text-danger">
@@ -312,14 +284,15 @@ function ListCard({ thesis, name }: { thesis: SupervisedThesis; name: string }) 
             </p>
             <Link
               to={`/encadrement/${thesis.thesisId}`}
-              className="inline-flex rounded-md bg-brand px-3 py-1.5 text-sm font-medium text-white"
+              className="inline-flex items-center gap-2 rounded-md border border-line px-3 py-1.5 text-sm font-medium text-brand transition-colors hover:border-brand hover:bg-brand-soft focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
             >
               {t('supervision.openSpace')}
+              <Icon name="chevron" className="h-3.5 w-3.5" />
             </Link>
           </div>
-          <StudentPriorities thesis={thesis} />
         </div>
       </div>
+      <StudentPriorities thesis={thesis} />
     </li>
   );
 }
@@ -339,13 +312,16 @@ function StudentPriorities({ thesis }: { thesis: SupervisedThesis }) {
           : `${base}/profil`
     : null;
   return (
-    <div className="mt-3 space-y-3 rounded-md border border-line bg-surface p-3 text-left">
-      <div>
-        <p className="text-xs font-medium text-muted">{t('supervision.nextDeadline')}</p>
+    <div className="grid gap-3 border-t border-line bg-canvas/50 px-4 py-3 text-left sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,0.75fr)]">
+      <div className="min-w-0">
+        <p className="flex items-center gap-1.5 text-xs font-medium text-muted">
+          <Icon name="meetings" className="h-3.5 w-3.5" />
+          {t('supervision.nextDeadline')}
+        </p>
         {deadline && deadlineUrl ? (
           <Link
             to={deadlineUrl}
-            className="mt-1 block text-sm text-ink hover:text-brand hover:underline"
+            className="mt-1 block text-xs text-ink hover:text-brand hover:underline"
           >
             <span className="block break-words">
               {deadline.kind === 'EXPECTED_DEFENSE'
@@ -363,14 +339,23 @@ function StudentPriorities({ thesis }: { thesis: SupervisedThesis }) {
           <p className="mt-1 text-xs text-muted">{t('supervision.noDeadline')}</p>
         )}
       </div>
-      <Link
-        to={`${base}/livrables?status=SUBMITTED`}
-        className="block text-xs font-medium text-brand hover:underline"
-      >
-        {t('supervision.pendingCount', { count: thesis.pendingValidationCount })}
-      </Link>
-      <div className="border-t border-line pt-2">
-        <p className="text-xs font-medium text-muted">{t('supervision.lastActivity')}</p>
+      <div className="min-w-0">
+        <p className="flex items-center gap-1.5 text-xs font-medium text-muted">
+          <Icon name="deliverables" className="h-3.5 w-3.5" />
+          {t('supervision.section.deliverables')}
+        </p>
+        <Link
+          to={`${base}/livrables?status=SUBMITTED`}
+          className={`mt-1 inline-block text-xs font-medium hover:underline ${thesis.pendingValidationCount > 0 ? 'text-brand' : 'text-muted'}`}
+        >
+          {t('supervision.pendingCount', { count: thesis.pendingValidationCount })}
+        </Link>
+      </div>
+      <div className="min-w-0">
+        <p className="flex items-center gap-1.5 text-xs font-medium text-muted">
+          <Icon name="watch" className="h-3.5 w-3.5" />
+          {t('supervision.lastActivity')}
+        </p>
         {thesis.lastActivityAt ? (
           <time dateTime={thesis.lastActivityAt} className="mt-1 block text-xs text-ink">
             {new Date(thesis.lastActivityAt).toLocaleDateString(dateLocale, {
@@ -407,14 +392,14 @@ function Stat({
         ? 'bg-warn-soft text-warn'
         : 'bg-brand-soft text-brand';
   return (
-    <article className="flex items-center gap-3 rounded-md border border-line bg-surface px-3 py-3">
-      <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-full ${bubble}`}>
-        <Icon name={icon} className="h-4 w-4" />
+    <article className="flex items-center gap-3 rounded-[12px] border border-line bg-surface px-3.5 py-3 shadow-[0_1px_2px_rgba(15,23,42,0.03)]">
+      <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-[10px] ${bubble}`}>
+        <Icon name={icon} className="h-5 w-5" />
       </span>
       <div className="min-w-0">
-        <p className="text-xs font-medium text-muted">{label}</p>
-        <p className="mt-0.5 text-lg font-semibold leading-tight text-ink">{value}</p>
-        {detail ? <p className="text-xs font-medium text-danger">{detail}</p> : null}
+        <p className="text-[11px] font-medium uppercase tracking-[0.04em] text-muted">{label}</p>
+        <p className="mt-0.5 text-lg font-semibold leading-tight tabular-nums text-ink">{value}</p>
+        {detail ? <p className="mt-0.5 text-xs font-medium text-danger">{detail}</p> : null}
       </div>
     </article>
   );

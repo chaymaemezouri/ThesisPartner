@@ -15,7 +15,7 @@ type FieldProps = {
 };
 
 const controlClass =
-  'w-full rounded-md border border-line bg-surface px-3 py-2 text-sm text-ink shadow-control outline-none transition-[border-color,box-shadow,background-color] duration-150 placeholder:text-muted/70 hover:border-brand/35 focus:border-brand focus:bg-white focus:shadow-[0_0_0_3px_rgba(36,87,167,0.12)] disabled:cursor-not-allowed disabled:bg-canvas disabled:text-muted';
+  'w-full rounded-lg border border-line bg-canvas px-3 py-2 text-sm text-ink outline-none transition-[border-color,box-shadow,background-color] duration-150 placeholder:text-muted/70 hover:border-ink/20 focus:border-brand/60 focus:bg-surface focus:shadow-[0_0_0_3px_rgba(36,99,197,0.08)] focus-visible:outline-none! disabled:cursor-not-allowed disabled:bg-canvas disabled:text-muted';
 
 function describedBy(id: string, hint?: string, error?: string): string | undefined {
   const ids = [hint ? `${id}-hint` : null, error ? `${id}-error` : null].filter(Boolean);

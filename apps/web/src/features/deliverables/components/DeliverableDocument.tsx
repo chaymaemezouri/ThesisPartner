@@ -36,33 +36,35 @@ export function DeliverableDocument({
   );
 
   return (
-    <section className="min-w-0" aria-labelledby="document-titre">
-      <header className="mb-2">
+    <section
+      className="min-w-0 rounded-2xl border border-line/80 bg-surface p-4 shadow-[0_1px_4px_rgba(15,23,42,0.03)]"
+      aria-labelledby="document-titre"
+    >
+      <header className="mb-3 flex items-center gap-2">
+        <span className="grid h-8 w-8 place-items-center rounded-lg bg-canvas text-muted">
+          <Icon name="deliverables" className="h-4 w-4" />
+        </span>
         <h2 id="document-titre" className="text-sm font-semibold text-ink">
           {t('deliverables.document')}
         </h2>
       </header>
 
       {versions.isLoading ? (
-        <div className="py-2" aria-busy="true">
-          <Skeleton className="h-12" />
+        <div aria-busy="true">
+          <Skeleton className="h-16" />
         </div>
       ) : null}
 
-      {versions.isError ? (
-        <div className="py-2">
-          <QueryError error={versions.error} />
-        </div>
-      ) : null}
+      {versions.isError ? <QueryError error={versions.error} /> : null}
 
       {versions.data && !file ? (
-        <div className="flex items-center gap-3 py-2">
-          <span className="grid h-6 w-6 shrink-0 place-items-center text-muted">
+        <div className="flex items-start gap-3 rounded-xl border border-dashed border-line bg-canvas/60 px-3 py-4">
+          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-surface text-muted">
             <Icon name="deliverables" className="h-4 w-4" />
           </span>
           <div className="min-w-0">
-            <p className="text-sm text-muted">{t('deliverables.documentEmpty')}</p>
-            <p className="mt-1 text-xs text-muted">
+            <p className="text-sm font-medium text-ink">{t('deliverables.documentEmpty')}</p>
+            <p className="mt-1 text-xs leading-relaxed text-muted">
               {current
                 ? t('deliverables.currentVersionNoFile', { number: current.versionNumber })
                 : t('deliverables.documentEmptyHelp')}
@@ -72,10 +74,10 @@ export function DeliverableDocument({
       ) : null}
 
       {file && current ? (
-        <div className="py-2">
-          <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-line bg-canvas/50 px-3 py-3">
             <div className="flex min-w-0 items-center gap-3">
-              <span className="grid h-6 w-6 shrink-0 place-items-center text-brand">
+              <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-brand-soft text-brand">
                 <Icon name="deliverables" className="h-4 w-4" />
               </span>
               <div className="min-w-0">

@@ -5,7 +5,7 @@ export function Card({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
   return (
     <div
       className={cn(
-        'rounded-md border border-line bg-surface p-4 shadow-card transition-[border-color,box-shadow] duration-150',
+        'rounded-xl border border-line bg-surface p-4 transition-[border-color,box-shadow] duration-150',
         className,
       )}
       {...props}
@@ -23,7 +23,7 @@ export function Badge({
   return (
     <span
       className={cn(
-        'inline-flex items-center rounded-md border px-2 py-0.5 text-xs font-semibold',
+        'inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium',
         tone === 'neutral' && 'border-line bg-canvas text-muted',
         tone === 'ok' && 'border-ok/20 bg-ok-soft text-ok',
         tone === 'warn' && 'border-warn/20 bg-warn-soft text-warn',
@@ -50,11 +50,11 @@ export function Avatar({
   const frame = cn(
     'inline-flex items-center justify-center overflow-hidden rounded-full bg-brand-soft font-semibold text-brand',
     size === 'xl'
-      ? 'h-24 w-24 text-xl ring-2 ring-white shadow-[0_8px_24px_rgba(15,23,42,0.12)]'
+      ? 'h-24 w-24 text-xl ring-2 ring-white'
       : size === 'lg'
-        ? 'h-[4.5rem] w-[4.5rem] text-lg ring-2 ring-white shadow-[0_8px_24px_rgba(15,23,42,0.12)]'
+        ? 'h-[4.5rem] w-[4.5rem] text-lg ring-2 ring-white'
         : size === 'md'
-          ? 'h-16 w-16 text-base ring-2 ring-white shadow-[0_8px_24px_rgba(15,23,42,0.12)]'
+          ? 'h-16 w-16 text-base ring-2 ring-white'
           : 'h-8 w-8 text-xs',
     className,
   );
@@ -100,8 +100,8 @@ export function Skeleton({ className }: { className?: string }) {
 
 export function EmptyState({ title, description }: { title: string; description: string }) {
   return (
-    <div className="rounded-md border border-dashed border-brand/25 bg-surface px-6 py-10 text-center shadow-control">
-      <span className="mx-auto mb-3 block h-1 w-10 rounded-full bg-brand/35" aria-hidden="true" />
+    <div className="rounded-xl border border-dashed border-line bg-surface px-6 py-10 text-center">
+      <span className="mx-auto mb-3 block h-1 w-10 rounded-full bg-ink/15" aria-hidden="true" />
       <h2 className="text-base font-semibold text-ink">{title}</h2>
       <p className="mx-auto mt-1.5 max-w-md text-sm leading-relaxed text-muted">{description}</p>
     </div>

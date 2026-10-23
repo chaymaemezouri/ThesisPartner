@@ -104,6 +104,7 @@ export const currentUserSchema = z
     givenName: boundedTextSchema(80),
     familyName: boundedTextSchema(80),
     displayName: boundedTextSchema(160),
+    avatarUrl: z.string().max(500).nullable().optional(),
   })
   .strict();
 
@@ -1248,6 +1249,7 @@ export const messageParticipantSchema = z
   .object({
     userId: z.string().uuid(),
     displayName: z.string().max(160),
+    avatarUrl: z.string().max(500).nullable().optional(),
   })
   .strict();
 
@@ -1278,6 +1280,7 @@ export const messageStudentSchema = z
   .object({
     userId: z.string().uuid(),
     displayName: z.string().max(160),
+    avatarUrl: z.string().max(500).nullable().optional(),
   })
   .strict();
 
@@ -1363,6 +1366,8 @@ export const documentFollowUpSchema = z.enum([
   'CHANGES_REQUESTED',
   'VALIDATED',
 ]);
+export const documentSubjectRelevanceSchema = z.enum(['UNSET', 'IMPORTANT', 'NOT_IMPORTANT']);
+export const documentSourceSchema = z.enum(['SUPERVISOR', 'STUDENT']);
 
 const optionalText = (max: number) =>
   z.union([z.string().trim().max(max), z.literal('')]).optional();
@@ -1392,6 +1397,7 @@ export const documentSynthesisSchema = z
     limits: optionalText(4000),
     thesisLink: optionalText(4000),
     exploitation: optionalText(4000),
+    subjectRelevance: documentSubjectRelevanceSchema.optional(),
     objectiveId: z.union([uuidSchema, z.literal(''), z.null()]).optional(),
     taskId: z.union([uuidSchema, z.literal(''), z.null()]).optional(),
     submit: z.boolean().optional(),
@@ -1436,7 +1442,12 @@ export const thesisDocumentSchema = z
     limits: z.string().max(4000).nullable(),
     thesisLink: z.string().max(4000).nullable(),
     exploitation: z.string().max(4000).nullable(),
+    subjectRelevance: documentSubjectRelevanceSchema,
+    synthesisFileName: z.string().max(180).nullable(),
+    source: documentSourceSchema,
+    mine: z.boolean(),
     reviewMessage: z.string().max(500).nullable(),
+    sharedOn: daySchema,
   })
   .strict();
 
@@ -1593,5 +1604,30 @@ export const supervisorDeskSchema = z
           .strict(),
       )
       .max(200),
+  })
+  .strict();
+
+export const researchAiLocaleSchema = z.enum(['en', 'fr']);
+
+export const researchAiSectionSchema = z
+  .object({
+    id: z.string().max(80),
+    kind: z.enum(['OBJECTIVE', 'STEP', 'DOCUMENT', 'REMARK', 'DELIVERABLE']),
+    title: boundedTextSchema(300),
+    summary: z.string().trim().max(4000),
+    status: z.string().max(80).nullable(),
+  })
+  .strict();
+
+export const researchAiSynthesisSchema = z
+  .object({
+    thesisId: uuidSchema,
+    thesisTitle: boundedTextSchema(300),
+    reportTitle: boundedTextSchema(300),
+    generatedAt: z.string().datetime(),
+    source: z.enum(['RULES', 'OPENAI']),
+    locale: researchAiLocaleSchema,
+    overview: z.string().trim().max(16000),
+    sections: z.array(researchAiSectionSchema).max(120),
   })
   .strict();

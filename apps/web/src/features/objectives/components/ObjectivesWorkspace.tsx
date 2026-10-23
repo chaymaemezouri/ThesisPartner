@@ -22,7 +22,7 @@ export function ObjectivesWorkspace({
   thesisId,
   canManage,
   detailPath,
-  tabsAside = false,
+  tabsAside: _tabsAside = false,
   canRemark = false,
 }: {
   thesisId: string;
@@ -31,6 +31,7 @@ export function ObjectivesWorkspace({
   tabsAside?: boolean;
   canRemark?: boolean;
 }) {
+  void _tabsAside;
   const t = useT();
   const [tab, setTab] = useState<StatusTab>('all');
   const [search, setSearch] = useState('');
@@ -46,24 +47,13 @@ export function ObjectivesWorkspace({
   const remove = useDeleteObjective(thesisId);
   const filtered = tab !== 'all' || search.trim().length > 0;
 
-  const filterBar = (
-    <ObjectiveFilters
-      tab={tab}
-      search={search}
-      onTab={setTab}
-      onSearch={setSearch}
-      part={tabsAside ? 'search' : 'all'}
-    />
-  );
+  const showCreate =
+    canManage && (objectives.data?.objectives.length ?? 0) > 0;
 
   return (
-    <div
-      className={
-        tabsAside ? 'grid items-start gap-4 md:grid-cols-[11rem_minmax(0,1fr)]' : 'min-w-0'
-      }
-    >
-      {tabsAside ? (
-        <div className="min-w-0 md:sticky md:top-20 md:col-start-1 md:row-start-1">
+    <div className="min-w-0">
+      <div className="mb-3 flex min-w-0 items-center gap-2">
+        <div className="min-w-0 flex-1">
           <ObjectiveFilters
             tab={tab}
             search={search}
@@ -72,14 +62,23 @@ export function ObjectivesWorkspace({
             part="tabs"
           />
         </div>
-      ) : null}
-      <div className={tabsAside ? 'min-w-0 md:col-start-2 md:row-start-1' : undefined}>
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="min-w-40 flex-1">{filterBar}</div>
-          {canManage && (objectives.data?.objectives.length ?? 0) > 0 ? (
-            <IconAction label={t('objectives.new')} icon="plus" onClick={() => setCreating(true)} />
-          ) : null}
-        </div>
+        {showCreate ? (
+          <IconAction
+            className="shrink-0"
+            label={t('objectives.new')}
+            icon="plus"
+            onClick={() => setCreating(true)}
+          />
+        ) : null}
+      </div>
+      <div>
+        <ObjectiveFilters
+          tab={tab}
+          search={search}
+          onTab={setTab}
+          onSearch={setSearch}
+          part="search"
+        />
         {canManage && standardPath.data && !standardPath.data.applied ? (
           <div className="mt-4">
             <Button

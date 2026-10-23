@@ -2,7 +2,6 @@ import { Link } from 'react-router-dom';
 import { Icon } from '../../../components/Icon';
 import { useT } from '../../../i18n/LocaleContext';
 import type { RemarkListItem } from '../hooks/use-remarks';
-import { REMARK_STATUS_STYLE } from '../presentation';
 import { RemarkStatusBadge } from './RemarkStatusBadge';
 
 function turnLabel(status: RemarkListItem['status'], t: ReturnType<typeof useT>) {
@@ -28,9 +27,7 @@ export function RemarkList({
               to={detailPath(item.id)}
               className="group flex items-start gap-3 px-3 py-3.5 transition-colors hover:bg-canvas/65 sm:items-center sm:px-4"
             >
-              <span
-                className={`mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-lg border ${REMARK_STATUS_STYLE[item.status].edge} ${REMARK_STATUS_STYLE[item.status].soft} ${REMARK_STATUS_STYLE[item.status].ink} sm:mt-0`}
-              >
+              <span className="mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-lg border border-line bg-canvas text-muted sm:mt-0">
                 <Icon name="remarks" className="h-4 w-4" />
               </span>
               <span className="min-w-0 flex-1">

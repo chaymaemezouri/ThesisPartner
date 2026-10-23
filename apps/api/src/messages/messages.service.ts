@@ -5,6 +5,7 @@ import type { z } from 'zod';
 import { AuditService } from '../audit/audit.service';
 import { AppException } from '../common/errors/app.exception';
 import { PrismaService } from '../infrastructure/prisma/prisma.service';
+import { resolveAvatarUrl } from '../profile/profile.service';
 import { isUnread, oneThreadPerCounterpart, singleSupervisorThread } from './messages-rules';
 
 type GroupDraft = z.infer<typeof createMessageGroupSchema>;
@@ -13,7 +14,7 @@ type MessageDraft = z.infer<typeof createMessageSchema>;
 const personSelect = {
   id: true,
   email: true,
-  profile: { select: { displayName: true } },
+  profile: { select: { displayName: true, avatarUrl: true } },
 } satisfies Prisma.UserSelect;
 
 type Person = Prisma.UserGetPayload<{ select: typeof personSelect }>;
@@ -55,6 +56,7 @@ export class MessagesService {
           participants: row.conversation.members.map((member) => ({
             userId: member.userId,
             displayName: personName(member.user),
+            avatarUrl: resolveAvatarUrl(member.userId, member.user.profile?.avatarUrl),
           })),
           lastMessage: last
             ? {
@@ -398,6 +400,7 @@ export class MessagesService {
       participants: conversation.members.map((member) => ({
         userId: member.userId,
         displayName: personName(member.user),
+        avatarUrl: resolveAvatarUrl(member.userId, member.user.profile?.avatarUrl),
       })),
       messages: messages.map((message) => ({
         id: message.id,
