@@ -12,7 +12,7 @@ import {
   type SynthesisLocale,
 } from './compose-synthesis';
 
-const READ_ROLES = ['DOCTORAL_STUDENT', 'SUPERVISOR', 'ADMIN'] as const;
+const GENERATE_ROLES = ['DOCTORAL_STUDENT'] as const;
 
 type Locale = z.infer<typeof researchAiLocaleSchema>;
 type Synthesis = z.infer<typeof researchAiSynthesisSchema>;
@@ -26,7 +26,7 @@ export class ResearchAiService {
   ) {}
 
   async generate(actorId: string, thesisId: string, locale: Locale): Promise<Synthesis> {
-    await this.access.assertCanAccess({ actorId, thesisId, allowedRoles: READ_ROLES });
+    await this.access.assertCanAccess({ actorId, thesisId, allowedRoles: GENERATE_ROLES });
     const ctx = await this.loadContext(thesisId);
     if (!ctx) throw new AppException(404, 'NOT_FOUND', 'Thesis not found');
 

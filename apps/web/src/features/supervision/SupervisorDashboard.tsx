@@ -115,8 +115,8 @@ export function SupervisorDashboard({ layout = 'cards' }: { layout?: 'cards' | '
         <div
           className={`grid shrink-0 gap-3 md:grid-cols-[minmax(0,1fr)_11rem_13rem] ${
             layout === 'list'
-              ? 'rounded-xl border border-line bg-surface p-3'
-              : 'rounded-[12px] border border-line bg-surface p-3 shadow-[0_1px_2px_rgba(15,23,42,0.03)]'
+              ? 'rounded-[14px] border border-line bg-surface p-3 shadow-[0_3px_18px_rgba(15,23,42,0.03)]'
+              : 'rounded-[14px] border border-line bg-surface p-3 shadow-[0_3px_18px_rgba(15,23,42,0.03)]'
           }`}
         >
           <Input
@@ -190,7 +190,7 @@ function SquareCard({ thesis, name }: { thesis: SupervisedThesis; name: string }
     <li className="min-w-0">
       <Link
         to={`/encadrement/${thesis.thesisId}`}
-        className="flex h-full flex-col items-center rounded-[12px] border border-line bg-surface px-3 py-4 text-center shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition-[border-color,box-shadow,transform] duration-150 hover:-translate-y-0.5 hover:border-brand/40 hover:shadow-[0_8px_20px_rgba(15,23,42,0.06)]"
+        className="flex h-full flex-col items-center rounded-[14px] border border-line bg-surface px-3 py-4 text-center shadow-[0_3px_18px_rgba(15,23,42,0.03)] transition-[border-color,box-shadow,transform] duration-150 hover:-translate-y-0.5 hover:border-brand/40 hover:shadow-[0_8px_20px_rgba(15,23,42,0.06)]"
       >
         <Avatar
           label={name}
@@ -394,7 +394,7 @@ function Stat({
         ? 'bg-warn-soft text-warn'
         : 'bg-brand-soft text-brand';
   return (
-    <article className="flex items-center gap-3 rounded-[12px] border border-line bg-surface px-3.5 py-3 shadow-[0_1px_2px_rgba(15,23,42,0.03)]">
+    <article className="flex items-center gap-3 rounded-[14px] border border-line bg-surface px-3.5 py-3 shadow-[0_3px_18px_rgba(15,23,42,0.03)]">
       <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-[10px] ${bubble}`}>
         <Icon name={icon} className="h-5 w-5" />
       </span>

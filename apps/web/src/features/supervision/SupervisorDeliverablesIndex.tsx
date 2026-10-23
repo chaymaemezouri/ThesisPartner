@@ -1,4 +1,4 @@
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useState } from 'react';
 import { Avatar, EmptyState, Input, Skeleton } from '@thesispartner/ui';
 import { Icon } from '../../components/Icon';
@@ -8,6 +8,7 @@ import { useSupervisedTheses } from './hooks/use-supervised-theses';
 
 export function SupervisorDeliverablesIndex() {
   const t = useT();
+  const navigate = useNavigate();
   const supervised = useSupervisedTheses();
   const { dateLocale } = useLocale();
   const [params, setParams] = useSearchParams();
@@ -37,7 +38,7 @@ export function SupervisorDeliverablesIndex() {
       <div
         role="tablist"
         aria-label={t('supervision.deliverables')}
-        className="mb-4 flex flex-wrap gap-1 rounded-md border border-line bg-surface p-1.5"
+        className="mb-4 flex flex-wrap justify-center gap-1 rounded-2xl border border-line/80 bg-line/45 p-1.5"
       >
         {(['review', 'students'] as const).map((id) => (
           <button
@@ -45,7 +46,11 @@ export function SupervisorDeliverablesIndex() {
             type="button"
             role="tab"
             aria-selected={view === id}
-            className={`rounded-md px-3 py-2 text-xs font-medium ${view === id ? 'bg-brand-soft text-brand' : 'text-muted hover:bg-canvas'}`}
+            className={`rounded-xl px-3 py-2 text-xs transition-[background-color,box-shadow,color] ${
+              view === id
+                ? 'bg-surface font-semibold text-ink shadow-[0_1px_3px_rgba(15,23,42,0.08)]'
+                : 'font-medium text-ink/80 hover:bg-surface/70'
+            }`}
             onClick={() => {
               const copy = new URLSearchParams(params);
               copy.set('view', id);
@@ -115,46 +120,60 @@ export function SupervisorDeliverablesIndex() {
                   </tr>
                 </thead>
                 <tbody className="block divide-y divide-line sm:table-row-group">
-                  {visible.map((item) => (
-                    <tr
-                      key={`${item.thesisId}-${item.id}`}
-                      className="grid grid-cols-2 gap-3 p-4 hover:bg-canvas/40 sm:table-row sm:p-0"
-                    >
-                      <td className="col-span-2 min-w-0 sm:px-4 sm:py-4 sm:align-top">
-                        <Link
-                          to={`/encadrement/${item.thesisId}/livrables/${item.id}`}
-                          className="break-words text-sm font-medium text-ink hover:text-brand hover:underline"
-                        >
-                          {item.title}
-                        </Link>
-                      </td>
-                      <td className="col-span-2 min-w-0 break-words text-xs text-muted sm:px-3 sm:py-4 sm:align-top">
-                        {item.studentName}
-                      </td>
-                      <td className="text-xs text-muted sm:px-3 sm:py-4 sm:align-top">
-                        {item.latestVersionNumber
-                          ? t('deliverables.versionShort', { number: item.latestVersionNumber })
-                          : t('common.notProvided')}
-                      </td>
-                      <td className="text-right text-xs text-muted sm:px-3 sm:py-4 sm:text-left sm:align-top">
-                        {item.submittedAt ? (
-                          <time dateTime={item.submittedAt}>
-                            {new Date(item.submittedAt).toLocaleDateString(dateLocale)}
-                          </time>
-                        ) : (
-                          t('common.notProvided')
-                        )}
-                      </td>
-                      <td className="col-span-2 sm:px-3 sm:py-4 sm:align-top">
-                        <Link
-                          to={`/encadrement/${item.thesisId}/livrables/${item.id}`}
-                          className="inline-flex rounded-md bg-brand px-3 py-2 text-xs font-medium text-white hover:bg-brand-strong"
-                        >
-                          {t('common.open')}
-                        </Link>
-                      </td>
-                    </tr>
-                  ))}
+                  {visible.map((item) => {
+                    const href = `/encadrement/${item.thesisId}/livrables/${item.id}`;
+                    return (
+                      <tr
+                        key={`${item.thesisId}-${item.id}`}
+                        className="group grid cursor-pointer grid-cols-2 gap-3 p-4 transition-colors hover:bg-brand-soft/35 focus-within:bg-brand-soft/35 sm:table-row sm:p-0"
+                        onClick={(event) => {
+                          if (
+                            event.target instanceof Element &&
+                            event.target.closest('a,button,input,select')
+                          )
+                            return;
+                          if (window.getSelection()?.toString()) return;
+                          void navigate(href);
+                        }}
+                      >
+                        <td className="col-span-2 min-w-0 sm:px-4 sm:py-4 sm:align-top">
+                          <Link
+                            to={href}
+                            className="break-words text-sm font-medium text-ink group-hover:text-brand"
+                          >
+                            {item.title}
+                          </Link>
+                        </td>
+                        <td className="col-span-2 min-w-0 break-words text-xs text-muted sm:px-3 sm:py-4 sm:align-top">
+                          {item.studentName}
+                        </td>
+                        <td className="text-xs text-muted sm:px-3 sm:py-4 sm:align-top">
+                          {item.latestVersionNumber
+                            ? t('deliverables.versionShort', { number: item.latestVersionNumber })
+                            : t('common.notProvided')}
+                        </td>
+                        <td className="text-right text-xs text-muted sm:px-3 sm:py-4 sm:text-left sm:align-top">
+                          {item.submittedAt ? (
+                            <time dateTime={item.submittedAt}>
+                              {new Date(item.submittedAt).toLocaleDateString(dateLocale)}
+                            </time>
+                          ) : (
+                            t('common.notProvided')
+                          )}
+                        </td>
+                        <td className="col-span-2 sm:px-3 sm:py-4 sm:align-top">
+                          <Link
+                            to={href}
+                            aria-label={t('common.open')}
+                            className="inline-flex items-center gap-1 text-sm font-medium text-brand hover:underline"
+                          >
+                            {t('common.open')}
+                            <Icon name="chevron" className="h-3.5 w-3.5" />
+                          </Link>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>

@@ -68,7 +68,7 @@ export function RemarksWorkspace({
 
   const statusTabs = (
     <div
-      className="flex min-w-0 gap-1 overflow-x-auto rounded-2xl border border-line/80 bg-line/45 p-1.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      className="flex min-w-0 justify-center gap-1 overflow-x-auto rounded-2xl border border-line/80 bg-line/45 p-1.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       role="tablist"
       aria-label={t('remarks.title')}
     >

@@ -32,7 +32,7 @@ export function ObjectiveFilters({
 
   const tabList = (
     <div
-      className="flex gap-1 overflow-x-auto rounded-2xl border border-line/80 bg-line/45 p-1.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      className="flex justify-center gap-1 overflow-x-auto rounded-2xl border border-line/80 bg-line/45 p-1.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       role="tablist"
       aria-label={t('objectives.title')}
     >

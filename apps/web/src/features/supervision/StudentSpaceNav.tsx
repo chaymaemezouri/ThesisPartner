@@ -11,7 +11,6 @@ const SECTIONS = [
   { id: 'deliverables', to: '/livrables', icon: 'deliverables' },
   { id: 'remarks', to: '/remarques', icon: 'remarks' },
   { id: 'meetings', to: '/reunions', icon: 'meetings' },
-  { id: 'researchAi', to: '/radar', icon: 'radar' },
   { id: 'profile', to: '/profil', icon: 'profile' },
 ] as const;
 

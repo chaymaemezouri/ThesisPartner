@@ -71,46 +71,46 @@ export function SupervisorDeskPage() {
       ) : null}
       {desk.isError ? <QueryError error={desk.error} /> : null}
       {desk.data ? (
-        <div className="grid items-start gap-4 md:grid-cols-[14rem_minmax(0,1fr)]">
+        <div className="flex min-w-0 flex-col gap-4">
           <nav
             aria-label={t('nav.followUp')}
-            className="flex min-w-0 gap-1 overflow-x-auto rounded-[12px] border border-line bg-surface p-1.5 md:sticky md:top-20 md:flex-col md:overflow-visible [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            className="flex min-w-0 justify-center gap-1 overflow-x-auto rounded-2xl border border-line/80 bg-line/45 p-1.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
           >
-            {SECTIONS.map((item) => (
-              <button
-                key={item}
-                type="button"
-                aria-current={section === item ? 'page' : undefined}
-                className={
-                  section === item
-                    ? 'flex shrink-0 items-center gap-2.5 rounded-lg border border-transparent bg-ink/6 px-2.5 py-2.5 text-left text-sm font-semibold text-ink'
-                    : 'flex shrink-0 items-center gap-2.5 rounded-lg border border-transparent px-2.5 py-2.5 text-left text-sm text-muted transition-colors hover:bg-canvas hover:text-ink'
-                }
-                onClick={() => {
-                  const next = new URLSearchParams(params);
-                  next.set('vue', item);
-                  setParams(next);
-                }}
-              >
-                <Icon name={SECTION_ICON[item]} className="h-4 w-4 shrink-0" />
-                <span className="whitespace-nowrap md:whitespace-normal">
-                  {t(`followUp.${item}`)}
-                </span>
-              </button>
-            ))}
+            {SECTIONS.map((item) => {
+              const selected = section === item;
+              return (
+                <button
+                  key={item}
+                  type="button"
+                  aria-current={selected ? 'page' : undefined}
+                  className={`inline-flex shrink-0 items-center gap-2 rounded-xl px-2.5 py-2 text-sm transition-[background-color,box-shadow,color] duration-150 ${
+                    selected
+                      ? 'bg-surface font-semibold text-ink shadow-[0_1px_3px_rgba(15,23,42,0.08)]'
+                      : 'font-medium text-ink/80 hover:bg-surface/70'
+                  }`}
+                  onClick={() => {
+                    const next = new URLSearchParams(params);
+                    next.set('vue', item);
+                    setParams(next);
+                  }}
+                >
+                  <span
+                    aria-hidden="true"
+                    className={`grid h-8 w-8 shrink-0 place-items-center rounded-lg ${
+                      selected ? 'bg-brand-soft text-brand' : 'bg-surface/80 text-muted'
+                    }`}
+                  >
+                    <Icon name={SECTION_ICON[item]} className="h-4 w-4" />
+                  </span>
+                  <span className="whitespace-nowrap">{t(`followUp.${item}`)}</span>
+                </button>
+              );
+            })}
           </nav>
-          <section className="min-w-0">
-            <header className="mb-4 flex items-start gap-3 rounded-xl border border-line bg-surface p-4">
-              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-ink/5 text-ink">
-                <Icon name={SECTION_ICON[section]} className="h-5 w-5" />
-              </span>
-              <div className="min-w-0">
-                <h2 className="text-base font-semibold text-ink">{t(`followUp.${section}`)}</h2>
-                <p className="mt-1 text-sm leading-relaxed text-muted">
-                  {t(`followUp.${section}Help`)}
-                </p>
-              </div>
-            </header>
+          <section className="min-w-0" aria-labelledby="follow-up-section-title">
+            <h2 id="follow-up-section-title" className="sr-only">
+              {t(`followUp.${section}`)}
+            </h2>
             <DeskSection section={section} data={desk.data} />
           </section>
         </div>
@@ -153,12 +153,12 @@ function Schedule({ data }: { data: SupervisorDesk }) {
       {rows.length === 0 ? (
         <EmptyState title={t('followUp.noSchedule')} description={t('followUp.scheduleHelp')} />
       ) : (
-        <ul className="overflow-hidden rounded-[12px] border border-line bg-surface">
+        <ul className="overflow-hidden rounded-[14px] border border-line bg-surface shadow-[0_3px_18px_rgba(15,23,42,0.03)]">
           {rows.map((item) => (
-            <li key={item.id} className="border-b border-line last:border-b-0">
+            <li key={item.id} className="border-b border-line/80 last:border-b-0">
               <Link
                 to={place(item.kind, item.thesisId)}
-                className="flex items-center justify-between gap-3 px-3 py-2.5 hover:bg-canvas/70"
+                className="flex items-center justify-between gap-3 px-3 py-3 transition-colors hover:bg-canvas/65"
               >
                 <span className="min-w-0">
                   <span className="block truncate text-sm font-medium text-ink">{item.title}</span>
@@ -210,19 +210,19 @@ function Reports({ data }: { data: SupervisorDesk }) {
           <select
             value={period}
             aria-label={t('followUp.reports')}
-            className="h-9 rounded-md border border-line bg-surface px-3 text-sm font-normal shadow-control"
+            className="h-10 rounded-[10px] border border-line bg-canvas/70 px-3 text-sm font-normal outline-none transition-[background-color,border-color,box-shadow] focus:border-brand/50 focus:bg-surface focus:ring-2 focus:ring-brand/10"
             onChange={(event) => setPeriod(event.target.value === 'quarter' ? 'quarter' : 'month')}
           >
             <option value="month">{t('followUp.month')}</option>
             <option value="quarter">{t('followUp.quarter')}</option>
           </select>
         </label>
-        <Button className="h-9 px-3 text-sm" onClick={() => setReady(true)}>
+        <Button className="h-10 px-3 text-sm" onClick={() => setReady(true)}>
           {t('followUp.generate')}
         </Button>
       </div>
       {ready && plan ? (
-        <article className="rounded-md border border-line bg-surface px-4 py-3">
+        <article className="rounded-[14px] border border-line bg-surface px-4 py-4 shadow-[0_3px_18px_rgba(15,23,42,0.03)]">
           <h3 className="text-sm font-semibold text-ink">{plan.studentName}</h3>
           <p className="mt-1 text-[11px] text-muted">
             {formatShortDay(range.start, dateLocale)} – {formatShortDay(range.end, dateLocale)}
@@ -313,7 +313,7 @@ function EvaluationForm({ thesisId }: { thesisId: string }) {
 
   return (
     <form
-      className="flex flex-col gap-3 rounded-md border border-line bg-surface px-3 py-3"
+      className="flex flex-col gap-3 rounded-[14px] border border-line bg-surface px-4 py-4 shadow-[0_3px_18px_rgba(15,23,42,0.03)]"
       onSubmit={async (event) => {
         event.preventDefault();
         const body: EvaluationDraft = {
@@ -334,7 +334,7 @@ function EvaluationForm({ thesisId }: { thesisId: string }) {
           type="date"
           required
           value={evaluatedOn}
-          className="h-9 rounded-md border border-line bg-surface px-3 text-sm font-normal shadow-control"
+          className="h-10 rounded-[10px] border border-line bg-canvas/70 px-3 text-sm font-normal outline-none transition-[background-color,border-color,box-shadow] focus:border-brand/50 focus:bg-surface focus:ring-2 focus:ring-brand/10"
           onChange={(event) => setEvaluatedOn(event.target.value)}
         />
       </label>
@@ -401,7 +401,7 @@ function PublicationRow({ item }: { item: SupervisorDesk['publications'][number]
         aria-label={t('followUp.publications')}
         value={item.status}
         disabled={update.isPending}
-        className="h-9 rounded-md border border-line bg-surface px-2 text-sm shadow-control"
+        className="h-10 rounded-[10px] border border-line bg-canvas/70 px-2 text-sm outline-none transition-[background-color,border-color,box-shadow] focus:border-brand/50 focus:bg-surface focus:ring-2 focus:ring-brand/10"
         onChange={(event) => void update.mutate(event.target.value as PublicationStatus)}
       >
         {PUBLICATION_STATUSES.map((status) => (
@@ -516,7 +516,7 @@ function StudentSelect({
       <select
         value={value}
         aria-label={t('followUp.student')}
-        className="h-9 rounded-md border border-line bg-surface px-3 text-sm font-normal shadow-control"
+        className="h-10 rounded-[10px] border border-line bg-canvas/70 px-3 text-sm font-normal outline-none transition-[background-color,border-color,box-shadow] focus:border-brand/50 focus:bg-surface focus:ring-2 focus:ring-brand/10"
         onChange={(event) => onChange(event.target.value)}
       >
         {plans.map((plan) => (
@@ -577,8 +577,8 @@ function FilterButton({
       aria-pressed={pressed}
       className={
         pressed
-          ? 'rounded-md bg-brand-soft px-3 py-1.5 text-xs font-semibold text-brand'
-          : 'rounded-md border border-line px-3 py-1.5 text-xs text-ink'
+          ? 'rounded-xl bg-surface px-3 py-2 text-xs font-semibold text-ink shadow-[0_1px_3px_rgba(15,23,42,0.08)] ring-1 ring-brand/20'
+          : 'rounded-xl border border-line/80 bg-line/45 px-3 py-2 text-xs font-medium text-ink/80 hover:bg-surface/70'
       }
       onClick={onClick}
     >

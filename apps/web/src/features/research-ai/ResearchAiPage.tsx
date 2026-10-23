@@ -1,20 +1,16 @@
 import { Button, Skeleton } from '@thesispartner/ui';
 import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
 import { Icon } from '../../components/Icon';
 import { useLocale, useT } from '../../i18n/LocaleContext';
 import { useDashboard } from '../dashboard/hooks/use-dashboard';
 import { QueryError, queryErrorMessage } from '../objectives/components/QueryError';
-import { StudentSpaceNav } from '../supervision/StudentSpaceNav';
 import { useGenerateResearchAi, type ResearchAiSynthesis } from './hooks/use-research-ai';
 
-export function ResearchAiPage({ mode = 'student' }: { mode?: 'student' | 'supervisor' }) {
+export function ResearchAiPage() {
   const t = useT();
   const { locale } = useLocale();
-  const params = useParams();
   const dashboard = useDashboard();
-  const thesisId =
-    mode === 'supervisor' ? (params.thesisId ?? null) : (dashboard.data?.thesis?.id ?? null);
+  const thesisId = dashboard.data?.thesis?.id ?? null;
   const generate = useGenerateResearchAi(thesisId, locale === 'fr' ? 'fr' : 'en');
   const [result, setResult] = useState<ResearchAiSynthesis | null>(null);
 
@@ -35,13 +31,10 @@ export function ResearchAiPage({ mode = 'student' }: { mode?: 'student' | 'super
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [thesisId, locale]);
 
-  const loading =
-    (mode === 'student' && dashboard.isLoading) ||
-    (Boolean(thesisId) && !result && generate.isPending);
+  const loading = dashboard.isLoading || (Boolean(thesisId) && !result && generate.isPending);
 
   return (
     <div className="min-w-0">
-      {mode === 'supervisor' && thesisId ? <StudentSpaceNav thesisId={thesisId} /> : null}
       <h1 className="sr-only">{t('researchAi.title')}</h1>
       <header className="mb-3 flex justify-end">
         <Button
@@ -59,7 +52,7 @@ export function ResearchAiPage({ mode = 'student' }: { mode?: 'student' | 'super
         </Button>
       </header>
 
-      {mode === 'student' && dashboard.isError ? <QueryError error={dashboard.error} /> : null}
+      {dashboard.isError ? <QueryError error={dashboard.error} /> : null}
       {!thesisId && !dashboard.isLoading ? (
         <p className="text-sm text-muted">{t('researchAi.noThesis')}</p>
       ) : null}
@@ -104,8 +97,4 @@ function SynthesisView({ data }: { data: ResearchAiSynthesis }) {
       </div>
     </article>
   );
-}
-
-export function SupervisorResearchAiPage() {
-  return <ResearchAiPage mode="supervisor" />;
 }

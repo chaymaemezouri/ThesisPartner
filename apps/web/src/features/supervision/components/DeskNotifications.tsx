@@ -57,7 +57,7 @@ export function DeskNotifications({
         <div
           role="group"
           aria-label={t('followUp.notificationType')}
-          className="flex min-w-0 flex-1 gap-1 overflow-x-auto rounded-lg border border-line bg-surface p-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          className="flex min-w-0 flex-1 justify-center gap-1 overflow-x-auto rounded-2xl border border-line/80 bg-line/45 p-1.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         >
           {(['all', ...KINDS] as const).map((value) => (
             <button
@@ -65,7 +65,11 @@ export function DeskNotifications({
               type="button"
               aria-pressed={kind === value}
               onClick={() => setKind(value)}
-              className={`shrink-0 whitespace-nowrap rounded-md px-2.5 py-1.5 text-[11px] transition-colors ${kind === value ? 'bg-brand-soft font-medium text-brand' : 'text-muted hover:bg-canvas hover:text-ink'}`}
+              className={`shrink-0 whitespace-nowrap rounded-xl px-2.5 py-2 text-xs transition-[background-color,box-shadow,color] ${
+                kind === value
+                  ? 'bg-surface font-semibold text-ink shadow-[0_1px_3px_rgba(15,23,42,0.08)]'
+                  : 'font-medium text-ink/80 hover:bg-surface/70'
+              }`}
             >
               {value === 'all' ? t('followUp.allNotifications') : t(`followUp.kind.${value}`)}
             </button>
@@ -78,12 +82,12 @@ export function DeskNotifications({
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             placeholder={t('followUp.searchNotifications')}
-            className="h-9 w-full rounded-lg border border-line bg-surface px-3 text-xs text-ink outline-none transition-colors placeholder:text-muted/70 focus:border-brand/50"
+            className="h-10 w-full rounded-[10px] border border-line bg-canvas/70 px-3 text-xs text-ink outline-none transition-[background-color,border-color,box-shadow] placeholder:text-muted/70 focus:border-brand/50 focus:bg-surface focus:ring-2 focus:ring-brand/10 sm:text-sm"
           />
         </label>
       </div>
       {filtered.length === 0 ? (
-        <div className="rounded-[12px] border border-line bg-surface px-4 py-8 text-center text-xs text-muted">
+        <div className="rounded-[14px] border border-line bg-surface px-4 py-8 text-center text-xs text-muted shadow-[0_3px_18px_rgba(15,23,42,0.03)]">
           <p>{t('followUp.noMatchingNotifications')}</p>
           <button
             type="button"
@@ -97,7 +101,7 @@ export function DeskNotifications({
           </button>
         </div>
       ) : (
-        <div className="overflow-hidden rounded-[12px] border border-line bg-surface">
+        <div className="overflow-hidden rounded-[14px] border border-line bg-surface shadow-[0_3px_18px_rgba(15,23,42,0.03)]">
           {[...groups].map(([day, rows]) => (
             <section key={day}>
               <h3 className="flex items-center justify-between gap-3 border-y border-line/70 bg-canvas/60 px-4 py-2 text-[11px] font-medium text-muted">

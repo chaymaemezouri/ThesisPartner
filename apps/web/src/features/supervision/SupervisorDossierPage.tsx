@@ -27,18 +27,21 @@ export function SupervisorDossierPage() {
     <div className="min-w-0">
       <StudentSpaceNav thesisId={thesisId} />
       <div className="grid items-start gap-4 lg:grid-cols-2">
-        <ThesisProgressSummary
-          thesis={data.thesis}
-          progress={data.progress}
-          workProgress={data.workProgress}
-          objectives={data.objectives}
-          deliverables={data.deliverables}
-          showThesisLink={false}
-          paths={{
-            objectives: `${root}/objectifs`,
-            deliverables: `${root}/livrables`,
-          }}
-        />
+        <div className="min-w-0 lg:col-span-2">
+          <ThesisProgressSummary
+            thesis={data.thesis}
+            progress={data.progress}
+            workProgress={data.workProgress}
+            objectives={data.objectives}
+            deliverables={data.deliverables}
+            showThesisLink={false}
+            variant="supervisor"
+            paths={{
+              objectives: `${root}/objectifs`,
+              deliverables: `${root}/livrables`,
+            }}
+          />
+        </div>
         <UpcomingDeadlines deadlines={data.upcomingDeadlines} scope={root} />
       </div>
       <div className="mt-4">

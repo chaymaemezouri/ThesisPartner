@@ -39,7 +39,7 @@ import { SupervisorMeetingsIndex } from '../features/supervision/SupervisorMeeti
 import { useSupervisedTheses } from '../features/supervision/hooks/use-supervised-theses';
 import { MessagesPage } from '../features/messages/MessagesPage';
 import { PortfolioPage } from '../features/portfolio/PortfolioPage';
-import { ResearchAiPage, SupervisorResearchAiPage } from '../features/research-ai/ResearchAiPage';
+import { ResearchAiPage } from '../features/research-ai/ResearchAiPage';
 import { ResourcesPage } from '../features/resources/ResourcesPage';
 import { SupervisorDeskPage } from '../features/supervision/SupervisorDeskPage';
 import { ProfilePage } from '../features/profile/ProfilePage';
@@ -176,7 +176,6 @@ export function AppRoutes() {
           <Route path="portfolio" element={<PortfolioPage />} />
           <Route path="ressources" element={<ResourcesPage />} />
           <Route path="radar" element={<ResearchAiPage />} />
-          <Route path="encadrement/:thesisId/radar" element={<SupervisorResearchAiPage />} />
           <Route path="suivi" element={<SupervisorDeskPage />} />
           <Route path="messagerie" element={<MessagesPage />} />
           <Route path="messagerie/:conversationId" element={<MessagesPage />} />

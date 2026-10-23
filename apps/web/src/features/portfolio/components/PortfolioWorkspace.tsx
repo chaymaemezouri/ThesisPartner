@@ -41,7 +41,7 @@ export function PortfolioWorkspace() {
     <div className="min-w-0">
       <h1 className="sr-only">{t('portfolio.title')}</h1>
       <div
-        className="mb-4 flex gap-1 overflow-x-auto rounded-2xl border border-line/80 bg-line/45 p-1.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        className="mb-4 flex justify-center gap-1 overflow-x-auto rounded-2xl border border-line/80 bg-line/45 p-1.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         role="tablist"
         aria-label={t('portfolio.title')}
       >
