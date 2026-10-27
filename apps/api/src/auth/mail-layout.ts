@@ -26,7 +26,7 @@ export function thesisPartnerMailHtml(input: {
           <table role="presentation" width="560" cellspacing="0" cellpadding="0" style="max-width:560px;width:100%;background:#ffffff;border:1px solid #e2e8f0;border-radius:16px;padding:32px 28px;">
             <tr>
               <td>
-                <p style="margin:0 0 20px;font-size:13px;letter-spacing:0.08em;text-transform:uppercase;color:#1d4ed8;font-weight:700;">Thesis Flow</p>
+                <p style="margin:0 0 20px;font-size:13px;letter-spacing:0.08em;text-transform:uppercase;color:#1d4ed8;font-weight:700;">ThesisPartner</p>
                 <h1 style="margin:0 0 16px;font-size:22px;line-height:1.3;color:#0f172a;">${escapeHtml(input.title)}</h1>
                 ${paragraphs}
                 ${action}

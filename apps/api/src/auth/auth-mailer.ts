@@ -86,6 +86,6 @@ function fallbackHtml(mail: AuthMail): string {
     preheader: mail.subject,
     title: mail.subject,
     paragraphs: mail.text.split(/\n{2,}/).map((part) => part.replaceAll('\n', ' ').trim()),
-    footer: 'Thesis Flow — message automatique, ne pas répondre.',
+    footer: 'ThesisPartner — message automatique, ne pas répondre.',
   });
 }

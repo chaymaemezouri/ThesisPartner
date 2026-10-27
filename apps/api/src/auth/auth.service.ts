@@ -126,7 +126,7 @@ export class AuthService {
 
     await this.deliver({
       to: created.user.email,
-      subject: 'Confirmez votre adresse Thesis Flow',
+      subject: 'Confirmez votre adresse ThesisPartner',
       text: this.verificationText(created.token),
     });
     return { user: created.user, issued: created.issued };
@@ -218,7 +218,7 @@ export class AuthService {
     );
     await this.deliver({
       to: user.email,
-      subject: 'Confirmez votre adresse Thesis Flow',
+      subject: 'Confirmez votre adresse ThesisPartner',
       text: this.verificationText(token),
     });
   }
@@ -232,7 +232,7 @@ export class AuthService {
     const url = `${this.env.APP_URL}/reinitialiser-mot-de-passe?token=${encodeURIComponent(token)}`;
     await this.deliver({
       to: user.email,
-      subject: 'Réinitialisation du mot de passe Thesis Flow',
+      subject: 'Réinitialisation du mot de passe ThesisPartner',
       text: `Pour choisir un nouveau mot de passe, ouvrez ce lien :\n${url}\n\nCe lien expire dans une heure. Si vous n’êtes pas à l’origine de cette demande, ignorez ce message.`,
     });
   }
@@ -304,7 +304,7 @@ export class AuthService {
 
   private verificationText(token: string): string {
     const url = `${this.env.APP_URL}/verifier-email?token=${encodeURIComponent(token)}`;
-    return `Pour confirmer votre adresse Thesis Flow, ouvrez ce lien :\n${url}\n\nCe lien expire dans 24 heures.`;
+    return `Pour confirmer votre adresse ThesisPartner, ouvrez ce lien :\n${url}\n\nCe lien expire dans 24 heures.`;
   }
 
   private async deliver(mail: { to: string; subject: string; text: string }): Promise<void> {
