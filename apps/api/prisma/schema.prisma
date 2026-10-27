@@ -57,6 +57,12 @@ model User {
   thesisDocumentsCreated     ThesisDocument[]     @relation("ThesisDocumentCreator")
   documentStudies            DocumentStudy[]      @relation("DocumentStudyStudent")
   documentStudiesReviewed    DocumentStudy[]      @relation("DocumentStudyReviewer")
+  trial                      Trial?
+  subscriptions              Subscription[]
+  subscriptionEvents         SubscriptionEvent[]  @relation("SubscriptionEventSubject")
+  billingEventsActed         SubscriptionEvent[]  @relation("SubscriptionEventActor")
+  payments                   Payment[]
+  invoices                   Invoice[]
 
   @@index([platformRole])
   @@index([disabledAt])
@@ -197,6 +203,7 @@ model Thesis {
   evaluations          PeriodicEvaluation[]
   conversations        Conversation[]
   documents            ThesisDocument[]
+  subscriptionCoverage ThesisSubscriptionCoverage?
 
   @@index([status])
   @@map("theses")
@@ -210,14 +217,24 @@ enum InvitationStatus {
   CANCELLED
 }
 
+enum InvitationEmailStatus {
+  QUEUED
+  SENT
+  FAILED
+}
+
 /// Explicit invitation before ThesisMembership is created. Token stored hashed.
 model Invitation {
   id                   String           @id @default(uuid()) @db.Uuid
   thesisId             String           @map("thesis_id") @db.Uuid
   email                String           @db.VarChar(320)
   role                 MembershipRole
-  status               InvitationStatus @default(PENDING)
-  tokenHash            String           @unique @map("token_hash") @db.VarChar(64)
+  status               InvitationStatus      @default(PENDING)
+  emailStatus          InvitationEmailStatus @default(QUEUED) @map("email_status")
+  emailSentAt          DateTime?             @map("email_sent_at")
+  emailAttemptedAt     DateTime?             @map("email_attempted_at")
+  emailLastError       String?               @map("email_last_error") @db.VarChar(80)
+  tokenHash            String                @unique @map("token_hash") @db.VarChar(64)
   invitedById          String           @map("invited_by_id") @db.Uuid
   /// When true, accepting replaces the current SUPERVISOR and archives them in SupervisionHistory.
   replacesSupervisor   Boolean          @default(false) @map("replaces_supervisor")
@@ -915,4 +932,282 @@ model DocumentStudy {
 
   @@index([status])
   @@map("document_studies")
+}
+
+enum TrialStatus {
+  NOT_STARTED
+  ACTIVE
+  EXPIRED
+}
+
+enum PlanCode {
+  THESISPARTNER_PRO_MONTHLY
+  THESISPARTNER_PRO_YEARLY
+}
+
+enum PlanInterval {
+  MONTH
+  YEAR
+}
+
+enum SubscriptionStatus {
+  PENDING
+  ACTIVE
+  PAST_DUE
+  GRACE_PERIOD
+  EXPIRED
+  CANCELLED
+}
+
+/// Singleton platform billing settings (id = default).
+model BillingSettings {
+  id             String   @id @db.VarChar(32)
+  trialDays      Int      @default(30) @map("trial_days")
+  graceDays      Int      @default(7) @map("grace_days")
+  /// Tax in basis points (10000 = 100%). Never hardcoded in application code.
+  taxBps         Int      @default(0) @map("tax_bps")
+  invoicePrefix  String   @default("TP") @map("invoice_prefix") @db.VarChar(16)
+  issuerName     String?  @map("issuer_name") @db.VarChar(200)
+  issuerAddress  String?  @map("issuer_address") @db.VarChar(500)
+  issuerLegalId  String?  @map("issuer_legal_id") @db.VarChar(120)
+  issuerEmail    String?  @map("issuer_email") @db.VarChar(320)
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  @@map("billing_settings")
+}
+
+/// One trial per account. Never restarted.
+model Trial {
+  id         String      @id @default(uuid()) @db.Uuid
+  userId     String      @unique @map("user_id") @db.Uuid
+  status     TrialStatus @default(NOT_STARTED)
+  startedAt  DateTime?   @map("started_at")
+  expiresAt  DateTime?   @map("expires_at")
+  createdAt  DateTime    @default(now()) @map("created_at")
+  updatedAt  DateTime    @updatedAt @map("updated_at")
+
+  user   User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  events SubscriptionEvent[]
+
+  @@index([status, expiresAt])
+  @@map("trials")
+}
+
+model Plan {
+  id        String       @id @default(uuid()) @db.Uuid
+  code      PlanCode     @unique
+  name      String       @db.VarChar(120)
+  interval  PlanInterval
+  /// Integer Moroccan dirhams (MAD). No payment capture in Phase 4.
+  priceMad  Int          @map("price_mad")
+  currency  String       @default("MAD") @db.VarChar(3)
+  active    Boolean      @default(true)
+  createdAt DateTime     @default(now()) @map("created_at")
+  updatedAt DateTime     @updatedAt @map("updated_at")
+
+  subscriptions Subscription[]
+  payments      Payment[]
+
+  @@map("plans")
+}
+
+model Subscription {
+  id                String             @id @default(uuid()) @db.Uuid
+  userId            String             @map("user_id") @db.Uuid
+  planId            String             @map("plan_id") @db.Uuid
+  status            SubscriptionStatus @default(PENDING)
+  currentPeriodStart DateTime?         @map("current_period_start")
+  currentPeriodEnd   DateTime?         @map("current_period_end")
+  cancelAtPeriodEnd  Boolean           @default(false) @map("cancel_at_period_end")
+  cancelledAt        DateTime?         @map("cancelled_at")
+  gracePeriodEndsAt  DateTime?         @map("grace_period_ends_at")
+  activatedAt        DateTime?         @map("activated_at")
+  createdAt          DateTime          @default(now()) @map("created_at")
+  updatedAt          DateTime          @updatedAt @map("updated_at")
+
+  user      User                         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  plan      Plan                         @relation(fields: [planId], references: [id], onDelete: Restrict)
+  coverages ThesisSubscriptionCoverage[]
+  events    SubscriptionEvent[]
+  payments  Payment[]
+  invoices  Invoice[]
+
+  @@index([userId, status])
+  @@index([status, currentPeriodEnd])
+  @@map("subscriptions")
+}
+
+/// V1: one paid coverage row per thesis.
+model ThesisSubscriptionCoverage {
+  id             String   @id @default(uuid()) @db.Uuid
+  thesisId       String   @unique @map("thesis_id") @db.Uuid
+  subscriptionId String   @map("subscription_id") @db.Uuid
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  thesis       Thesis       @relation(fields: [thesisId], references: [id], onDelete: Cascade)
+  subscription Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+
+  @@index([subscriptionId])
+  @@map("thesis_subscription_coverages")
+}
+
+/// Append-only billing transitions. Not a payment ledger.
+model SubscriptionEvent {
+  id             String   @id @default(uuid()) @db.Uuid
+  userId         String   @map("user_id") @db.Uuid
+  actorId        String?  @map("actor_id") @db.Uuid
+  trialId        String?  @map("trial_id") @db.Uuid
+  subscriptionId String?  @map("subscription_id") @db.Uuid
+  type           String   @db.VarChar(80)
+  metadata       Json?
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  user         User          @relation("SubscriptionEventSubject", fields: [userId], references: [id], onDelete: Cascade)
+  actor        User?         @relation("SubscriptionEventActor", fields: [actorId], references: [id], onDelete: SetNull)
+  trial        Trial?        @relation(fields: [trialId], references: [id], onDelete: SetNull)
+  subscription Subscription? @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
+
+  @@index([userId, createdAt])
+  @@index([type, createdAt])
+  @@map("subscription_events")
+}
+
+enum PaymentEnvironment {
+  TEST
+  LIVE
+}
+
+enum PaymentStatus {
+  PENDING
+  PROCESSING
+  SUCCEEDED
+  FAILED
+  CANCELLED
+  REFUNDED
+  PARTIALLY_REFUNDED
+}
+
+enum PaymentEventProcessingStatus {
+  RECEIVED
+  PROCESSED
+  IGNORED
+  FAILED
+}
+
+enum InvoiceKind {
+  INVOICE
+  CREDIT_NOTE
+}
+
+enum InvoiceStatus {
+  DRAFT
+  ISSUED
+  VOIDED
+}
+
+model Payment {
+  id                 String             @id @default(uuid()) @db.Uuid
+  userId             String             @map("user_id") @db.Uuid
+  subscriptionId     String             @map("subscription_id") @db.Uuid
+  planId             String             @map("plan_id") @db.Uuid
+  provider           String             @db.VarChar(32)
+  providerPaymentId  String?            @map("provider_payment_id") @db.VarChar(120)
+  checkoutSessionId  String?            @map("checkout_session_id") @db.VarChar(120)
+  idempotencyKey     String             @map("idempotency_key") @db.VarChar(128)
+  amountMinor        Int                @map("amount_minor")
+  refundedAmountMinor Int               @default(0) @map("refunded_amount_minor")
+  currency           String             @default("MAD") @db.VarChar(3)
+  status             PaymentStatus      @default(PENDING)
+  environment        PaymentEnvironment
+  checkoutUrl        String?            @map("checkout_url") @db.VarChar(500)
+  checkoutExpiresAt  DateTime?          @map("checkout_expires_at")
+  failureCode        String?            @map("failure_code") @db.VarChar(80)
+  createdAt          DateTime           @default(now()) @map("created_at")
+  confirmedAt        DateTime?          @map("confirmed_at")
+  failedAt           DateTime?          @map("failed_at")
+  refundedAt         DateTime?          @map("refunded_at")
+  updatedAt          DateTime           @updatedAt @map("updated_at")
+
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subscription Subscription  @relation(fields: [subscriptionId], references: [id], onDelete: Restrict)
+  plan         Plan          @relation(fields: [planId], references: [id], onDelete: Restrict)
+  events       PaymentEvent[]
+  invoices     Invoice[]
+
+  @@unique([userId, idempotencyKey])
+  @@unique([provider, environment, providerPaymentId])
+  @@unique([provider, environment, checkoutSessionId])
+  @@index([userId, createdAt])
+  @@index([status, environment])
+  @@index([subscriptionId])
+  @@map("payments")
+}
+
+model PaymentEvent {
+  id               String                        @id @default(uuid()) @db.Uuid
+  provider         String                        @db.VarChar(32)
+  environment      PaymentEnvironment
+  externalEventId  String                        @map("external_event_id") @db.VarChar(160)
+  paymentId        String?                       @map("payment_id") @db.Uuid
+  eventType        String                        @map("event_type") @db.VarChar(80)
+  processingStatus PaymentEventProcessingStatus  @default(RECEIVED) @map("processing_status")
+  payload          Json?
+  errorCode        String?                       @map("error_code") @db.VarChar(80)
+  receivedAt       DateTime                      @default(now()) @map("received_at")
+  processedAt      DateTime?                     @map("processed_at")
+
+  payment Payment? @relation(fields: [paymentId], references: [id], onDelete: SetNull)
+
+  @@unique([provider, environment, externalEventId])
+  @@index([processingStatus, receivedAt])
+  @@index([paymentId])
+  @@map("payment_events")
+}
+
+model InvoiceSequence {
+  environment PaymentEnvironment
+  year        Int
+  lastValue   Int                @map("last_value")
+
+  @@id([environment, year])
+  @@map("invoice_sequences")
+}
+
+model Invoice {
+  id                 String             @id @default(uuid()) @db.Uuid
+  userId             String             @map("user_id") @db.Uuid
+  subscriptionId     String?            @map("subscription_id") @db.Uuid
+  paymentId          String?            @map("payment_id") @db.Uuid
+  invoiceNumber      String             @unique @map("invoice_number") @db.VarChar(40)
+  kind               InvoiceKind        @default(INVOICE)
+  status             InvoiceStatus      @default(ISSUED)
+  specimen           Boolean            @default(true)
+  issueDate          DateTime           @map("issue_date")
+  periodStart        DateTime?          @map("period_start")
+  periodEnd          DateTime?          @map("period_end")
+  description        String             @db.VarChar(240)
+  planCode           String             @map("plan_code") @db.VarChar(64)
+  amountMinor        Int                @map("amount_minor")
+  taxBps             Int                @map("tax_bps")
+  taxAmountMinor     Int                @map("tax_amount_minor")
+  totalMinor         Int                @map("total_minor")
+  currency           String             @default("MAD") @db.VarChar(3)
+  environment        PaymentEnvironment
+  documentPath       String?            @map("document_path") @db.VarChar(500)
+  issuerName         String?            @map("issuer_name") @db.VarChar(200)
+  issuerAddress      String?            @map("issuer_address") @db.VarChar(500)
+  issuerLegalId      String?            @map("issuer_legal_id") @db.VarChar(120)
+  recipientName      String             @map("recipient_name") @db.VarChar(200)
+  recipientEmail     String             @map("recipient_email") @db.VarChar(320)
+  paymentReference   String?            @map("payment_reference") @db.VarChar(160)
+  createdAt          DateTime           @default(now()) @map("created_at")
+
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subscription Subscription? @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
+  payment      Payment?      @relation(fields: [paymentId], references: [id], onDelete: SetNull)
+
+  @@index([userId, issueDate])
+  @@index([paymentId])
+  @@index([environment, status])
+  @@map("invoices")
 }

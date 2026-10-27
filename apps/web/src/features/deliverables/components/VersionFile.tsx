@@ -57,16 +57,22 @@ export function localFileError(file: File, t: Translate = defaultT): string | nu
 export function fileErrorMessage(error: unknown, t: Translate = defaultT): string {
   if (!(error instanceof ApiClientError)) return t('errors.unavailable');
   if (error.body.code === 'FILE_TYPE_NOT_ALLOWED') return t('deliverables.fileTypeNotAllowed');
-  if (error.body.code === 'FILE_TOO_LARGE') return error.body.message;
+  if (error.body.code === 'FILE_TOO_LARGE' || error.body.code === 'PAYLOAD_TOO_LARGE') {
+    return t('deliverables.fileTooLarge');
+  }
   if (error.body.code === 'FILE_SIGNATURE_MISMATCH') {
     return t('deliverables.fileSignatureMismatch');
   }
   if (error.body.code === 'VERSION_FILE_ALREADY_EXISTS') {
     return t('deliverables.versionFileExists');
   }
+  if (error.body.code === 'STORAGE_UNAVAILABLE') return t('errors.storageUnavailable');
+  if (error.body.code === 'SUBSCRIPTION_REQUIRED') return t('errors.subscriptionRequired');
   if (error.body.code === 'FORBIDDEN') return t('errors.forbidden');
   if (error.body.code === 'NOT_FOUND') return t('errors.notFound');
   if (error.body.code === 'RATE_LIMITED') return error.body.message;
+  if (error.body.statusCode === 413) return t('deliverables.fileTooLarge');
+  if (error.body.statusCode === 503) return t('errors.unavailable');
   return t('errors.unavailable');
 }
 

@@ -32,6 +32,7 @@ import { ProfileModule } from './profile/profile.module';
 import { RedisModule } from './infrastructure/redis/redis.module';
 import { StorageModule } from './storage/storage.module';
 import { ThesesModule } from './theses/theses.module';
+import { BillingModule } from './billing/billing.module';
 
 @Module({
   imports: [
@@ -44,6 +45,7 @@ import { ThesesModule } from './theses/theses.module';
     AuditModule,
     AuthModule,
     AdminModule,
+    BillingModule,
     ThesisAccessModule,
     ThesesModule,
     InvitationsModule,

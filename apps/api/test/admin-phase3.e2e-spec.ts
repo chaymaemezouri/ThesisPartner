@@ -76,6 +76,15 @@ describe('admin phase 3', () => {
     });
     expect(adminLogin.status).toBe(200);
 
+    const userAgent = request.agent(app.getHttpServer());
+    const userReg = await userAgent.post('/api/v1/auth/register').send({
+      email: userEmail,
+      password,
+      givenName: 'Regular',
+      familyName: 'User',
+    });
+    expect(userReg.status).toBe(201);
+
     const stats = await adminAgent.get('/api/v1/admin/stats');
     expect(stats.status).toBe(200);
     const statsBody = adminStatsSchema.parse(stats.body);
@@ -103,15 +112,6 @@ describe('admin phase 3', () => {
     expect(systemBody.health.checks.api).toBe('ok');
     expect(systemBody).not.toHaveProperty('DATABASE_URL');
     expect(['development', 'test', 'production']).toContain(systemBody.nodeEnv);
-
-    const userAgent = request.agent(app.getHttpServer());
-    const userReg = await userAgent.post('/api/v1/auth/register').send({
-      email: userEmail,
-      password,
-      givenName: 'Regular',
-      familyName: 'User',
-    });
-    expect(userReg.status).toBe(201);
 
     for (const path of ['/stats', '/analytics', '/audit', '/system'] as const) {
       const denied = await userAgent.get(`/api/v1/admin${path}`);

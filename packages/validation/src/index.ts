@@ -1,4 +1,16 @@
-import { INVITATION_STATUSES, MEMBERSHIP_ROLES, PLATFORM_ROLES } from '@thesispartner/types';
+import {
+  INVOICE_KINDS,
+  INVOICE_STATUSES,
+  INVITATION_EMAIL_STATUSES,
+  INVITATION_STATUSES,
+  MEMBERSHIP_ROLES,
+  PAYMENT_ENVIRONMENTS,
+  PAYMENT_STATUSES,
+  PLAN_CODES,
+  PLATFORM_ROLES,
+  SUBSCRIPTION_STATUSES,
+  TRIAL_STATUSES,
+} from '@thesispartner/types';
 import { z } from 'zod';
 
 export const uuidSchema = z.string().uuid();
@@ -8,6 +20,7 @@ export const membershipRoleSchema = z.enum(MEMBERSHIP_ROLES);
 export const platformRoleSchema = z.enum(PLATFORM_ROLES);
 
 export const invitationStatusSchema = z.enum(INVITATION_STATUSES);
+export const invitationEmailStatusSchema = z.enum(INVITATION_EMAIL_STATUSES);
 
 export const boundedTextSchema = (max: number) => z.string().trim().min(1).max(max);
 
@@ -36,6 +49,7 @@ export const healthResponseSchema = z
         api: z.literal('ok'),
         database: z.enum(['ok', 'error']),
         redis: z.enum(['ok', 'error']),
+        storage: z.enum(['ok', 'error']),
       })
       .strict(),
   })
@@ -190,6 +204,7 @@ export const inviteResponseSchema = z
     email: z.string().email(),
     role: membershipRoleSchema,
     status: invitationStatusSchema,
+    emailStatus: invitationEmailStatusSchema,
     expiresAt: z.string().datetime(),
     replacesSupervisor: z.boolean(),
   })
@@ -203,6 +218,7 @@ export const invitationSummarySchema = z
     email: z.string().email(),
     role: membershipRoleSchema,
     status: invitationStatusSchema,
+    emailStatus: invitationEmailStatusSchema,
     replacesSupervisor: z.boolean(),
     changeReason: z.string().max(500).nullable(),
     invitedByName: boundedTextSchema(160),
@@ -798,6 +814,14 @@ const supervisedStudentSchema = z
   })
   .strict();
 
+export const thesisCoverageSchema = z
+  .object({
+    writable: z.boolean(),
+    source: z.enum(['trial', 'subscription', 'none']),
+    expiresAt: z.string().datetime().nullable(),
+  })
+  .strict();
+
 export const supervisedThesisSchema = z
   .object({
     thesisId: uuidSchema,
@@ -846,6 +870,7 @@ export const supervisedThesisSchema = z
           .strict(),
       )
       .max(8),
+    coverage: thesisCoverageSchema,
     doctoralStudent: supervisedStudentSchema.nullable(),
     doctoralStudents: z.array(supervisedStudentSchema).max(20),
     objectiveSummary: z
@@ -1749,6 +1774,7 @@ export const adminHealthChecksSchema = z
     api: z.literal('ok'),
     database: z.enum(['ok', 'error']),
     redis: z.enum(['ok', 'error']),
+    storage: z.enum(['ok', 'error']),
   })
   .strict();
 
@@ -1899,3 +1925,390 @@ export const adminReactivateBodySchema = z
 
 export type AdminSuspendBody = z.infer<typeof adminSuspendBodySchema>;
 export type AdminReactivateBody = z.infer<typeof adminReactivateBodySchema>;
+
+export const planCodeSchema = z.enum(PLAN_CODES);
+export const trialStatusSchema = z.enum(TRIAL_STATUSES);
+export const subscriptionStatusSchema = z.enum(SUBSCRIPTION_STATUSES);
+
+export const billingPlanSchema = z
+  .object({
+    id: uuidSchema,
+    code: planCodeSchema,
+    name: boundedTextSchema(120),
+    interval: z.enum(['MONTH', 'YEAR']),
+    priceMad: z.number().int().nonnegative(),
+    currency: z.literal('MAD'),
+    active: z.boolean(),
+  })
+  .strict();
+
+export const billingPlansSchema = z.object({ plans: z.array(billingPlanSchema).max(10) }).strict();
+
+export const billingTrialSchema = z
+  .object({
+    status: trialStatusSchema,
+    startedAt: z.string().datetime().nullable(),
+    expiresAt: z.string().datetime().nullable(),
+    daysRemaining: z.number().int().min(0).nullable(),
+    progressPercent: z.number().int().min(0).max(100).nullable(),
+    reminders: z.array(z.enum(['J-7', 'J-3', 'J-1'])).max(3),
+    canStart: z.boolean(),
+  })
+  .strict();
+
+export const billingSubscriptionSchema = z
+  .object({
+    id: uuidSchema.nullable(),
+    status: subscriptionStatusSchema.nullable(),
+    planCode: planCodeSchema.nullable(),
+    planName: boundedTextSchema(120).nullable(),
+    priceMad: z.number().int().nonnegative().nullable(),
+    interval: z.enum(['MONTH', 'YEAR']).nullable(),
+    currentPeriodStart: z.string().datetime().nullable(),
+    currentPeriodEnd: z.string().datetime().nullable(),
+    cancelAtPeriodEnd: z.boolean(),
+    gracePeriodEndsAt: z.string().datetime().nullable(),
+    paymentProviderReady: z.boolean(),
+  })
+  .strict();
+
+export const billingStatusSchema = z
+  .object({
+    roleHint: z.enum(['DOCTORAL_STUDENT', 'SUPERVISOR', 'MIXED', 'NONE']),
+    trial: billingTrialSchema,
+    subscription: billingSubscriptionSchema,
+    coverage: thesisCoverageSchema,
+    plans: z.array(billingPlanSchema).max(10),
+  })
+  .strict();
+
+export const billingEventSchema = z
+  .object({
+    id: uuidSchema,
+    type: boundedTextSchema(80),
+    createdAt: z.string().datetime(),
+    metadata: z.record(z.unknown()).nullable(),
+  })
+  .strict();
+
+export const billingEventListSchema = z
+  .object({
+    events: z.array(billingEventSchema).max(100),
+    page: z.number().int().min(1),
+    pageSize: z.number().int().min(1).max(100),
+    total: z.number().int().nonnegative(),
+  })
+  .strict();
+
+export const selectPlanBodySchema = z.object({ planCode: planCodeSchema }).strict();
+
+export const cancelSubscriptionBodySchema = z
+  .object({ confirm: z.literal(true) })
+  .strict();
+
+export const adminBillingSettingsSchema = z
+  .object({
+    trialDays: z.number().int().min(1).max(365),
+    graceDays: z.number().int().min(0).max(90),
+    taxBps: z.number().int().min(0).max(10_000),
+    invoicePrefix: boundedTextSchema(16),
+    issuerName: z.string().max(200).nullable(),
+    issuerAddress: z.string().max(500).nullable(),
+    issuerLegalId: z.string().max(120).nullable(),
+    issuerEmail: z.string().max(320).nullable(),
+    legalConfigured: z.boolean(),
+    updatedAt: z.string().datetime(),
+  })
+  .strict();
+
+export const adminBillingSettingsBodySchema = z
+  .object({
+    trialDays: z.number().int().min(1).max(365).optional(),
+    graceDays: z.number().int().min(0).max(90).optional(),
+    taxBps: z.number().int().min(0).max(10_000).optional(),
+    invoicePrefix: boundedTextSchema(16).optional(),
+    issuerName: z.string().trim().max(200).nullable().optional(),
+    issuerAddress: z.string().trim().max(500).nullable().optional(),
+    issuerLegalId: z.string().trim().max(120).nullable().optional(),
+    issuerEmail: z.string().trim().max(320).nullable().optional(),
+  })
+  .strict();
+
+export const adminUpdatePlanBodySchema = z
+  .object({
+    priceMad: z.number().int().min(0).max(1_000_000).optional(),
+    active: z.boolean().optional(),
+    name: boundedTextSchema(120).optional(),
+  })
+  .strict();
+
+export const adminExtendAccessBodySchema = z
+  .object({
+    days: z.number().int().min(1).max(365),
+    reason: boundedTextSchema(500),
+  })
+  .strict();
+
+export const adminActivateSubscriptionBodySchema = z
+  .object({
+    reason: boundedTextSchema(500),
+  })
+  .strict();
+
+export const adminBillingStatsSchema = z
+  .object({
+    trialsNotStarted: z.number().int().nonnegative(),
+    trialsActive: z.number().int().nonnegative(),
+    trialsExpired: z.number().int().nonnegative(),
+    subscriptionsPending: z.number().int().nonnegative(),
+    subscriptionsActive: z.number().int().nonnegative(),
+    subscriptionsGrace: z.number().int().nonnegative(),
+    subscriptionsExpired: z.number().int().nonnegative(),
+    subscriptionsCancelled: z.number().int().nonnegative(),
+    conversionStartedToPaid: z.number().min(0).max(100),
+    liveCollectedMinor: z.number().int().nonnegative(),
+    liveRefundedMinor: z.number().int().nonnegative(),
+    liveNetMinor: z.number().int(),
+    testPaymentCount: z.number().int().nonnegative(),
+    paymentsPending: z.number().int().nonnegative(),
+    paymentsFailed: z.number().int().nonnegative(),
+    expiringSoon: z.number().int().nonnegative(),
+  })
+  .strict();
+
+export const adminTrialRowSchema = z
+  .object({
+    id: uuidSchema,
+    userId: uuidSchema,
+    email: z.string().email(),
+    displayName: boundedTextSchema(160),
+    status: trialStatusSchema,
+    startedAt: z.string().datetime().nullable(),
+    expiresAt: z.string().datetime().nullable(),
+    createdAt: z.string().datetime(),
+  })
+  .strict();
+
+export const adminTrialListSchema = z
+  .object({
+    trials: z.array(adminTrialRowSchema).max(100),
+    page: z.number().int().min(1),
+    pageSize: z.number().int().min(1).max(100),
+    total: z.number().int().nonnegative(),
+  })
+  .strict();
+
+export const adminSubscriptionRowSchema = z
+  .object({
+    id: uuidSchema,
+    userId: uuidSchema,
+    email: z.string().email(),
+    displayName: boundedTextSchema(160),
+    planCode: planCodeSchema,
+    status: subscriptionStatusSchema,
+    currentPeriodEnd: z.string().datetime().nullable(),
+    cancelAtPeriodEnd: z.boolean(),
+    createdAt: z.string().datetime(),
+  })
+  .strict();
+
+export const adminSubscriptionListSchema = z
+  .object({
+    subscriptions: z.array(adminSubscriptionRowSchema).max(100),
+    page: z.number().int().min(1),
+    pageSize: z.number().int().min(1).max(100),
+    total: z.number().int().nonnegative(),
+  })
+  .strict();
+
+export const paymentStatusSchema = z.enum(PAYMENT_STATUSES);
+export const paymentEnvironmentSchema = z.enum(PAYMENT_ENVIRONMENTS);
+export const invoiceKindSchema = z.enum(INVOICE_KINDS);
+export const invoiceStatusSchema = z.enum(INVOICE_STATUSES);
+
+export const checkoutBodySchema = z
+  .object({
+    planCode: planCodeSchema,
+    idempotencyKey: z.string().trim().min(8).max(128),
+  })
+  .strict();
+
+export const checkoutResponseSchema = z
+  .object({
+    paymentId: uuidSchema,
+    checkoutUrl: z.string().url().max(500).nullable(),
+    status: paymentStatusSchema,
+    amountMinor: z.number().int().nonnegative(),
+    currency: z.literal('MAD'),
+    environment: paymentEnvironmentSchema,
+    expiresAt: z.string().datetime().nullable(),
+    checkoutAvailable: z.boolean(),
+  })
+  .strict();
+
+export const paymentDtoSchema = z
+  .object({
+    id: uuidSchema,
+    planCode: planCodeSchema,
+    amountMinor: z.number().int().nonnegative(),
+    refundedAmountMinor: z.number().int().nonnegative(),
+    currency: z.literal('MAD'),
+    status: paymentStatusSchema,
+    environment: paymentEnvironmentSchema,
+    provider: boundedTextSchema(32),
+    createdAt: z.string().datetime(),
+    confirmedAt: z.string().datetime().nullable(),
+  })
+  .strict();
+
+export const paymentListSchema = z
+  .object({
+    payments: z.array(paymentDtoSchema).max(100),
+    page: z.number().int().min(1),
+    pageSize: z.number().int().min(1).max(100),
+    total: z.number().int().nonnegative(),
+  })
+  .strict();
+
+export const invoiceDtoSchema = z
+  .object({
+    id: uuidSchema,
+    invoiceNumber: boundedTextSchema(40),
+    kind: invoiceKindSchema,
+    status: invoiceStatusSchema,
+    specimen: z.boolean(),
+    issueDate: z.string().datetime(),
+    description: boundedTextSchema(240),
+    planCode: planCodeSchema,
+    amountMinor: z.number().int(),
+    taxAmountMinor: z.number().int().nonnegative(),
+    totalMinor: z.number().int(),
+    currency: z.literal('MAD'),
+    environment: paymentEnvironmentSchema,
+    downloadable: z.boolean(),
+  })
+  .strict();
+
+export const invoiceListSchema = z
+  .object({
+    invoices: z.array(invoiceDtoSchema).max(100),
+    page: z.number().int().min(1),
+    pageSize: z.number().int().min(1).max(100),
+    total: z.number().int().nonnegative(),
+  })
+  .strict();
+
+export const invoiceDownloadSchema = z
+  .object({
+    url: z.string().url().max(2000),
+    expiresAt: z.string().datetime(),
+    fileName: boundedTextSchema(120),
+  })
+  .strict();
+
+export const webhookAckSchema = z
+  .object({
+    received: z.literal(true),
+    duplicate: z.boolean(),
+  })
+  .strict();
+
+export const mockCheckoutCompleteBodySchema = z
+  .object({
+    confirm: z.literal(true),
+  })
+  .strict();
+
+export const mockCheckoutSessionSchema = z
+  .object({
+    sessionId: boundedTextSchema(120),
+    paymentId: uuidSchema,
+    amountMinor: z.number().int().nonnegative(),
+    currency: z.literal('MAD'),
+    planCode: planCodeSchema,
+    environment: z.literal('TEST'),
+    status: paymentStatusSchema,
+  })
+  .strict();
+
+export const adminPaymentRowSchema = z
+  .object({
+    id: uuidSchema,
+    userId: uuidSchema,
+    email: z.string().email(),
+    displayName: boundedTextSchema(160),
+    planCode: planCodeSchema,
+    amountMinor: z.number().int().nonnegative(),
+    currency: z.literal('MAD'),
+    status: paymentStatusSchema,
+    environment: paymentEnvironmentSchema,
+    provider: boundedTextSchema(32),
+    createdAt: z.string().datetime(),
+    confirmedAt: z.string().datetime().nullable(),
+  })
+  .strict();
+
+export const adminPaymentListSchema = z
+  .object({
+    payments: z.array(adminPaymentRowSchema).max(100),
+    page: z.number().int().min(1),
+    pageSize: z.number().int().min(1).max(100),
+    total: z.number().int().nonnegative(),
+  })
+  .strict();
+
+export const adminInvoiceRowSchema = z
+  .object({
+    id: uuidSchema,
+    invoiceNumber: boundedTextSchema(40),
+    email: z.string().email(),
+    kind: invoiceKindSchema,
+    status: invoiceStatusSchema,
+    specimen: z.boolean(),
+    totalMinor: z.number().int(),
+    currency: z.literal('MAD'),
+    environment: paymentEnvironmentSchema,
+    issueDate: z.string().datetime(),
+    downloadable: z.boolean(),
+  })
+  .strict();
+
+export const adminInvoiceListSchema = z
+  .object({
+    invoices: z.array(adminInvoiceRowSchema).max(100),
+    page: z.number().int().min(1),
+    pageSize: z.number().int().min(1).max(100),
+    total: z.number().int().nonnegative(),
+  })
+  .strict();
+
+export const adminPaymentEventRowSchema = z
+  .object({
+    id: uuidSchema,
+    provider: boundedTextSchema(32),
+    environment: paymentEnvironmentSchema,
+    externalEventId: boundedTextSchema(160),
+    eventType: boundedTextSchema(80),
+    processingStatus: z.enum(['RECEIVED', 'PROCESSED', 'IGNORED', 'FAILED']),
+    paymentId: uuidSchema.nullable(),
+    errorCode: z.string().max(80).nullable(),
+    receivedAt: z.string().datetime(),
+    processedAt: z.string().datetime().nullable(),
+  })
+  .strict();
+
+export const adminPaymentEventListSchema = z
+  .object({
+    events: z.array(adminPaymentEventRowSchema).max(100),
+    page: z.number().int().min(1),
+    pageSize: z.number().int().min(1).max(100),
+    total: z.number().int().nonnegative(),
+  })
+  .strict();
+
+export const adminRefundBodySchema = z
+  .object({
+    reason: boundedTextSchema(500),
+    amountMinor: z.number().int().positive().optional(),
+  })
+  .strict();

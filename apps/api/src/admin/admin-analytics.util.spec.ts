@@ -20,6 +20,7 @@ describe('admin-analytics.util', () => {
       { date: '2026-10-01', count: 0 },
       { date: '2026-10-02', count: 3 },
       { date: '2026-10-03', count: 0 },
+      { date: '2026-10-04', count: 0 },
     ]);
   });
 

@@ -102,6 +102,17 @@ export function SettingsPage() {
         ) : null}
       </section>
 
+      <section className="rounded-md border border-line bg-surface px-4 py-4">
+        <h2 className="text-sm font-medium text-ink">{t('billing.title')}</h2>
+        <p className="mt-1 text-sm text-muted">{t('billing.subtitle')}</p>
+        <Link
+          to="/abonnement"
+          className="mt-4 inline-flex h-10 items-center justify-center rounded-lg border border-line bg-canvas px-4 text-sm font-semibold text-ink hover:border-ink/20"
+        >
+          {t('nav.billing')}
+        </Link>
+      </section>
+
       <section
         className="rounded-md border border-line bg-surface px-4 py-4"
         aria-labelledby="invitations-access-title"

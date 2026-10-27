@@ -10,7 +10,7 @@ Aucun endpoint n’expose de fichiers scientifiques, de jetons, de secrets d’e
 
 ### `GET /stats`
 
-Compteurs plateforme et série d’inscriptions (30 jours) + santé API.
+Compteurs plateforme et série d’inscriptions (60 jours, pour comparer 30 j. vs 30 j. précédents) + santé API.
 
 Champs principaux : `totalUsers`, `activeAccounts`, `suspendedAccounts`, `doctoralStudents`, `supervisors` (distincts via `ThesisMembership`), `theses`, `activeTheses`, compteurs d’invitations par statut, fenêtres d’inscriptions (`7j` / `30j` / `12 mois`), `registrationsByDay`, `health`.
 

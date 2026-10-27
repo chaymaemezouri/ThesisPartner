@@ -34,6 +34,7 @@ services:
 
   mailpit:
     image: axllent/mailpit:v1.27
+    profiles: ['mail']
     ports:
       - '1025:1025'
       - '8025:8025'
@@ -80,8 +81,12 @@ services:
       TRUST_PROXY: 'true'
       SMTP_HOST: mailpit
       SMTP_PORT: '1025'
+      SMTP_USER: ''
+      SMTP_PASS: ''
+      SMTP_SECURE: 'false'
       SMTP_FROM: ThesisPartner <noreply@thesispartner.local>
       S3_ENDPOINT: http://s3:8333
+      S3_PUBLIC_URL: http://localhost:8080
       S3_REGION: us-east-1
       S3_BUCKET: thesispartner
       S3_ACCESS_KEY: thesispartner
@@ -89,7 +94,8 @@ services:
       S3_FORCE_PATH_STYLE: 'true'
       SIGNED_URL_TTL_SECONDS: '300'
       MAX_UPLOAD_SIZE_MB: '50'
-      FILE_SCAN_MODE: stub
+      FILE_SCAN_MODE: allow
+      PAYMENT_PROVIDER: none
     depends_on:
       postgres:
         condition: service_healthy
@@ -107,7 +113,7 @@ services:
           'CMD',
           'node',
           '-e',
-          "fetch('http://127.0.0.1:3000/api/v1/health').then((r)=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+          "fetch('http://127.0.0.1:3000/api/v1/health').then((r)=>r.json()).then((b)=>process.exit(b.checks&&b.checks.database==='ok'&&b.checks.redis==='ok'&&b.checks.storage==='ok'?0:1)).catch(()=>process.exit(1))",
         ]
       interval: 10s
       timeout: 5s

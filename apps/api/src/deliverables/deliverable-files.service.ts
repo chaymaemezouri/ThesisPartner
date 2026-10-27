@@ -56,6 +56,12 @@ export class DeliverableFilesService {
       throw new AppException(400, 'FILE_TYPE_NOT_ALLOWED', 'Aucun fichier n’a été envoyé.');
     }
     const loaded = await this.loadVersion(actorId, thesisId, deliverableId, versionId);
+    await this.access.assertCanAccess({
+      actorId,
+      thesisId,
+      allowedRoles: READ_ROLES,
+      write: true,
+    });
     if (!canUploadFile(loaded.role, loaded.version.deliverable.status)) {
       if (loaded.role !== 'DOCTORAL_STUDENT') {
         throw new AppException(403, 'FORBIDDEN', 'Ajout de fichier non autorisé');
@@ -70,9 +76,7 @@ export class DeliverableFilesService {
       );
     }
     await this.consumeUploadBudget(actorId);
-    if (!this.storage.isReady()) {
-      throw new AppException(503, 'INTERNAL_ERROR', 'Le stockage est indisponible.');
-    }
+    await this.storage.ensureReady();
 
     const info = await stat(file.path);
     const header = await readHeader(file.path);
@@ -85,7 +89,7 @@ export class DeliverableFilesService {
     });
     if (!inspection.ok) throw fileError(inspection.code, this.env.MAX_UPLOAD_SIZE_MB);
 
-    const scanStatus = scanHeader(header, this.env.NODE_ENV);
+    const scanStatus = scanHeader(header, this.env.NODE_ENV, this.env.FILE_SCAN_MODE);
     if (scanStatus === 'INFECTED') {
       throw new AppException(
         403,
@@ -167,7 +171,7 @@ export class DeliverableFilesService {
           'Cette version possède déjà un fichier.',
         );
       }
-      throw new AppException(503, 'INTERNAL_ERROR', 'Le stockage est indisponible.');
+      throw new AppException(503, 'STORAGE_UNAVAILABLE', 'Le stockage est indisponible.');
     }
 
     if (!created) throw new AppException(500, 'INTERNAL_ERROR', 'Internal server error');
@@ -206,9 +210,7 @@ export class DeliverableFilesService {
         'Ce fichier n’est pas encore disponible au téléchargement.',
       );
     }
-    if (!this.storage.isReady()) {
-      throw new AppException(503, 'INTERNAL_ERROR', 'Le stockage est indisponible.');
-    }
+    await this.storage.ensureReady();
     try {
       return await this.objects.createSignedDownloadUrl({
         key: file.storageKey,
@@ -218,7 +220,7 @@ export class DeliverableFilesService {
         inline,
       });
     } catch {
-      throw new AppException(503, 'INTERNAL_ERROR', 'Le stockage est indisponible.');
+      throw new AppException(503, 'STORAGE_UNAVAILABLE', 'Le stockage est indisponible.');
     }
   }
 

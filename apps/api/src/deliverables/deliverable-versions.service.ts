@@ -73,7 +73,7 @@ export class DeliverableVersionsService {
     body: CreateBody,
     requestId?: string,
   ) {
-    const role = await this.memberRole(actorId, thesisId);
+    const role = await this.memberRole(actorId, thesisId, true);
     for (let attempt = 0; attempt < CREATE_ATTEMPTS; attempt += 1) {
       try {
         return await this.insertVersion(actorId, role, thesisId, deliverableId, body, requestId);
@@ -158,8 +158,12 @@ export class DeliverableVersionsService {
     if (!deliverable) throw new AppException(404, 'NOT_FOUND', 'Resource not found');
   }
 
-  private async memberRole(actorId: string, thesisId: string): Promise<MembershipRole> {
-    await this.access.assertCanAccess({ actorId, thesisId, allowedRoles: READ_ROLES });
+  private async memberRole(
+    actorId: string,
+    thesisId: string,
+    write = false,
+  ): Promise<MembershipRole> {
+    await this.access.assertCanAccess({ actorId, thesisId, allowedRoles: READ_ROLES, write });
     const membership = await this.prisma.thesisMembership.findUnique({
       where: { thesisId_userId: { thesisId, userId: actorId } },
     });

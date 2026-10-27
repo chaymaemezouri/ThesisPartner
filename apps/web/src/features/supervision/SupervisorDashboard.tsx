@@ -269,6 +269,11 @@ function ListCard({ thesis, name }: { thesis: SupervisedThesis; name: string }) 
           </p>
           <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
             <p className="flex flex-wrap gap-2 text-xs">
+              {!thesis.coverage.writable ? (
+                <span className="rounded-full bg-warn-soft px-2 py-0.5 font-medium text-warn">
+                  {t('billing.trialEnded')}
+                </span>
+              ) : null}
               {late ? (
                 <span className="rounded-full bg-danger-soft px-2 py-0.5 font-medium text-danger">
                   {t('supervision.alertOverdue', { count: thesis.objectiveSummary.overdue })}

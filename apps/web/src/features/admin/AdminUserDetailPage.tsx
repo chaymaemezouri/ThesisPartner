@@ -4,6 +4,7 @@ import { Button, Modal, Textarea } from '@thesispartner/ui';
 import { ApiClientError } from '../../api/client';
 import { useMeQuery } from '../../hooks/use-session';
 import { useT } from '../../i18n/LocaleContext';
+import { AdminBadge, AdminPanel } from './AdminUi';
 import { useAdminUser, useReactivateUser, useSuspendUser } from './hooks/use-admin';
 
 export function AdminUserDetailPage() {
@@ -65,21 +66,24 @@ export function AdminUserDetailPage() {
         </p>
       ) : user ? (
         <>
-          <section
-            className="rounded-md border border-line bg-surface px-4 py-4"
-            aria-labelledby="admin-profile"
-          >
-            <h2 id="admin-profile" className="text-sm font-medium text-ink">
+          <AdminPanel>
+            <h2 id="admin-profile" className="text-sm font-semibold text-ink">
               {t('admin.users.profile')}
             </h2>
             <dl className="mt-4 grid gap-4 sm:grid-cols-2">
               <Field label={t('auth.email')} value={user.email} />
-              <Field
-                label={t('admin.users.colStatus')}
-                value={
-                  user.disabledAt ? t('admin.users.statusDisabled') : t('admin.users.statusActive')
-                }
-              />
+              <div>
+                <dt className="text-[11px] font-medium tracking-wide text-muted uppercase">
+                  {t('admin.users.colStatus')}
+                </dt>
+                <dd className="mt-1">
+                  <AdminBadge tone={user.disabledAt ? 'danger' : 'ok'}>
+                    {user.disabledAt
+                      ? t('admin.users.statusDisabled')
+                      : t('admin.users.statusActive')}
+                  </AdminBadge>
+                </dd>
+              </div>
               <Field label={t('settings.displayName')} value={user.displayName} />
               <Field
                 label={t('admin.users.filterPlatform')}
@@ -112,10 +116,10 @@ export function AdminUserDetailPage() {
                 />
               ) : null}
             </dl>
-          </section>
+          </AdminPanel>
 
           <section
-            className="rounded-md border border-line bg-surface px-4 py-4"
+            className="rounded-2xl border border-line bg-surface px-4 py-4 shadow-card"
             aria-labelledby="admin-memberships"
           >
             <h2 id="admin-memberships" className="text-sm font-medium text-ink">

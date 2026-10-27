@@ -13,6 +13,12 @@ const MESSAGE_KEY: Partial<Record<ApiErrorCode, MessageKey>> = {
   RATE_LIMITED: 'errors.rateLimited',
   FORBIDDEN: 'errors.forbidden',
   NOT_FOUND: 'errors.accountNotFound',
+  STORAGE_UNAVAILABLE: 'errors.storageUnavailable',
+  PAYLOAD_TOO_LARGE: 'errors.payloadTooLarge',
+  FILE_TOO_LARGE: 'deliverables.fileTooLarge',
+  FILE_TYPE_NOT_ALLOWED: 'deliverables.fileTypeNotAllowed',
+  FILE_SIGNATURE_MISMATCH: 'deliverables.fileSignatureMismatch',
+  SUBSCRIPTION_REQUIRED: 'errors.subscriptionRequired',
 };
 
 export function formErrorMessage(error: unknown, t: Translate): string {

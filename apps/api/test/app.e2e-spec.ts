@@ -25,7 +25,7 @@ describe('API foundation', () => {
     expect(response.headers['x-request-id']).toBe('health-check-01');
     expect(healthResponseSchema.parse(response.body)).toEqual({
       status: 'ok',
-      checks: { api: 'ok', database: 'ok', redis: 'ok' },
+      checks: { api: 'ok', database: 'ok', redis: 'ok', storage: 'ok' },
     });
     expect(JSON.stringify(response.body)).not.toContain('postgresql://');
   });

@@ -31,6 +31,15 @@ jobs:
       - run: npm run typecheck
       - run: npm run test
       - run: npm run build
+      - name: Validate production Compose
+        run: docker compose -f docker-compose.yml -f docker-compose.production.yml config >/dev/null
+        env:
+          APP_URL: https://example.invalid
+          SMTP_HOST: smtp.example.invalid
+          SMTP_FROM: ThesisPartner <noreply@example.invalid>
+          S3_PUBLIC_URL: https://example.invalid
+          S3_ACCESS_KEY: ci
+          S3_SECRET_KEY: ci-secret-value
 
   deploy:
     name: Deploy to Hostinger
@@ -59,6 +68,16 @@ jobs:
           ssh-keygen -y -f ~/.ssh/thesispartner_deploy > /dev/null
           ssh-keygen -F "$DEPLOY_HOST" -f ~/.ssh/known_hosts
 
+      - name: Require public health URL
+        env:
+          APP_URL: ${{ vars.THESIS_APP_URL }}
+        run: |
+          set -euo pipefail
+          if [ -z "${APP_URL:-}" ]; then
+            echo "Set GitHub Actions variable THESIS_APP_URL to the public origin" >&2
+            exit 1
+          fi
+
       - name: Deploy exact commit
         env:
           DEPLOY_HOST: ${{ secrets.THESIS_DEPLOY_HOST }}
@@ -70,6 +89,33 @@ jobs:
             -o StrictHostKeyChecking=yes \
             -o BatchMode=yes \
             "$DEPLOY_USER@$DEPLOY_HOST" "deploy $DEPLOY_SHA"
+
+      - name: Verify production health including storage
+        env:
+          APP_URL: ${{ vars.THESIS_APP_URL }}
+        run: |
+          set -euo pipefail
+          url="${APP_URL%/}/api/v1/health"
+          body=""
+          for i in $(seq 1 24); do
+            if body="$(curl -fsS --max-time 20 "$url")"; then
+              break
+            fi
+            sleep 5
+          done
+          if [ -z "$body" ]; then
+            echo "public health URL did not respond" >&2
+            exit 1
+          fi
+          BODY="$body" python3 -c 'import json, os, sys
+b = json.loads(os.environ["BODY"])
+c = b.get("checks") or {}
+missing = [n for n in ("database", "redis", "storage") if c.get(n) != "ok"]
+if missing:
+    print("health checks failed: " + ",".join(missing), file=sys.stderr)
+    sys.exit(1)
+'
+          echo "public health ok"
 
       - name: Remove temporary SSH key
         if: always()

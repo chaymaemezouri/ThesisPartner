@@ -10,6 +10,7 @@ class HealthChecksDto {
   api!: 'ok';
   database!: 'ok' | 'error';
   redis!: 'ok' | 'error';
+  storage!: 'ok' | 'error';
 }
 
 class HealthResponseDto {
@@ -29,7 +30,7 @@ export class HealthController {
   @ApiOkResponse({ type: HealthResponseDto })
   async get(@Res({ passthrough: true }) response: Response): Promise<HealthResponse> {
     const body = await this.health.check();
-    response.status(body.status === 'ok' ? 200 : 503);
+    response.status(body.checks.database === 'ok' ? 200 : 503);
     return body;
   }
 }

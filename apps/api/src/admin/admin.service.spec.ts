@@ -19,7 +19,7 @@ describe('AdminService', () => {
     const health = overrides.health ?? {
       check: jest.fn().mockResolvedValue({
         status: 'ok',
-        checks: { api: 'ok', database: 'ok', redis: 'ok' },
+        checks: { api: 'ok', database: 'ok', redis: 'ok', storage: 'ok' },
       }),
     };
     const env = overrides.env ?? { NODE_ENV: 'test' as const };
@@ -135,7 +135,7 @@ describe('AdminService', () => {
     ).toBe(true);
     expect(result.health).toEqual({
       status: 'ok',
-      checks: { api: 'ok', database: 'ok', redis: 'ok' },
+      checks: { api: 'ok', database: 'ok', redis: 'ok', storage: 'ok' },
     });
     expect(health.check).toHaveBeenCalled();
   });
@@ -289,7 +289,7 @@ describe('AdminService', () => {
     const health = {
       check: jest.fn().mockResolvedValue({
         status: 'ok',
-        checks: { api: 'ok', database: 'ok', redis: 'ok' },
+        checks: { api: 'ok', database: 'ok', redis: 'ok', storage: 'ok' },
       }),
     };
     const profile = {

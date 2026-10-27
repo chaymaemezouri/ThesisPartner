@@ -141,6 +141,12 @@ export const SUPERVISOR_NAV: NavItem[] = [
 
 export const SECONDARY_NAV: NavItem[] = [
   {
+    to: '/abonnement',
+    labelKey: 'nav.billing',
+    descriptionKey: 'nav.billingDesc',
+    icon: 'settings',
+  },
+  {
     to: '/parametres',
     labelKey: 'nav.settings',
     descriptionKey: 'nav.settingsDesc',

@@ -1,0 +1,14 @@
+# Outer Hostinger HTTPS vhost. Merge into the existing TLS server; do not drop certificates.
+# Proxy the whole site to the Compose web container (it already routes /api/ and /thesispartner/).
+#
+# client_max_body_size 52m;
+# proxy_read_timeout 120s;
+# proxy_send_timeout 120s;
+# proxy_http_version 1.1;
+# proxy_set_header Host $host;
+# proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+# proxy_set_header X-Forwarded-Proto $scheme;
+# proxy_pass http://127.0.0.1:8080;
+#
+# If /api is proxied directly to 127.0.0.1:3000, also proxy /thesispartner/ to 8080
+# (or S3 signatures from the browser will 404). Prefer a single pass to 8080.

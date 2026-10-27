@@ -5,6 +5,7 @@ import {
   sanitizeOriginalName,
   scanHeader,
   sha256Buffer,
+  rewriteSignedUrl,
   signedUrlExpiry,
   sumStoredBytes,
 } from './file-rules';
@@ -111,6 +112,7 @@ describe('file inspection', () => {
     expect(scanHeader(pdf, 'development')).toBe('CLEAN');
     expect(scanHeader(pdf, 'test')).toBe('CLEAN');
     expect(scanHeader(pdf, 'production')).toBe('PENDING');
+    expect(scanHeader(pdf, 'production', 'allow')).toBe('CLEAN');
     expect(scanHeader(Buffer.from('EICAR-STANDARD-ANTIVIRUS-TEST-FILE'), 'development')).toBe(
       'INFECTED',
     );
@@ -119,6 +121,14 @@ describe('file inspection', () => {
   it('computes a short signed-url expiry', () => {
     const now = new Date('2026-09-30T00:00:00.000Z');
     expect(signedUrlExpiry(now, 300).toISOString()).toBe('2026-09-30T00:05:00.000Z');
+  });
+
+  it('rewrites the signed URL host for a public S3 origin', () => {
+    const signed = 'http://s3:8333/thesispartner/theses/a/file.pdf?X-Amz-Signature=abc';
+    expect(rewriteSignedUrl(signed, 'http://localhost:9000')).toBe(
+      'http://localhost:9000/thesispartner/theses/a/file.pdf?X-Amz-Signature=abc',
+    );
+    expect(rewriteSignedUrl(signed, undefined)).toBe(signed);
   });
 });
 

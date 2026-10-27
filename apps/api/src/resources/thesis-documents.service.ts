@@ -92,7 +92,7 @@ export class ThesisDocumentsService {
   }
 
   async create(actorId: string, thesisId: string, body: DocumentBody, requestId?: string) {
-    const role = await this.role(actorId, thesisId);
+    const role = await this.role(actorId, thesisId, true);
     if (role !== 'SUPERVISOR' && role !== 'DOCTORAL_STUDENT') {
       throw new AppException(403, 'FORBIDDEN', 'Vous ne pouvez pas ajouter un document');
     }
@@ -136,7 +136,7 @@ export class ThesisDocumentsService {
     body: DocumentBody,
     requestId?: string,
   ) {
-    const role = await this.role(actorId, thesisId);
+    const role = await this.role(actorId, thesisId, true);
     const existing = await this.prisma.thesisDocument.findFirst({
       where: { id: documentId, thesisId },
     });
@@ -178,7 +178,7 @@ export class ThesisDocumentsService {
   }
 
   async remove(actorId: string, thesisId: string, documentId: string, requestId?: string) {
-    const role = await this.role(actorId, thesisId);
+    const role = await this.role(actorId, thesisId, true);
     const existing = await this.prisma.thesisDocument.findFirst({
       where: { id: documentId, thesisId },
     });
@@ -209,7 +209,7 @@ export class ThesisDocumentsService {
     file: { path: string; originalName: string; declaredMime: string } | undefined,
     requestId?: string,
   ) {
-    const role = await this.role(actorId, thesisId);
+    const role = await this.role(actorId, thesisId, true);
     if (!file) throw new AppException(400, 'VALIDATION_ERROR', 'Aucun fichier');
     if (!acceptedFile(file.originalName, file.declaredMime)) {
       throw new AppException(400, 'VALIDATION_ERROR', 'Formats acceptés : PDF, DOC ou DOCX');
@@ -227,6 +227,7 @@ export class ThesisDocumentsService {
       throw new AppException(403, 'FORBIDDEN', 'Vous ne pouvez pas joindre un fichier');
     }
     const key = `theses/${thesisId}/documents/${documentId}/${randomUUID()}`;
+    await this.storage.ensureReady();
     try {
       try {
         await this.storage.putObject({
@@ -237,7 +238,7 @@ export class ThesisDocumentsService {
           downloadName: file.originalName,
         });
       } catch {
-        throw new AppException(503, 'INTERNAL_ERROR', 'Le stockage est indisponible.');
+        throw new AppException(503, 'STORAGE_UNAVAILABLE', 'Le stockage est indisponible.');
       }
       await this.prisma.thesisDocument.update({
         where: { id: documentId },
@@ -264,7 +265,7 @@ export class ThesisDocumentsService {
   }
 
   async removeFile(actorId: string, thesisId: string, documentId: string, requestId?: string) {
-    const role = await this.role(actorId, thesisId);
+    const role = await this.role(actorId, thesisId, true);
     if (role !== 'SUPERVISOR') {
       throw new AppException(403, 'FORBIDDEN', 'Seul le superviseur peut retirer un fichier');
     }
@@ -289,7 +290,7 @@ export class ThesisDocumentsService {
   }
 
   async download(actorId: string, thesisId: string, documentId: string, inline: boolean) {
-    const role = await this.role(actorId, thesisId);
+    const role = await this.role(actorId, thesisId, true);
     const existing = await this.prisma.thesisDocument.findFirst({
       where: { id: documentId, thesisId },
     });
@@ -308,7 +309,7 @@ export class ThesisDocumentsService {
   }
 
   async consult(actorId: string, thesisId: string, documentId: string) {
-    const role = await this.role(actorId, thesisId);
+    const role = await this.role(actorId, thesisId, true);
     if (role !== 'DOCTORAL_STUDENT') {
       throw new AppException(403, 'FORBIDDEN', 'Seul le doctorant enregistre une consultation');
     }
@@ -327,7 +328,7 @@ export class ThesisDocumentsService {
     body: SynthesisBody,
     requestId?: string,
   ) {
-    const role = await this.role(actorId, thesisId);
+    const role = await this.role(actorId, thesisId, true);
     if (role !== 'DOCTORAL_STUDENT') {
       throw new AppException(403, 'FORBIDDEN', 'Seul le doctorant rédige la synthèse');
     }
@@ -424,7 +425,7 @@ export class ThesisDocumentsService {
     body: ReviewBody,
     requestId?: string,
   ) {
-    const role = await this.role(actorId, thesisId);
+    const role = await this.role(actorId, thesisId, true);
     if (role !== 'SUPERVISOR') {
       throw new AppException(403, 'FORBIDDEN', 'Seul le superviseur examine une synthèse');
     }
@@ -468,7 +469,7 @@ export class ThesisDocumentsService {
     file: { path: string; originalName: string; declaredMime: string } | undefined,
     requestId?: string,
   ) {
-    const role = await this.role(actorId, thesisId);
+    const role = await this.role(actorId, thesisId, true);
     if (role !== 'DOCTORAL_STUDENT') {
       throw new AppException(403, 'FORBIDDEN', 'Seul le doctorant joint une synthèse');
     }
@@ -490,6 +491,7 @@ export class ThesisDocumentsService {
       throw new AppException(403, 'FORBIDDEN', 'Cette synthèse ne peut plus être modifiée');
     }
     const key = `theses/${thesisId}/documents/${documentId}/synthesis/${randomUUID()}`;
+    await this.storage.ensureReady();
     const now = new Date();
     const nextStatus =
       status === 'CHANGES_REQUESTED' || status === 'SUBMITTED' || status === 'VALIDATED'
@@ -505,7 +507,7 @@ export class ThesisDocumentsService {
           downloadName: file.originalName,
         });
       } catch {
-        throw new AppException(503, 'INTERNAL_ERROR', 'Le stockage est indisponible.');
+        throw new AppException(503, 'STORAGE_UNAVAILABLE', 'Le stockage est indisponible.');
       }
       await this.prisma.documentStudy.upsert({
         where: { documentId },
@@ -587,11 +589,12 @@ export class ThesisDocumentsService {
     }
   }
 
-  private async role(actorId: string, thesisId: string): Promise<MembershipRole> {
+  private async role(actorId: string, thesisId: string, write = false): Promise<MembershipRole> {
     await this.access.assertCanAccess({
       actorId,
       thesisId,
       allowedRoles: ['DOCTORAL_STUDENT', 'SUPERVISOR', 'ADMIN'],
+      write,
     });
     const membership = await this.prisma.thesisMembership.findUnique({
       where: { thesisId_userId: { thesisId, userId: actorId } },

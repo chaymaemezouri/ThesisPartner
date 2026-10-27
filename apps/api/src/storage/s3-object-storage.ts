@@ -12,6 +12,7 @@ import {
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { GetObjectCommand } from '@aws-sdk/client-s3';
 import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
+import { AppException } from '../common/errors/app.exception';
 import { ENV, type Env } from '../config/env';
 import { StructuredLogger } from '../infrastructure/logger/logger';
 import { contentDisposition, signedUrlExpiry } from './file-rules';
@@ -20,23 +21,28 @@ import type { ObjectStorage } from './object-storage';
 @Injectable()
 export class S3ObjectStorage implements ObjectStorage, OnModuleInit {
   private readonly client: S3Client;
+  private readonly signer: S3Client;
   private ready = false;
 
   constructor(
     @Inject(ENV) private readonly env: Env,
     private readonly logger: StructuredLogger,
   ) {
-    this.client = new S3Client({
+    const credentials = {
+      accessKeyId: env.S3_ACCESS_KEY,
+      secretAccessKey: env.S3_SECRET_KEY,
+    };
+    const shared = {
       region: env.S3_REGION,
-      endpoint: env.S3_ENDPOINT,
       forcePathStyle: env.S3_FORCE_PATH_STYLE,
-      requestChecksumCalculation: 'WHEN_REQUIRED',
-      responseChecksumValidation: 'WHEN_REQUIRED',
-      credentials: {
-        accessKeyId: env.S3_ACCESS_KEY,
-        secretAccessKey: env.S3_SECRET_KEY,
-      },
-    });
+      requestChecksumCalculation: 'WHEN_REQUIRED' as const,
+      responseChecksumValidation: 'WHEN_REQUIRED' as const,
+      credentials,
+    };
+    this.client = new S3Client({ ...shared, endpoint: env.S3_ENDPOINT });
+    this.signer = env.S3_PUBLIC_URL
+      ? new S3Client({ ...shared, endpoint: env.S3_PUBLIC_URL })
+      : this.client;
   }
 
   async onModuleInit(): Promise<void> {
@@ -51,6 +57,26 @@ export class S3ObjectStorage implements ObjectStorage, OnModuleInit {
 
   isReady(): boolean {
     return this.ready;
+  }
+
+  async ping(): Promise<boolean> {
+    try {
+      await this.ensurePrivateBucket();
+      this.ready = true;
+      return true;
+    } catch {
+      this.ready = false;
+      return false;
+    }
+  }
+
+  async ensureReady(): Promise<void> {
+    if (this.ready) return;
+    const ok = await this.ping();
+    if (!ok) {
+      this.logger.write({ level: 'error', msg: 'storage.unavailable' });
+      throw new AppException(503, 'STORAGE_UNAVAILABLE', 'Le stockage est indisponible.');
+    }
   }
 
   async ensurePrivateBucket(): Promise<void> {
@@ -116,8 +142,11 @@ export class S3ObjectStorage implements ObjectStorage, OnModuleInit {
       ResponseContentType: input.contentType,
       ResponseContentDisposition: contentDisposition(input.downloadName, input.inline),
     });
-    const url = await getSignedUrl(this.client, command, { expiresIn: input.ttlSeconds });
-    return { url, expiresAt: signedUrlExpiry(new Date(), input.ttlSeconds) };
+    const url = await getSignedUrl(this.signer, command, { expiresIn: input.ttlSeconds });
+    return {
+      url,
+      expiresAt: signedUrlExpiry(new Date(), input.ttlSeconds),
+    };
   }
 
   private async removePublicPolicy(): Promise<void> {

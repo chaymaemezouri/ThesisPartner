@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button, Input, Select } from '@thesispartner/ui';
-import { ApiClientError } from '../../api/client';
 import { useT } from '../../i18n/LocaleContext';
+import { AdminBadge, AdminEmpty, AdminPageHeader, AdminPanel, AdminState } from './AdminUi';
 import { useAdminUsers, type AdminUserListParams } from './hooks/use-admin';
 
 export function AdminUsersPage() {
@@ -15,13 +15,10 @@ export function AdminUsersPage() {
 
   return (
     <div className="space-y-6">
-      <header>
-        <h1 className="text-lg font-semibold tracking-tight text-ink">{t('admin.users.title')}</h1>
-        <p className="mt-1 text-sm text-muted">{t('admin.users.subtitle')}</p>
-      </header>
+      <AdminPageHeader title={t('admin.users.title')} subtitle={t('admin.users.subtitle')} />
 
       <form
-        className="flex flex-wrap items-end gap-3"
+        className="flex flex-wrap items-end gap-3 rounded-2xl border border-line bg-surface p-4 shadow-card"
         onSubmit={(event) => {
           event.preventDefault();
           setParams((current) => ({ ...current, search: searchInput, page: 1 }));
@@ -96,19 +93,13 @@ export function AdminUsersPage() {
         <Button type="submit">{t('admin.users.applyFilters')}</Button>
       </form>
 
-      {list.isLoading ? (
-        <p role="status" className="text-sm text-muted">
-          {t('common.loading')}
-        </p>
-      ) : list.isError ? (
-        <p role="alert" className="text-sm text-danger">
-          {list.error instanceof ApiClientError ? list.error.body.message : t('errors.generic')}
-        </p>
-      ) : list.data && list.data.users.length === 0 ? (
-        <p className="text-sm text-muted">{t('admin.users.empty')}</p>
-      ) : list.data ? (
+      <AdminState loading={list.isLoading} error={list.error}>
+        {list.data && list.data.users.length === 0 ? (
+          <AdminEmpty>{t('admin.users.empty')}</AdminEmpty>
+        ) : list.data ? (
         <>
-          <div className="overflow-x-auto rounded-md border border-line bg-surface">
+          <AdminPanel>
+            <div className="overflow-x-auto">
             <table className="min-w-full text-left text-sm">
               <thead className="border-b border-line text-[11px] tracking-wide text-muted uppercase">
                 <tr>
@@ -121,38 +112,51 @@ export function AdminUsersPage() {
               </thead>
               <tbody>
                 {list.data.users.map((user) => (
-                  <tr key={user.id} className="border-b border-line last:border-0">
+                  <tr key={user.id} className="border-b border-line last:border-0 transition-colors hover:bg-brand-soft/40">
                     <td className="px-4 py-3">
                       <Link
                         to={`/admin/utilisateurs/${user.id}`}
-                        className="font-medium text-ink underline-offset-2 hover:underline"
+                        className="font-medium text-brand hover:underline"
                       >
                         {user.displayName}
                       </Link>
                       {user.platformRole === 'SUPER_ADMIN' ? (
-                        <span className="ml-2 text-[11px] text-muted">
-                          {t('admin.roles.superAdmin')}
+                        <span className="ml-2">
+                          <AdminBadge tone="violet">{t('admin.roles.superAdmin')}</AdminBadge>
                         </span>
                       ) : null}
                     </td>
                     <td className="px-4 py-3 break-all text-muted">{user.email}</td>
-                    <td className="px-4 py-3 text-muted">
-                      {user.membershipRoles.length === 0
-                        ? t('common.none')
-                        : user.membershipRoles
-                            .map((role) =>
-                              role === 'DOCTORAL_STUDENT'
-                                ? t('admin.roles.doctoral')
-                                : role === 'SUPERVISOR'
-                                  ? t('admin.roles.supervisor')
-                                  : t('admin.roles.thesisAdmin'),
-                            )
-                            .join(', ')}
+                    <td className="px-4 py-3">
+                      <div className="flex flex-wrap gap-1">
+                        {user.membershipRoles.length === 0
+                          ? t('common.none')
+                          : user.membershipRoles.map((role) => (
+                              <AdminBadge
+                                key={role}
+                                tone={
+                                  role === 'DOCTORAL_STUDENT'
+                                    ? 'teal'
+                                    : role === 'SUPERVISOR'
+                                      ? 'brand'
+                                      : 'muted'
+                                }
+                              >
+                                {role === 'DOCTORAL_STUDENT'
+                                  ? t('admin.roles.doctoral')
+                                  : role === 'SUPERVISOR'
+                                    ? t('admin.roles.supervisor')
+                                    : t('admin.roles.thesisAdmin')}
+                              </AdminBadge>
+                            ))}
+                      </div>
                     </td>
                     <td className="px-4 py-3">
-                      {user.disabledAt
-                        ? t('admin.users.statusDisabled')
-                        : t('admin.users.statusActive')}
+                      <AdminBadge tone={user.disabledAt ? 'danger' : 'ok'}>
+                        {user.disabledAt
+                          ? t('admin.users.statusDisabled')
+                          : t('admin.users.statusActive')}
+                      </AdminBadge>
                     </td>
                     <td className="px-4 py-3 tabular-nums text-muted">
                       {new Date(user.createdAt).toLocaleDateString()}
@@ -161,7 +165,8 @@ export function AdminUsersPage() {
                 ))}
               </tbody>
             </table>
-          </div>
+            </div>
+          </AdminPanel>
 
           <div className="flex flex-wrap items-center justify-between gap-3 text-sm">
             <p className="text-muted">
@@ -202,6 +207,7 @@ export function AdminUsersPage() {
           </div>
         </>
       ) : null}
+      </AdminState>
     </div>
   );
 }

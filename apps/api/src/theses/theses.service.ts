@@ -96,6 +96,7 @@ export class ThesesService {
   }
 
   async create(userId: string, body: CreateThesisBody, requestId?: string) {
+    await this.access.assertCanCreateThesis(userId);
     const thesis = await this.prisma.$transaction(async (tx) => {
       const created = await tx.thesis.create({
         data: {
@@ -129,6 +130,7 @@ export class ThesesService {
       actorId: userId,
       thesisId,
       allowedRoles: ['DOCTORAL_STUDENT', 'SUPERVISOR'],
+      write: true,
     });
     const data = {
       title: body.title,
@@ -171,6 +173,7 @@ export class ThesesService {
       actorId: userId,
       thesisId,
       allowedRoles: ['DOCTORAL_STUDENT'],
+      write: true,
     });
     await this.prisma.$transaction(async (tx) => {
       await this.audit.record(tx, {
@@ -200,6 +203,7 @@ export class ThesesService {
       actorId,
       thesisId,
       allowedRoles: ['DOCTORAL_STUDENT', 'SUPERVISOR'],
+      write: true,
     });
     const created = await this.prisma.$transaction((tx) =>
       this.standardPath.apply(tx, thesisId, actorId),

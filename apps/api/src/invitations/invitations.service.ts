@@ -1,5 +1,10 @@
 import { Inject, Injectable } from '@nestjs/common';
-import type { InvitationStatus, MembershipRole, Prisma } from '@prisma/client';
+import type {
+  InvitationEmailStatus,
+  InvitationStatus,
+  MembershipRole,
+  Prisma,
+} from '@prisma/client';
 import { MEMBERSHIP_ROLES } from '@thesispartner/types';
 import type { inviteMemberSchema, supervisorChangeBodySchema } from '@thesispartner/validation';
 import type { z } from 'zod';
@@ -12,8 +17,10 @@ import { ENV, type Env } from '../config/env';
 import { StructuredLogger } from '../infrastructure/logger/logger';
 import { PrismaService } from '../infrastructure/prisma/prisma.service';
 import { assertCanInvite } from '../theses/invite.policy';
+import { buildInviteMail } from './invite-mail';
 
 const INVITATION_TTL_MS = 14 * 24 * 60 * 60 * 1000;
+const RESEND_COOLDOWN_MS = 60 * 1000;
 
 type InviteBody = z.infer<typeof inviteMemberSchema>;
 type ChangeBody = z.infer<typeof supervisorChangeBodySchema>;
@@ -24,6 +31,7 @@ type InvitationRow = {
   email: string;
   role: MembershipRole;
   status: InvitationStatus;
+  emailStatus: InvitationEmailStatus;
   replacesSupervisor: boolean;
   changeReason: string | null;
   expiresAt: Date;
@@ -366,6 +374,17 @@ export class InvitationsService {
     if (invitation.status !== 'PENDING') {
       throw new AppException(409, 'CONFLICT', 'Only pending invitations can be resent');
     }
+    if (
+      this.env.NODE_ENV !== 'test' &&
+      invitation.emailAttemptedAt &&
+      Date.now() - invitation.emailAttemptedAt.getTime() < RESEND_COOLDOWN_MS
+    ) {
+      throw new AppException(
+        429,
+        'RATE_LIMITED',
+        'Wait a minute before sending this invitation again',
+      );
+    }
 
     const token = createOpaqueToken();
     await this.prisma.$transaction(async (tx) => {
@@ -387,6 +406,7 @@ export class InvitationsService {
     });
 
     await this.deliverInviteEmail({
+      invitationId,
       to: invitation.email,
       thesisTitle: invitation.thesis.title,
       inviterName: invitation.invitedBy.profile?.displayName ?? 'ThesisPartner',
@@ -606,7 +626,8 @@ export class InvitationsService {
       return created;
     });
 
-    await this.deliverInviteEmail({
+    const emailStatus = await this.deliverInviteEmail({
+      invitationId: invitation.id,
       to: email,
       thesisTitle: actor.thesis.title,
       inviterName: actor.user.profile?.displayName ?? 'ThesisPartner',
@@ -620,6 +641,7 @@ export class InvitationsService {
       email: invitation.email,
       role: invitation.role,
       status: invitation.status,
+      emailStatus,
       expiresAt: invitation.expiresAt.toISOString(),
       replacesSupervisor: invitation.replacesSupervisor,
     };
@@ -683,6 +705,7 @@ export class InvitationsService {
       email: row.email,
       role: row.role,
       status: row.status,
+      emailStatus: row.emailStatus,
       replacesSupervisor: row.replacesSupervisor,
       changeReason: row.changeReason,
       invitedByName: row.invitedBy.profile?.displayName ?? 'ThesisPartner',
@@ -693,32 +716,52 @@ export class InvitationsService {
   }
 
   private async deliverInviteEmail(input: {
+    invitationId: string;
     to: string;
     thesisTitle: string;
     inviterName: string;
     role: MembershipRole;
     token: string;
     replacesSupervisor: boolean;
-  }): Promise<void> {
-    const url = `${this.env.APP_URL}/invitation?token=${encodeURIComponent(input.token)}`;
-    const roleLabel =
-      input.role === 'SUPERVISOR'
-        ? 'encadrant'
-        : input.role === 'DOCTORAL_STUDENT'
-          ? 'doctorant'
-          : 'administrateur';
-    const changeLine = input.replacesSupervisor
-      ? '\nCette invitation remplace l’encadrant actuel après acceptation.\n'
-      : '\n';
-    const text = `${input.inviterName} vous invite à rejoindre la thèse « ${input.thesisTitle} » en tant que ${roleLabel} sur ThesisPartner.${changeLine}\nPour accepter ou refuser, ouvrez ce lien sécurisé :\n${url}\n\nLe lien expire dans 14 jours. Si vous n’avez pas encore de compte, créez-en un avec cette adresse e-mail puis rouvrez le lien.`;
+  }): Promise<InvitationEmailStatus> {
+    const acceptUrl = `${this.env.APP_URL.replace(/\/$/, '')}/invitation?token=${encodeURIComponent(input.token)}`;
+    const mail = buildInviteMail({
+      thesisTitle: input.thesisTitle,
+      inviterName: input.inviterName,
+      role: input.role,
+      acceptUrl,
+      replacesSupervisor: input.replacesSupervisor,
+    });
+    await this.prisma.invitation.update({
+      where: { id: input.invitationId },
+      data: { emailAttemptedAt: new Date() },
+    });
     try {
       await this.mailer.send({
         to: input.to,
-        subject: `Invitation ThesisPartner — ${input.thesisTitle}`,
-        text,
+        subject: mail.subject,
+        text: mail.text,
+        html: mail.html,
       });
+      await this.prisma.invitation.update({
+        where: { id: input.invitationId },
+        data: {
+          emailStatus: 'SENT',
+          emailSentAt: new Date(),
+          emailLastError: null,
+        },
+      });
+      return 'SENT';
     } catch {
+      await this.prisma.invitation.update({
+        where: { id: input.invitationId },
+        data: {
+          emailStatus: 'FAILED',
+          emailLastError: 'smtp_error',
+        },
+      });
       this.logger.write({ level: 'error', msg: 'invitation.mail.failed' });
+      return 'FAILED';
     }
   }
 }

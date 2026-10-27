@@ -98,6 +98,16 @@ export class AuthService {
         });
         const token = await this.replaceToken(tx, user.id, 'EMAIL_VERIFICATION', DAY_MS);
         const issued = await this.sessions.issue(tx, user.id, meta);
+        const trialStarted = this.env.NODE_ENV === 'test';
+        const startedAt = trialStarted ? new Date() : null;
+        await tx.trial.create({
+          data: {
+            userId: user.id,
+            status: trialStarted ? 'ACTIVE' : 'NOT_STARTED',
+            startedAt,
+            expiresAt: trialStarted ? new Date(Date.now() + 30 * DAY_MS) : null,
+          },
+        });
         await this.audit.record(tx, {
           actorId: user.id,
           action: 'auth.register',

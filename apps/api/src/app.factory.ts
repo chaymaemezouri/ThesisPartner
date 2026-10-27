@@ -2,7 +2,7 @@ import { VersioningType, type INestApplication } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import cookieParser from 'cookie-parser';
-import { json, urlencoded } from 'express';
+import { json, urlencoded, type Request } from 'express';
 import helmet from 'helmet';
 import { AppModule } from './app.module';
 import { requestIdMiddleware } from './common/http/request-context';
@@ -23,7 +23,14 @@ export function configureApp(app: INestApplication, env: Env): void {
   app.use(requestIdMiddleware);
   app.use(helmet());
   app.use(cookieParser());
-  app.use(json({ limit: '256kb' }));
+  app.use(
+    json({
+      limit: '256kb',
+      verify: (request, _response, buffer) => {
+        (request as Request).rawBody = buffer;
+      },
+    }),
+  );
   app.use(urlencoded({ extended: false, limit: '256kb' }));
   app.enableCors({
     origin: env.APP_URL,

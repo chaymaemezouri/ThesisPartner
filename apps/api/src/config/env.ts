@@ -27,11 +27,18 @@ const schema = z.object({
     emptyToUndefined,
     z.coerce.number().int().min(1).max(65535).default(1025),
   ),
+  SMTP_USER: z.preprocess(emptyToUndefined, z.string().min(1).max(320).optional()),
+  SMTP_PASS: z.preprocess(emptyToUndefined, z.string().min(1).max(256).optional()),
+  SMTP_SECURE: z.preprocess(
+    (value) => (value === undefined || value === '' ? 'false' : value),
+    z.enum(['true', 'false']).transform((value) => value === 'true'),
+  ),
   SMTP_FROM: z.preprocess(
     emptyToUndefined,
     z.string().min(3).max(320).default('ThesisPartner <noreply@thesispartner.local>'),
   ),
   S3_ENDPOINT: z.preprocess(emptyToUndefined, z.string().url().default('http://127.0.0.1:9000')),
+  S3_PUBLIC_URL: z.preprocess(emptyToUndefined, z.string().url().optional()),
   S3_REGION: z.preprocess(emptyToUndefined, z.string().min(1).max(64).default('us-east-1')),
   S3_BUCKET: z.preprocess(emptyToUndefined, z.string().min(3).max(63).default('thesispartner')),
   S3_ACCESS_KEY: z.preprocess(
@@ -62,7 +69,7 @@ const schema = z.object({
     emptyToUndefined,
     z.coerce.number().int().min(1000).max(3_600_000).default(60_000),
   ),
-  FILE_SCAN_MODE: z.preprocess(emptyToUndefined, z.enum(['stub']).default('stub')),
+  FILE_SCAN_MODE: z.preprocess(emptyToUndefined, z.enum(['stub', 'allow']).default('stub')),
   OPENAI_API_KEY: z.preprocess(emptyToUndefined, z.string().min(10).max(200).optional()),
   OPENAI_MODEL: z.preprocess(emptyToUndefined, z.string().min(1).max(80).default('gpt-4o-mini')),
   /** Optional. Promotes this existing account to SUPER_ADMIN when none exists yet. */
@@ -70,9 +77,30 @@ const schema = z.object({
     emptyToUndefined,
     z.string().trim().toLowerCase().email().max(320).optional(),
   ),
+  PAYMENT_PROVIDER: z.preprocess(emptyToUndefined, z.enum(['none', 'mock']).optional()),
+  MOCK_WEBHOOK_SECRET: z.preprocess(emptyToUndefined, z.string().min(16).max(128).optional()),
+  MOCK_PAYMENT_SCENARIO: z.preprocess(
+    emptyToUndefined,
+    z
+      .enum([
+        'success',
+        'decline',
+        'cancel',
+        'pending',
+        'delayed',
+        'duplicate',
+        'out_of_order',
+        'refund',
+        'renewal_fail',
+      ])
+      .default('success'),
+  ),
 });
 
-export type Env = z.infer<typeof schema>;
+export type Env = Omit<z.infer<typeof schema>, 'PAYMENT_PROVIDER' | 'MOCK_WEBHOOK_SECRET'> & {
+  PAYMENT_PROVIDER: 'none' | 'mock';
+  MOCK_WEBHOOK_SECRET?: string;
+};
 export type LogLevel = Env['LOG_LEVEL'];
 
 export const ENV = Symbol('ENV');
@@ -90,8 +118,12 @@ export function parseEnv(source: NodeJS.ProcessEnv): Env {
     RATE_LIMIT_TTL_MS: source.RATE_LIMIT_TTL_MS,
     SMTP_HOST: source.SMTP_HOST,
     SMTP_PORT: source.SMTP_PORT,
+    SMTP_USER: source.SMTP_USER,
+    SMTP_PASS: source.SMTP_PASS,
+    SMTP_SECURE: source.SMTP_SECURE,
     SMTP_FROM: source.SMTP_FROM,
     S3_ENDPOINT: source.S3_ENDPOINT,
+    S3_PUBLIC_URL: source.S3_PUBLIC_URL,
     S3_REGION: source.S3_REGION,
     S3_BUCKET: source.S3_BUCKET,
     S3_ACCESS_KEY: source.S3_ACCESS_KEY,
@@ -105,6 +137,9 @@ export function parseEnv(source: NodeJS.ProcessEnv): Env {
     OPENAI_API_KEY: source.OPENAI_API_KEY,
     OPENAI_MODEL: source.OPENAI_MODEL,
     SUPER_ADMIN_BOOTSTRAP_EMAIL: source.SUPER_ADMIN_BOOTSTRAP_EMAIL,
+    PAYMENT_PROVIDER: source.PAYMENT_PROVIDER,
+    MOCK_WEBHOOK_SECRET: source.MOCK_WEBHOOK_SECRET,
+    MOCK_PAYMENT_SCENARIO: source.MOCK_PAYMENT_SCENARIO,
   });
 
   if (!result.success) {
@@ -112,5 +147,25 @@ export function parseEnv(source: NodeJS.ProcessEnv): Env {
     throw new Error(`Invalid environment: ${fields}`);
   }
 
-  return result.data;
+  const data = result.data;
+  const smtpHost =
+    data.SMTP_HOST ?? (data.NODE_ENV === 'development' ? '127.0.0.1' : data.SMTP_HOST);
+  const provider = data.PAYMENT_PROVIDER ?? (data.NODE_ENV === 'production' ? 'none' : 'mock');
+  if (data.NODE_ENV === 'production' && provider === 'mock') {
+    throw new Error('Invalid environment: PAYMENT_PROVIDER');
+  }
+  let mockSecret = data.MOCK_WEBHOOK_SECRET;
+  if (provider === 'mock' && !mockSecret) {
+    if (data.NODE_ENV === 'production') {
+      throw new Error('Invalid environment: MOCK_WEBHOOK_SECRET');
+    }
+    mockSecret = 'dev-mock-webhook-secret';
+  }
+
+  return {
+    ...data,
+    SMTP_HOST: smtpHost,
+    PAYMENT_PROVIDER: provider,
+    MOCK_WEBHOOK_SECRET: mockSecret,
+  };
 }

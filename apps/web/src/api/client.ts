@@ -1,4 +1,4 @@
-import type { ApiErrorBody } from '@thesispartner/types';
+import type { ApiErrorBody, ApiErrorCode } from '@thesispartner/types';
 import { CSRF_COOKIE_NAME, CSRF_HEADER_NAME } from '@thesispartner/types';
 import { apiErrorBodySchema } from '@thesispartner/validation';
 import type { z } from 'zod';
@@ -64,13 +64,7 @@ async function request<S extends z.ZodTypeAny>(
     throw new ApiClientError(
       parsed.success
         ? (parsed.data as ApiErrorBody)
-        : {
-            statusCode: response.status,
-            code: 'INTERNAL_ERROR',
-            message: 'Unexpected response',
-            errors: [],
-            requestId: response.headers.get('x-request-id') ?? 'unknown',
-          },
+        : fallbackApiError(response.status, response.headers.get('x-request-id') ?? 'unknown'),
     );
   }
 
@@ -107,13 +101,7 @@ export function apiUpload<S extends z.ZodTypeAny>(
           new ApiClientError(
             parsed.success
               ? (parsed.data as ApiErrorBody)
-              : {
-                  statusCode: xhr.status,
-                  code: 'INTERNAL_ERROR',
-                  message: 'Unexpected response',
-                  errors: [],
-                  requestId: xhr.getResponseHeader('x-request-id') ?? 'unknown',
-                },
+              : fallbackApiError(xhr.status, xhr.getResponseHeader('x-request-id') ?? 'unknown'),
           ),
         );
         return;
@@ -148,6 +136,17 @@ export function apiUpload<S extends z.ZodTypeAny>(
     body.append('file', file);
     xhr.send(body);
   });
+}
+
+function fallbackApiError(status: number, requestId: string): ApiErrorBody {
+  const code: ApiErrorCode = status === 413 ? 'PAYLOAD_TOO_LARGE' : 'INTERNAL_ERROR';
+  return {
+    statusCode: status,
+    code,
+    message: status === 413 ? 'Payload too large' : 'Unexpected response',
+    errors: [],
+    requestId,
+  };
 }
 
 export function readCookie(name: string): string | undefined {

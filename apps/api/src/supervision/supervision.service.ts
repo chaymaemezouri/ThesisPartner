@@ -9,6 +9,7 @@ import {
 } from '../dashboard/activity';
 import { assessProgress, workProgressPercentage } from '../dashboard/progress';
 import { summarizeDeliverables } from '../deliverables/deliverable-rules';
+import { ThesisAccessService } from '../common/thesis-access/thesis-access.service';
 import { PrismaService } from '../infrastructure/prisma/prisma.service';
 import { summarizeObjectives, supervisionSummary } from '../objectives/objective-rules';
 import {
@@ -24,7 +25,10 @@ import {
  */
 @Injectable()
 export class SupervisionService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly access: ThesisAccessService,
+  ) {}
 
   async list(actorId: string) {
     const now = new Date();
@@ -74,8 +78,11 @@ export class SupervisionService {
       orderBy: { createdAt: 'asc' },
       take: 50,
     });
+    const coverages = await Promise.all(
+      memberships.map((membership) => this.access.coverageForThesis(membership.thesis.id)),
+    );
     return {
-      theses: memberships.map((membership) => {
+      theses: memberships.map((membership, index) => {
         const students = membership.thesis.memberships.flatMap((item) => {
           if (item.role !== 'DOCTORAL_STUDENT' || !item.user.profile) return [];
           return [
@@ -167,6 +174,7 @@ export class SupervisionService {
           doctoralStudent: students[0] ?? null,
           doctoralStudents: students,
           objectiveSummary: supervisionSummary(counts),
+          coverage: coverages[index] ?? { writable: false, source: 'none' as const, expiresAt: null },
         };
       }),
     };

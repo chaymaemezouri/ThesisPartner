@@ -15,7 +15,7 @@ describe('apiGet', () => {
     const fetchImpl = vi.fn(async () =>
       jsonResponse({
         status: 'ok',
-        checks: { api: 'ok', database: 'ok', redis: 'ok' },
+        checks: { api: 'ok', database: 'ok', redis: 'ok', storage: 'ok' },
       }),
     );
 
@@ -26,6 +26,20 @@ describe('apiGet', () => {
       expect.objectContaining({ credentials: 'include' }),
     );
     expect(window.localStorage.length).toBe(0);
+  });
+
+  it('maps a non-JSON 413 to PAYLOAD_TOO_LARGE', async () => {
+    const fetchImpl = vi.fn(
+      async () =>
+        new Response('<html>413 Request Entity Too Large</html>', {
+          status: 413,
+          headers: { 'content-type': 'text/html', 'x-request-id': 'req-client-413' },
+        }),
+    );
+
+    await expect(apiGet('/api/v1/health', healthResponseSchema, fetchImpl)).rejects.toMatchObject({
+      body: { statusCode: 413, code: 'PAYLOAD_TOO_LARGE' },
+    });
   });
 
   it('throws the shared error contract', async () => {

@@ -101,6 +101,7 @@ describe('invitations', () => {
       ).body,
     );
     expect(created.status).toBe('PENDING');
+    expect(created.emailStatus).toBe('SENT');
 
     const duplicate = await student
       .post(`/api/v1/theses/${thesisId}/invitations`)

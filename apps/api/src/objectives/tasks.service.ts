@@ -63,6 +63,7 @@ export class TasksService {
       actorId,
       thesisId,
       allowedRoles: ['DOCTORAL_STUDENT', 'SUPERVISOR'],
+      write: true,
     });
     const role = await this.roleOf(actorId, thesisId);
     const now = new Date();
@@ -166,6 +167,7 @@ export class TasksService {
       actorId,
       thesisId,
       allowedRoles: ['DOCTORAL_STUDENT', 'SUPERVISOR'],
+      write: true,
     });
     const role = await this.roleOf(actorId, thesisId);
     const now = new Date();
@@ -199,6 +201,7 @@ export class TasksService {
       actorId,
       thesisId,
       allowedRoles: ['DOCTORAL_STUDENT', 'SUPERVISOR'],
+      write: true,
     });
     const role = await this.roleOf(actorId, thesisId);
     const now = new Date();

@@ -44,6 +44,12 @@ import { ResourcesPage } from '../features/resources/ResourcesPage';
 import { SupervisorDeskPage } from '../features/supervision/SupervisorDeskPage';
 import { ProfilePage } from '../features/profile/ProfilePage';
 import { SettingsPage } from '../features/settings/SettingsPage';
+import { BillingPage } from '../features/billing/BillingPage';
+import { MockCheckoutPage } from '../features/billing/MockCheckoutPage';
+import { AdminBillingPage } from '../features/admin/AdminBillingPage';
+import { AdminInvoicesPage } from '../features/admin/AdminInvoicesPage';
+import { AdminPaymentsPage } from '../features/admin/AdminPaymentsPage';
+import { AdminPlansPage } from '../features/admin/AdminPlansPage';
 import { DashboardPage } from '../pages/DashboardPage';
 import { ModulePage } from '../pages/ModulePage';
 import { NotFoundPage } from '../pages/NotFoundPage';
@@ -133,7 +139,8 @@ export function AppRoutes() {
       item.to !== '/portfolio' &&
       item.to !== '/messagerie' &&
       item.to !== '/ressources' &&
-      item.to !== '/radar',
+      item.to !== '/radar' &&
+      item.to !== '/abonnement',
   );
 
   return (
@@ -155,6 +162,10 @@ export function AppRoutes() {
             <Route path="theses/:thesisId" element={<AdminThesisRelationsPage />} />
             <Route path="audit" element={<AdminAuditPage />} />
             <Route path="system" element={<AdminSystemPage />} />
+            <Route path="abonnements" element={<AdminBillingPage />} />
+            <Route path="plans" element={<AdminPlansPage />} />
+            <Route path="paiements" element={<AdminPaymentsPage />} />
+            <Route path="factures" element={<AdminInvoicesPage />} />
           </Route>
         </Route>
         <Route element={<AppShell />}>
@@ -162,6 +173,8 @@ export function AppRoutes() {
           <Route path="these" element={<Navigate to="/profil" replace />} />
           <Route path="profil" element={<ProfilePage />} />
           <Route path="parametres" element={<SettingsPage />} />
+          <Route path="abonnement" element={<BillingPage />} />
+          <Route path="paiement/simulation/:sessionId" element={<MockCheckoutPage />} />
           <Route path="invitations" element={<InvitationsInboxPage />} />
           <Route path="objectifs" element={<DoctoralObjectivesPage />} />
           <Route path="objectifs/:objectiveId" element={<DoctoralObjectiveDetailPage />} />

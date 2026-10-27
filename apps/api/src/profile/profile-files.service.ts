@@ -60,9 +60,7 @@ export class ProfileFilesService {
     if (!profile) throw new AppException(404, 'NOT_FOUND', 'Resource not found');
     const key = storageKeyFromRef(profile.avatarUrl);
     if (!key) throw new AppException(404, 'NOT_FOUND', 'Aucune photo de profil.');
-    if (!this.storage.isReady()) {
-      throw new AppException(503, 'INTERNAL_ERROR', 'Le stockage est indisponible.');
-    }
+    await this.storage.ensureReady();
     const name = key.split('/').pop() ?? 'avatar.jpg';
     return this.objects.createSignedDownloadUrl({
       key,
@@ -77,9 +75,7 @@ export class ProfileFilesService {
     if (!profile) throw new AppException(404, 'NOT_FOUND', 'Resource not found');
     const key = storageKeyFromRef(profile.cvUrl);
     if (!key) throw new AppException(404, 'NOT_FOUND', 'Aucun CV.');
-    if (!this.storage.isReady()) {
-      throw new AppException(503, 'INTERNAL_ERROR', 'Le stockage est indisponible.');
-    }
+    await this.storage.ensureReady();
     return this.objects.createSignedDownloadUrl({
       key,
       downloadName: 'cv.pdf',
@@ -98,9 +94,7 @@ export class ProfileFilesService {
       throw new AppException(400, 'FILE_TYPE_NOT_ALLOWED', 'Aucun fichier n’a été envoyé.');
     }
     await this.consumeUploadBudget(userId);
-    if (!this.storage.isReady()) {
-      throw new AppException(503, 'INTERNAL_ERROR', 'Le stockage est indisponible.');
-    }
+    await this.storage.ensureReady();
 
     const profile = await this.prisma.profile.findUnique({ where: { userId } });
     if (!profile) throw new AppException(404, 'NOT_FOUND', 'Resource not found');

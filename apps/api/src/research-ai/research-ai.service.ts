@@ -26,7 +26,12 @@ export class ResearchAiService {
   ) {}
 
   async generate(actorId: string, thesisId: string, locale: Locale): Promise<Synthesis> {
-    await this.access.assertCanAccess({ actorId, thesisId, allowedRoles: GENERATE_ROLES });
+    await this.access.assertCanAccess({
+      actorId,
+      thesisId,
+      allowedRoles: GENERATE_ROLES,
+      write: true,
+    });
     const ctx = await this.loadContext(thesisId);
     if (!ctx) throw new AppException(404, 'NOT_FOUND', 'Thesis not found');
 

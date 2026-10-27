@@ -72,7 +72,7 @@ async function stubWorkspace(page: Page) {
       contentType: 'application/json',
       body: JSON.stringify({
         status: 'ok',
-        checks: { api: 'ok', database: 'ok', redis: 'ok' },
+        checks: { api: 'ok', database: 'ok', redis: 'ok', storage: 'ok' },
       }),
     }),
   );

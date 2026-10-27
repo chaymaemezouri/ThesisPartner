@@ -52,7 +52,7 @@ export class AdminService {
     const d7 = daysAgo(7, now);
     const d30 = daysAgo(30, now);
     const d365 = daysAgo(365, now);
-    const daySeriesFrom = daysAgo(30, now);
+    const daySeriesFrom = daysAgo(60, now);
 
     const [
       totalUsers,

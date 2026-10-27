@@ -1,0 +1,50 @@
+# Overlay for the VPS. Never use docker compose down -v.
+#   docker compose -f docker-compose.yml -f docker-compose.production.yml up -d --build
+# Public URLs and SMTP come from the VPS .env (not committed).
+
+services:
+  postgres:
+    ports: !override
+      - '127.0.0.1:5432:5432'
+
+  redis:
+    ports: !override
+      - '127.0.0.1:6379:6379'
+
+  s3:
+    ports: !override
+      - '127.0.0.1:9000:8333'
+
+  api:
+    environment:
+      NODE_ENV: production
+      APP_URL: ${APP_URL}
+      SMTP_HOST: ${SMTP_HOST}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      SMTP_SECURE: ${SMTP_SECURE:-false}
+      SMTP_FROM: ${SMTP_FROM}
+      S3_ENDPOINT: http://s3:8333
+      S3_PUBLIC_URL: ${S3_PUBLIC_URL:-${APP_URL}}
+      S3_REGION: ${S3_REGION:-us-east-1}
+      S3_BUCKET: ${S3_BUCKET:-thesispartner}
+      S3_ACCESS_KEY: ${S3_ACCESS_KEY}
+      S3_SECRET_KEY: ${S3_SECRET_KEY}
+      S3_FORCE_PATH_STYLE: 'true'
+      FILE_SCAN_MODE: ${FILE_SCAN_MODE:-allow}
+      TRUST_PROXY: 'true'
+      PAYMENT_PROVIDER: ${PAYMENT_PROVIDER:-none}
+    depends_on: !override
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      s3:
+        condition: service_healthy
+    ports: !override
+      - '127.0.0.1:3000:3000'
+
+  web:
+    ports: !override
+      - '127.0.0.1:8080:80'

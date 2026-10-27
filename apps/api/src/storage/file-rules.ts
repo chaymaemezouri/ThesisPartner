@@ -120,6 +120,16 @@ export function signedUrlExpiry(now: Date, ttlSeconds: number): Date {
   return new Date(now.getTime() + ttlSeconds * 1000);
 }
 
+/** Rewrites the host of an S3 signed URL so browsers can reach a public endpoint. */
+export function rewriteSignedUrl(url: string, publicBase: string | undefined): string {
+  if (!publicBase) return url;
+  const signed = new URL(url);
+  const published = new URL(publicBase);
+  signed.protocol = published.protocol;
+  signed.host = published.host;
+  return signed.toString();
+}
+
 export function sumStoredBytes(sizes: readonly bigint[]): bigint {
   return sizes.reduce((total, size) => total + size, 0n);
 }
@@ -163,8 +173,13 @@ export function sha256Buffer(body: Buffer): string {
   return createHash('sha256').update(body).digest('hex');
 }
 
-export function scanHeader(header: Buffer, nodeEnv: string): 'CLEAN' | 'PENDING' | 'INFECTED' {
+export function scanHeader(
+  header: Buffer,
+  nodeEnv: string,
+  mode: 'stub' | 'allow' = 'stub',
+): 'CLEAN' | 'PENDING' | 'INFECTED' {
   if (header.includes(Buffer.from('EICAR-STANDARD-ANTIVIRUS-TEST-FILE'))) return 'INFECTED';
+  if (mode === 'allow') return 'CLEAN';
   if (nodeEnv === 'production') return 'PENDING';
   return 'CLEAN';
 }

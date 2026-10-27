@@ -57,7 +57,7 @@ export class MeetingsService {
   }
 
   async create(actorId: string, thesisId: string, body: Draft, requestId?: string) {
-    const role = await this.memberRole(actorId, thesisId);
+    const role = await this.memberRole(actorId, thesisId, true);
     if (!canCreateMeeting(role)) {
       throw new AppException(403, 'FORBIDDEN', 'Seul un encadrant peut planifier une réunion');
     }
@@ -89,7 +89,7 @@ export class MeetingsService {
   }
 
   async request(actorId: string, thesisId: string, body: RequestDraft, requestId?: string) {
-    const role = await this.memberRole(actorId, thesisId);
+    const role = await this.memberRole(actorId, thesisId, true);
     if (!canRequestMeeting(role)) {
       throw new AppException(403, 'FORBIDDEN', 'Seul un doctorant peut demander une réunion');
     }
@@ -128,7 +128,7 @@ export class MeetingsService {
     body: RequestDraft,
     requestId?: string,
   ) {
-    const role = await this.memberRole(actorId, thesisId);
+    const role = await this.memberRole(actorId, thesisId, true);
     const updated = await this.prisma.$transaction(async (tx) => {
       const current = await this.lock(tx, thesisId, meetingId);
       if (!canReviseRequest(role, current.status)) {
@@ -167,7 +167,7 @@ export class MeetingsService {
     body: Draft,
     requestId?: string,
   ) {
-    const role = await this.memberRole(actorId, thesisId);
+    const role = await this.memberRole(actorId, thesisId, true);
     const updated = await this.prisma.$transaction(async (tx) => {
       const current = await this.lock(tx, thesisId, meetingId);
       if (!canConfirmRequest(role, current.status)) {
@@ -214,7 +214,7 @@ export class MeetingsService {
     body: Draft,
     requestId?: string,
   ) {
-    const role = await this.memberRole(actorId, thesisId);
+    const role = await this.memberRole(actorId, thesisId, true);
     const updated = await this.prisma.$transaction(async (tx) => {
       const current = await this.lock(tx, thesisId, meetingId);
       if (!canManageMeeting(role, current.status)) {
@@ -254,7 +254,7 @@ export class MeetingsService {
     body: HoldBody,
     requestId?: string,
   ) {
-    const role = await this.memberRole(actorId, thesisId);
+    const role = await this.memberRole(actorId, thesisId, true);
     const now = new Date();
     const updated = await this.prisma.$transaction(async (tx) => {
       const current = await this.lock(tx, thesisId, meetingId);
@@ -289,7 +289,7 @@ export class MeetingsService {
     body: CancelBody,
     requestId?: string,
   ) {
-    const role = await this.memberRole(actorId, thesisId);
+    const role = await this.memberRole(actorId, thesisId, true);
     const now = new Date();
     const updated = await this.prisma.$transaction(async (tx) => {
       const current = await this.lock(tx, thesisId, meetingId);
@@ -335,8 +335,12 @@ export class MeetingsService {
     );
   }
 
-  private async memberRole(actorId: string, thesisId: string): Promise<MembershipRole> {
-    await this.access.assertCanAccess({ actorId, thesisId, allowedRoles: READ_ROLES });
+  private async memberRole(
+    actorId: string,
+    thesisId: string,
+    write = false,
+  ): Promise<MembershipRole> {
+    await this.access.assertCanAccess({ actorId, thesisId, allowedRoles: READ_ROLES, write });
     const membership = await this.prisma.thesisMembership.findUnique({
       where: { thesisId_userId: { thesisId, userId: actorId } },
     });

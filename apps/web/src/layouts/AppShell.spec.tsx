@@ -95,7 +95,7 @@ describe('application shell', () => {
         return new Response(
           JSON.stringify({
             status: 'ok',
-            checks: { api: 'ok', database: 'ok', redis: 'ok' },
+            checks: { api: 'ok', database: 'ok', redis: 'ok', storage: 'ok' },
           }),
           { status: 200, headers: { 'content-type': 'application/json' } },
         );

@@ -1,8 +1,27 @@
 import { useState } from 'react';
 import { Button, Input, Select } from '@thesispartner/ui';
-import { ApiClientError } from '../../api/client';
 import { useT } from '../../i18n/LocaleContext';
+import {
+  AdminBadge,
+  AdminEmpty,
+  AdminPageHeader,
+  AdminPanel,
+  AdminState,
+  type AdminTone,
+} from './AdminUi';
 import { useAdminAudit, type AdminAuditListParams } from './hooks/use-admin';
+
+function actionTone(action: string): AdminTone {
+  if (action.includes('suspend') || action.includes('failed') || action.includes('reject')) {
+    return 'danger';
+  }
+  if (action.includes('reactivate') || action.includes('accepted') || action.includes('login')) {
+    return 'ok';
+  }
+  if (action.includes('invitation') || action.includes('supervision')) return 'warn';
+  if (action.includes('admin')) return 'violet';
+  return 'brand';
+}
 
 export function AdminAuditPage() {
   const t = useT();
@@ -16,13 +35,10 @@ export function AdminAuditPage() {
 
   return (
     <div className="space-y-6">
-      <header>
-        <h1 className="text-lg font-semibold tracking-tight text-ink">{t('admin.audit.title')}</h1>
-        <p className="mt-1 text-sm text-muted">{t('admin.audit.subtitle')}</p>
-      </header>
+      <AdminPageHeader title={t('admin.audit.title')} subtitle={t('admin.audit.subtitle')} />
 
       <form
-        className="flex flex-wrap items-end gap-3"
+        className="flex flex-wrap items-end gap-3 rounded-2xl border border-line bg-surface p-4 shadow-card"
         onSubmit={(event) => {
           event.preventDefault();
           setParams((current) => ({
@@ -75,94 +91,96 @@ export function AdminAuditPage() {
         <Button type="submit">{t('admin.users.applyFilters')}</Button>
       </form>
 
-      {list.isLoading ? (
-        <p className="text-sm text-muted">{t('common.loading')}</p>
-      ) : list.isError ? (
-        <p className="text-sm text-danger" role="alert">
-          {list.error instanceof ApiClientError ? list.error.body.message : t('errors.generic')}
-        </p>
-      ) : list.data && list.data.entries.length === 0 ? (
-        <p className="text-sm text-muted">{t('admin.audit.empty')}</p>
-      ) : list.data ? (
-        <div className="grid gap-6 lg:grid-cols-[1.4fr_1fr]">
-          <div className="overflow-x-auto rounded-md border border-line">
-            <table className="min-w-full text-left text-sm">
-              <thead className="border-b border-line bg-surface text-[11px] tracking-wide text-muted uppercase">
-                <tr>
-                  <th className="px-3 py-2 font-medium">{t('admin.audit.colWhen')}</th>
-                  <th className="px-3 py-2 font-medium">{t('admin.audit.colAction')}</th>
-                  <th className="px-3 py-2 font-medium">{t('admin.audit.colActor')}</th>
-                  <th className="px-3 py-2 font-medium">{t('admin.audit.colEntity')}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {list.data.entries.map((entry) => (
-                  <tr
-                    key={entry.id}
-                    className={`border-b border-line last:border-0 ${selectedId === entry.id ? 'bg-canvas' : ''}`}
-                  >
-                    <td className="px-3 py-2 whitespace-nowrap text-muted">
-                      <button
-                        type="button"
-                        className="text-left hover:text-ink"
+      <AdminState loading={list.isLoading} error={list.error}>
+        {list.data && list.data.entries.length === 0 ? (
+          <AdminEmpty>{t('admin.audit.empty')}</AdminEmpty>
+        ) : list.data ? (
+          <div className="grid gap-6 lg:grid-cols-[1.4fr_1fr]">
+            <AdminPanel>
+              <div className="overflow-x-auto">
+                <table className="min-w-full text-left text-sm">
+                  <thead className="border-b border-line text-[11px] tracking-wide text-muted uppercase">
+                    <tr>
+                      <th className="px-3 py-2 font-medium">{t('admin.audit.colWhen')}</th>
+                      <th className="px-3 py-2 font-medium">{t('admin.audit.colAction')}</th>
+                      <th className="px-3 py-2 font-medium">{t('admin.audit.colActor')}</th>
+                      <th className="px-3 py-2 font-medium">{t('admin.audit.colEntity')}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {list.data.entries.map((entry) => (
+                      <tr
+                        key={entry.id}
+                        className={`cursor-pointer border-b border-line last:border-0 transition-colors ${selectedId === entry.id ? 'bg-brand-soft' : 'hover:bg-brand-soft/40'}`}
                         onClick={() => setSelectedId(entry.id)}
                       >
-                        {new Date(entry.createdAt).toLocaleString()}
-                      </button>
-                    </td>
-                    <td className="px-3 py-2 font-medium text-ink">{entry.action}</td>
-                    <td className="px-3 py-2 text-muted">
-                      {entry.actorDisplayName ?? entry.actorEmail ?? '—'}
-                    </td>
-                    <td className="px-3 py-2 text-muted">{entry.entityType}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                        <td className="px-3 py-2 whitespace-nowrap text-muted">
+                          {new Date(entry.createdAt).toLocaleString()}
+                        </td>
+                        <td className="px-3 py-2">
+                          <AdminBadge tone={actionTone(entry.action)}>{entry.action}</AdminBadge>
+                        </td>
+                        <td className="px-3 py-2 text-muted">
+                          {entry.actorDisplayName ?? entry.actorEmail ?? '—'}
+                        </td>
+                        <td className="px-3 py-2 text-muted">{entry.entityType}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </AdminPanel>
 
-          <aside className="rounded-md border border-line bg-surface px-4 py-4 text-sm">
-            <h2 className="text-sm font-semibold text-ink">{t('admin.audit.detailTitle')}</h2>
-            {!selected ? (
-              <p className="mt-2 text-muted">{t('admin.audit.detailEmpty')}</p>
-            ) : (
-              <dl className="mt-3 space-y-2">
-                <Detail label={t('admin.audit.colAction')} value={selected.action} />
-                <Detail
-                  label={t('admin.audit.colWhen')}
-                  value={new Date(selected.createdAt).toLocaleString()}
-                />
-                <Detail
-                  label={t('admin.audit.colActor')}
-                  value={selected.actorDisplayName ?? selected.actorEmail ?? '—'}
-                />
-                <Detail label={t('admin.audit.colEntity')} value={selected.entityType} />
-                <Detail label="entityId" value={selected.entityId ?? '—'} />
-                <Detail label="requestId" value={selected.requestId ?? '—'} />
-                <Detail
-                  label={t('admin.audit.colThesis')}
-                  value={selected.thesisTitle ?? selected.thesisId ?? '—'}
-                />
-                <div>
-                  <dt className="text-[11px] font-medium tracking-wide text-muted uppercase">
-                    {t('admin.audit.metadata')}
-                  </dt>
-                  <dd className="mt-1 overflow-x-auto rounded bg-canvas px-2 py-2 font-mono text-xs text-ink">
-                    {selected.metadata
-                      ? JSON.stringify(selected.metadata, null, 2)
-                      : t('admin.audit.metadataEmpty')}
-                  </dd>
-                </div>
-              </dl>
-            )}
-          </aside>
-        </div>
-      ) : null}
+            <aside className="rounded-2xl border border-line bg-surface p-5 text-sm shadow-card">
+              <h2 className="text-sm font-semibold text-ink">{t('admin.audit.detailTitle')}</h2>
+              {!selected ? (
+                <p className="mt-3 text-muted">{t('admin.audit.detailEmpty')}</p>
+              ) : (
+                <dl className="mt-4 space-y-3">
+                  <div>
+                    <dt className="text-[11px] font-semibold tracking-wide text-muted uppercase">
+                      {t('admin.audit.colAction')}
+                    </dt>
+                    <dd className="mt-1">
+                      <AdminBadge tone={actionTone(selected.action)}>{selected.action}</AdminBadge>
+                    </dd>
+                  </div>
+                  <Detail
+                    label={t('admin.audit.colWhen')}
+                    value={new Date(selected.createdAt).toLocaleString()}
+                  />
+                  <Detail
+                    label={t('admin.audit.colActor')}
+                    value={selected.actorDisplayName ?? selected.actorEmail ?? '—'}
+                  />
+                  <Detail label={t('admin.audit.colEntity')} value={selected.entityType} />
+                  <Detail label="entityId" value={selected.entityId ?? '—'} />
+                  <Detail label="requestId" value={selected.requestId ?? '—'} />
+                  <Detail
+                    label={t('admin.audit.colThesis')}
+                    value={selected.thesisTitle ?? selected.thesisId ?? '—'}
+                  />
+                  <div>
+                    <dt className="text-[11px] font-semibold tracking-wide text-muted uppercase">
+                      {t('admin.audit.metadata')}
+                    </dt>
+                    <dd className="mt-1 overflow-x-auto rounded-xl bg-canvas px-3 py-2 font-mono text-xs text-ink">
+                      {selected.metadata
+                        ? JSON.stringify(selected.metadata, null, 2)
+                        : t('admin.audit.metadataEmpty')}
+                    </dd>
+                  </div>
+                </dl>
+              )}
+            </aside>
+          </div>
+        ) : null}
+      </AdminState>
 
       {list.data && list.data.total > 0 ? (
         <div className="flex items-center justify-between gap-3 text-sm">
           <p className="text-muted">
-            {t('admin.users.pagination', {
+            {t('admin.audit.pagination', {
               page: String(list.data.page),
               totalPages: String(totalPages),
               total: String(list.data.total),
@@ -199,7 +217,7 @@ export function AdminAuditPage() {
 function Detail({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <dt className="text-[11px] font-medium tracking-wide text-muted uppercase">{label}</dt>
+      <dt className="text-[11px] font-semibold tracking-wide text-muted uppercase">{label}</dt>
       <dd className="mt-0.5 text-ink break-all">{value}</dd>
     </div>
   );

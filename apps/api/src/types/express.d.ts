@@ -8,6 +8,7 @@ declare global {
       requestId?: string;
       startedAt?: bigint;
       auth?: AuthContext;
+      rawBody?: Buffer;
     }
   }
 }

@@ -12,7 +12,7 @@ describe('InvitationsService', () => {
     const audit = { record: jest.fn().mockResolvedValue(undefined) };
     const mailer = { send: jest.fn().mockResolvedValue(undefined) };
     const logger = { write: jest.fn() };
-    const env = { APP_URL: 'http://localhost:5173', NODE_ENV: 'test' };
+    const env = { APP_URL: 'http://localhost:5173', NODE_ENV: 'test' as string };
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const prisma: any = {
@@ -41,6 +41,7 @@ describe('InvitationsService', () => {
           email: 'supervisor@example.test',
           role: 'SUPERVISOR',
           status: 'PENDING',
+          emailStatus: 'QUEUED',
           expiresAt: new Date(Date.now() + 86_400_000),
           replacesSupervisor: false,
         }),
@@ -61,7 +62,7 @@ describe('InvitationsService', () => {
       logger as never,
       env as never,
     );
-    return { service, prisma, access, audit, mailer };
+    return { service, prisma, access, audit, mailer, env };
   }
 
   it('creates a pending invitation without membership and sends email', async () => {
@@ -75,6 +76,7 @@ describe('InvitationsService', () => {
     );
 
     expect(result.status).toBe('PENDING');
+    expect(result.emailStatus).toBe('SENT');
     expect(prisma.thesisMembership.create).not.toHaveBeenCalled();
     expect(mailer.send).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -127,6 +129,7 @@ describe('InvitationsService', () => {
       email: 'supervisor@example.test',
       role: 'SUPERVISOR',
       status: 'ACCEPTED',
+      emailStatus: 'SENT',
       replacesSupervisor: false,
       changeReason: null,
       expiresAt: new Date(Date.now() + 86_400_000),
@@ -260,6 +263,7 @@ describe('InvitationsService', () => {
       email: 'new-supervisor@example.test',
       role: 'SUPERVISOR',
       status: 'ACCEPTED',
+      emailStatus: 'SENT',
       replacesSupervisor: true,
       changeReason: 'Retirement',
       expiresAt: new Date(Date.now() + 86_400_000),
@@ -286,6 +290,45 @@ describe('InvitationsService', () => {
     });
     expect(prisma.thesisMembership.delete).toHaveBeenCalledWith({
       where: { id: 'old-membership' },
+    });
+  });
+
+  it('keeps the invitation when SMTP delivery fails', async () => {
+    const { service, prisma, mailer } = build();
+    mailer.send = jest.fn().mockRejectedValue(new Error('smtp down'));
+
+    const result = await service.create(actorId, thesisId, {
+      email: 'supervisor@example.test',
+      role: 'SUPERVISOR',
+    });
+
+    expect(result.status).toBe('PENDING');
+    expect(result.emailStatus).toBe('FAILED');
+    expect(prisma.invitation.create).toHaveBeenCalled();
+    expect(prisma.invitation.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ emailStatus: 'FAILED' }),
+      }),
+    );
+  });
+
+  it('rate-limits invitation resend within a minute', async () => {
+    const { service, prisma, env } = build();
+    env.NODE_ENV = 'development';
+    prisma.invitation.findFirst = jest.fn().mockResolvedValue({
+      id: invitationId,
+      thesisId,
+      email: 'supervisor@example.test',
+      role: 'SUPERVISOR',
+      status: 'PENDING',
+      emailAttemptedAt: new Date(),
+      replacesSupervisor: false,
+      thesis: { id: thesisId, title: 'Coastal ecosystems' },
+      invitedBy: { profile: { displayName: 'Ada' } },
+    });
+
+    await expect(service.resend(actorId, thesisId, invitationId)).rejects.toMatchObject({
+      appCode: 'RATE_LIMITED',
     });
   });
 });

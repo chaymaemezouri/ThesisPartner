@@ -3,6 +3,9 @@ import type { Readable } from 'node:stream';
 export const OBJECT_STORAGE = Symbol('OBJECT_STORAGE');
 
 export type ObjectStorage = {
+  isReady(): boolean;
+  ensureReady(): Promise<void>;
+  ping(): Promise<boolean>;
   ensurePrivateBucket(): Promise<void>;
   putObject(input: {
     key: string;

@@ -37,18 +37,22 @@ export function ThesisInvitationsPanel({
   const submit = async () => {
     setMessage(null);
     try {
-      if (mode === 'change' || hasSupervisor) {
-        if (!reason.trim()) {
-          setMessage(t('invitations.changeReason'));
-          return;
-        }
-        await change.mutateAsync({ email, reason: reason.trim() });
-      } else {
-        await create.mutateAsync({ email, role: 'SUPERVISOR' });
-      }
+      const result =
+        mode === 'change' || hasSupervisor
+          ? await (async () => {
+              if (!reason.trim()) {
+                setMessage(t('invitations.changeReason'));
+                return null;
+              }
+              return change.mutateAsync({ email, reason: reason.trim() });
+            })()
+          : await create.mutateAsync({ email, role: 'SUPERVISOR' });
+      if (!result) return;
       setEmail('');
       setReason('');
-      setMessage(t('invitations.sent'));
+      setMessage(
+        result.emailStatus === 'SENT' ? t('invitations.sent') : t('invitations.createdUnsent'),
+      );
     } catch (error) {
       setMessage(error instanceof ApiClientError ? error.body.message : t('errors.generic'));
     }
@@ -125,6 +129,12 @@ export function ThesisInvitationsPanel({
                 <p className="font-medium text-ink">{item.email}</p>
                 <p className="text-xs text-muted">
                   {item.status}
+                  {' · '}
+                  {item.emailStatus === 'SENT'
+                    ? t('invitations.emailSent')
+                    : item.emailStatus === 'FAILED'
+                      ? t('invitations.emailFailed')
+                      : t('invitations.emailQueued')}
                   {item.replacesSupervisor ? ` · ${t('invitations.replacesBadge')}` : ''}
                   {' · '}
                   {t('invitations.expires', {

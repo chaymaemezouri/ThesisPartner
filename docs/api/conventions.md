@@ -49,6 +49,10 @@ La validation du navigateur ne remplace pas celle de l’API.
 
 `/docs` et `/docs-json` sont montés quand `NODE_ENV` n’est pas `production`.
 
+## Super Admin
+
+Les endpoints de pilotage (`/api/v1/admin/...`) sont documentés dans [admin.md](./admin.md). Ils exigent `platformRole = SUPER_ADMIN` et n’exposent ni fichiers scientifiques, ni secrets.
+
 ## Accès à une thèse
 
 Les futurs endpoints de ressources prennent l’acteur authentifié, l’identifiant de thèse et les rôles autorisés, puis appellent `ThesisAccessService`. L’absence de membership est un 404. Un rôle insuffisant est un 403.

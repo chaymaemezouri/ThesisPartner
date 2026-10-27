@@ -28,7 +28,7 @@ export function fillDailySeries(
   const end = new Date(
     Date.UTC(toExclusive.getUTCFullYear(), toExclusive.getUTCMonth(), toExclusive.getUTCDate()),
   );
-  while (cursor < end) {
+  while (cursor <= end) {
     const key = toDayKey(cursor);
     points.push({ date: key, count: counts.get(key) ?? 0 });
     cursor.setUTCDate(cursor.getUTCDate() + 1);

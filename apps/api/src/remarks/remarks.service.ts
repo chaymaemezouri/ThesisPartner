@@ -301,7 +301,7 @@ export class RemarksService {
   }
 
   private async memberRole(actorId: string, thesisId: string): Promise<MembershipRole> {
-    await this.access.assertCanAccess({ actorId, thesisId, allowedRoles: READ_ROLES });
+    await this.access.assertCanAccess({ actorId, thesisId, allowedRoles: READ_ROLES, write: true });
     const membership = await this.prisma.thesisMembership.findUnique({
       where: { thesisId_userId: { thesisId, userId: actorId } },
     });
