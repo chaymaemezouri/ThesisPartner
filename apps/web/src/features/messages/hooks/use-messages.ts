@@ -87,10 +87,7 @@ export function useUpdateGroup(conversationId: string) {
   });
 }
 
-function refreshThread(
-  queryClient: ReturnType<typeof useQueryClient>,
-  detail: ConversationDetail,
-) {
+function refreshThread(queryClient: ReturnType<typeof useQueryClient>, detail: ConversationDetail) {
   queryClient.setQueryData(messageDetailKey(detail.id), detail);
   void queryClient.invalidateQueries({ queryKey: listKey });
 }

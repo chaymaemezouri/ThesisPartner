@@ -113,8 +113,7 @@ function mockMailbox({
         const payload = JSON.parse(String(init?.body)) as { body: string };
         const messageId = url.split('/').pop();
         const found = messages.find((message) => message.id === messageId) as
-          | (typeof messages)[number] & { editedAt?: string }
-          | undefined;
+          ((typeof messages)[number] & { editedAt?: string }) | undefined;
         if (found) {
           found.body = payload.body;
           found.editedAt = '2026-10-09T13:30:00.000Z';
@@ -123,8 +122,7 @@ function mockMailbox({
       if (method === 'DELETE' && /\/messages\/[0-9a-f-]+$/i.test(url)) {
         const messageId = url.split('/').pop();
         const found = messages.find((message) => message.id === messageId) as
-          | (typeof messages)[number] & { deleted?: boolean }
-          | undefined;
+          ((typeof messages)[number] & { deleted?: boolean }) | undefined;
         if (found) {
           found.body = '';
           found.deleted = true;

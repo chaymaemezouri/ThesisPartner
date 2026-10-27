@@ -35,7 +35,8 @@ export function ResearchAiPage() {
 
   const loading = dashboard.isLoading || (Boolean(thesisId) && !result && generate.isPending);
   const subscriptionRequired =
-    generate.error instanceof ApiClientError && generate.error.body.code === 'SUBSCRIPTION_REQUIRED';
+    generate.error instanceof ApiClientError &&
+    generate.error.body.code === 'SUBSCRIPTION_REQUIRED';
 
   return (
     <div className="min-w-0">

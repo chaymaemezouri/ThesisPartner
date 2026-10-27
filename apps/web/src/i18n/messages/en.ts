@@ -917,7 +917,8 @@ export const en = {
   },
   researchAi: {
     title: 'Research AI',
-    subtitle: 'Three article-style sections: research problem, subject summary and state of the art.',
+    subtitle:
+      'Three article-style sections: research problem, subject summary and state of the art.',
     generate: 'Generate synthesis',
     generating: 'Generating…',
     noThesis: 'No thesis is linked to this account yet.',

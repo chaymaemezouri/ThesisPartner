@@ -1099,7 +1099,8 @@ export const fr: Messages = {
     saveEdit: 'Enregistrer',
     conversationActions: 'Actions de la conversation',
     clearConversation: 'Effacer les messages',
-    clearConversationConfirm: 'Tous les messages de cette conversation seront définitivement supprimés.',
+    clearConversationConfirm:
+      'Tous les messages de cette conversation seront définitivement supprimés.',
     leaveGroup: 'Quitter le groupe',
     leaveGroupConfirm: 'Vous quitterez ce groupe. Vous pourrez y être ajouté plus tard.',
     deleteGroup: 'Supprimer le groupe',

@@ -862,7 +862,7 @@ function Thread({
                 ? t('messages.leaveGroupConfirm')
                 : t('messages.deleteGroupConfirm')}
           </p>
-          {(clearConversation.isError || leaveConversation.isError || deleteConversation.isError) ? (
+          {clearConversation.isError || leaveConversation.isError || deleteConversation.isError ? (
             <p className="mt-3 text-sm text-danger" role="alert">
               {queryErrorMessage(
                 clearConversation.error ?? leaveConversation.error ?? deleteConversation.error,

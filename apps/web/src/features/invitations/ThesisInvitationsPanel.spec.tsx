@@ -12,9 +12,7 @@ vi.mock('./hooks/use-invitations', () => ({
   useCancelInvitation: () => ({ isPending: false, mutateAsync: vi.fn() }),
 }));
 
-function renderPanel(
-  props: Partial<Parameters<typeof ThesisInvitationsPanel>[0]> = {},
-) {
+function renderPanel(props: Partial<Parameters<typeof ThesisInvitationsPanel>[0]> = {}) {
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
   });
