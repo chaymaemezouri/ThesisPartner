@@ -92,6 +92,9 @@ export function useCancelSubscription() {
 }
 
 export async function downloadInvoice(invoiceId: string) {
-  const signed = await apiGet(`/api/v1/billing/invoices/${invoiceId}/download`, invoiceDownloadSchema);
+  const signed = await apiGet(
+    `/api/v1/billing/invoices/${invoiceId}/download`,
+    invoiceDownloadSchema,
+  );
   window.open(signed.url, '_blank', 'noopener,noreferrer');
 }

@@ -49,7 +49,8 @@ export function BillingPage() {
       ? Math.max(
           0,
           Math.round(
-            (1 - (plans.find((plan) => plan.interval === 'YEAR')!.priceMad / (monthly.priceMad * 12))) *
+            (1 -
+              plans.find((plan) => plan.interval === 'YEAR')!.priceMad / (monthly.priceMad * 12)) *
               100,
           ),
         )
@@ -92,7 +93,9 @@ export function BillingPage() {
           <Sparkle size={12} weight="fill" />
           ThesisPartner Pro
         </p>
-        <h1 className="mt-3 text-2xl font-semibold tracking-tight text-ink sm:text-3xl">{t('billing.title')}</h1>
+        <h1 className="mt-3 text-2xl font-semibold tracking-tight text-ink sm:text-3xl">
+          {t('billing.title')}
+        </h1>
         <p className="mt-2 max-w-xl text-sm leading-6 text-muted">{t('billing.subtitle')}</p>
       </header>
 
@@ -105,15 +108,23 @@ export function BillingPage() {
           <section className="rounded-2xl border border-line bg-surface p-5 shadow-card sm:p-6">
             <div className="flex flex-wrap items-start justify-between gap-6">
               <div className="min-w-0 flex-1">
-                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-faint">{t('billing.trialTitle')}</p>
+                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-faint">
+                  {t('billing.trialTitle')}
+                </p>
                 <p className="mt-2 text-sm text-muted">{t('billing.trialHelp')}</p>
                 {trial.status === 'NOT_STARTED' ? (
-                  <Button className="mt-5" disabled={!trial.canStart || start.isPending} onClick={() => start.mutate()}>
+                  <Button
+                    className="mt-5"
+                    disabled={!trial.canStart || start.isPending}
+                    onClick={() => start.mutate()}
+                  >
                     {t('billing.startTrial')}
                   </Button>
                 ) : null}
                 {trial.status === 'ACTIVE' ? (
-                  <p className="mt-4 text-sm text-muted">{t('billing.expiresOn', { date: formatStamp(trial.expiresAt) })}</p>
+                  <p className="mt-4 text-sm text-muted">
+                    {t('billing.expiresOn', { date: formatStamp(trial.expiresAt) })}
+                  </p>
                 ) : null}
                 {expired ? (
                   <div className="mt-4 rounded-xl border border-warn/20 bg-warn-soft px-4 py-3">
@@ -121,7 +132,9 @@ export function BillingPage() {
                     <p className="mt-1 text-sm text-muted">{t('billing.readonlyHelp')}</p>
                   </div>
                 ) : null}
-                {start.isError ? <p className="mt-3 text-sm text-danger">{start.error.message}</p> : null}
+                {start.isError ? (
+                  <p className="mt-3 text-sm text-danger">{start.error.message}</p>
+                ) : null}
               </div>
               {trial.status === 'ACTIVE' ? (
                 <TrialRing
@@ -140,11 +153,15 @@ export function BillingPage() {
           <section>
             <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
               <div>
-                <h2 className="text-lg font-semibold tracking-tight text-ink">{t('billing.plansTitle')}</h2>
+                <h2 className="text-lg font-semibold tracking-tight text-ink">
+                  {t('billing.plansTitle')}
+                </h2>
                 <p className="mt-1 max-w-xl text-sm text-muted">{t('billing.plansIntro')}</p>
               </div>
               {!checkoutReady ? (
-                <p className="rounded-full bg-warn-soft px-3 py-1 text-xs font-medium text-warn">{t('billing.noProvider')}</p>
+                <p className="rounded-full bg-warn-soft px-3 py-1 text-xs font-medium text-warn">
+                  {t('billing.noProvider')}
+                </p>
               ) : null}
             </div>
             <ul className="grid gap-4 lg:grid-cols-2">
@@ -175,12 +192,16 @@ export function BillingPage() {
                       ) : null}
                     </div>
                     <p className="mt-4 flex items-end gap-1.5">
-                      <span className="text-4xl font-semibold tabular-nums tracking-tight text-ink">{plan.priceMad}</span>
+                      <span className="text-4xl font-semibold tabular-nums tracking-tight text-ink">
+                        {plan.priceMad}
+                      </span>
                       <span className="mb-1 text-sm font-medium text-muted">MAD</span>
                     </p>
                     <p className="text-sm text-muted">
                       {yearly ? t('billing.billedYearly') : t('billing.perMonth')}
-                      {monthlyEquiv ? ` · ${t('billing.equivMonth', { amount: String(monthlyEquiv) })}` : ''}
+                      {monthlyEquiv
+                        ? ` · ${t('billing.equivMonth', { amount: String(monthlyEquiv) })}`
+                        : ''}
                     </p>
                     {yearly && yearlySave > 0 ? (
                       <p className="mt-2 inline-flex w-fit rounded-full bg-ok-soft px-2.5 py-1 text-xs font-semibold text-ok">
@@ -221,19 +242,34 @@ export function BillingPage() {
                   </StatusPill>
                 ) : null}
                 {sub.currentPeriodEnd ? (
-                  <span className="text-muted">{t('billing.nextRenewal', { date: formatStamp(sub.currentPeriodEnd) })}</span>
+                  <span className="text-muted">
+                    {t('billing.nextRenewal', { date: formatStamp(sub.currentPeriodEnd) })}
+                  </span>
                 ) : null}
-                {confirmation === 'pending' ? <span className="text-muted">{t('billing.paymentPending')}</span> : null}
-                {confirmation === 'failed' ? <span className="text-danger">{t('billing.paymentFailed')}</span> : null}
-                {confirmation === 'succeeded' ? <span className="text-ok">{t('billing.paymentSucceeded')}</span> : null}
+                {confirmation === 'pending' ? (
+                  <span className="text-muted">{t('billing.paymentPending')}</span>
+                ) : null}
+                {confirmation === 'failed' ? (
+                  <span className="text-danger">{t('billing.paymentFailed')}</span>
+                ) : null}
+                {confirmation === 'succeeded' ? (
+                  <span className="text-ok">{t('billing.paymentSucceeded')}</span>
+                ) : null}
                 {sub.status === 'ACTIVE' && !sub.cancelAtPeriodEnd ? (
-                  <Button className="ml-auto" variant="ghost" disabled={cancel.isPending} onClick={() => cancel.mutate()}>
+                  <Button
+                    className="ml-auto"
+                    variant="ghost"
+                    disabled={cancel.isPending}
+                    onClick={() => cancel.mutate()}
+                  >
                     {t('billing.cancelAtEnd')}
                   </Button>
                 ) : null}
               </div>
             )}
-            {checkout.isError ? <p className="mt-3 text-sm text-danger">{checkout.error.message}</p> : null}
+            {checkout.isError ? (
+              <p className="mt-3 text-sm text-danger">{checkout.error.message}</p>
+            ) : null}
           </section>
         </>
       )}
@@ -301,7 +337,9 @@ export function BillingPage() {
               <li key={item.id} className="flex gap-3">
                 <span className="flex w-4 flex-col items-center">
                   <span className="mt-1.5 h-2 w-2 rounded-full bg-brand" />
-                  {index < events.data.events.length - 1 ? <span className="w-px flex-1 bg-line" /> : null}
+                  {index < events.data.events.length - 1 ? (
+                    <span className="w-px flex-1 bg-line" />
+                  ) : null}
                 </span>
                 <div className="flex flex-1 justify-between gap-3 pb-4 text-sm">
                   <span className="text-ink">{item.type}</span>
@@ -323,12 +361,16 @@ function TrialRing({ days, percent, unit }: { days: number; percent: number; uni
   return (
     <div
       className="grid h-[6.5rem] w-[6.5rem] shrink-0 place-items-center rounded-full"
-      style={{ background: `conic-gradient(var(--color-brand) ${remaining}%, var(--color-line) 0)` }}
+      style={{
+        background: `conic-gradient(var(--color-brand) ${remaining}%, var(--color-line) 0)`,
+      }}
       aria-hidden="true"
     >
       <div className="grid h-[5.15rem] w-[5.15rem] place-items-center rounded-full bg-surface text-center">
         <span className="text-2xl font-semibold tabular-nums leading-none text-ink">{days}</span>
-        <span className="mt-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted">{unit}</span>
+        <span className="mt-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted">
+          {unit}
+        </span>
       </div>
     </div>
   );
@@ -350,22 +392,40 @@ function LedgerCard({
   return (
     <section className="rounded-2xl border border-line bg-surface p-5 shadow-card">
       <div className="flex items-center gap-2">
-        <span className="grid h-8 w-8 place-items-center rounded-lg bg-brand-soft text-brand">{icon}</span>
+        <span className="grid h-8 w-8 place-items-center rounded-lg bg-brand-soft text-brand">
+          {icon}
+        </span>
         <h2 className="text-sm font-semibold text-ink">{title}</h2>
       </div>
-      {hasItems ? <ul className="mt-2 divide-y divide-line">{children}</ul> : <p className="mt-4 text-sm text-muted">{empty}</p>}
+      {hasItems ? (
+        <ul className="mt-2 divide-y divide-line">{children}</ul>
+      ) : (
+        <p className="mt-4 text-sm text-muted">{empty}</p>
+      )}
     </section>
   );
 }
 
-function StatusPill({ children, tone }: { children: ReactNode; tone: 'ok' | 'warn' | 'danger' | 'muted' }) {
+function StatusPill({
+  children,
+  tone,
+}: {
+  children: ReactNode;
+  tone: 'ok' | 'warn' | 'danger' | 'muted';
+}) {
   const styles = {
     ok: 'bg-ok-soft text-ok',
     warn: 'bg-warn-soft text-warn',
     danger: 'bg-danger-soft text-danger',
     muted: 'bg-canvas text-muted',
   }[tone];
-  return <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide ${styles}`}>{children}</span>;
+  return (
+    <span
+      className={`rounded-full px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide ${styles}`}
+    >
+      {children}
+    </span>
+  );
 }
 
 function subTone(status: string): 'ok' | 'warn' | 'danger' | 'muted' {

@@ -107,14 +107,7 @@ jobs:
             echo "public health URL did not respond" >&2
             exit 1
           fi
-          BODY="$body" python3 -c 'import json, os, sys
-b = json.loads(os.environ["BODY"])
-c = b.get("checks") or {}
-missing = [n for n in ("database", "redis", "storage") if c.get(n) != "ok"]
-if missing:
-    print("health checks failed: " + ",".join(missing), file=sys.stderr)
-    sys.exit(1)
-'
+          BODY="$body" python3 -c 'import json,os,sys;c=(json.loads(os.environ["BODY"]).get("checks") or {});m=[n for n in ("database","redis","storage") if c.get(n)!="ok"];sys.exit("health checks failed: "+",".join(m) if m else 0)'
           echo "public health ok"
 
       - name: Remove temporary SSH key

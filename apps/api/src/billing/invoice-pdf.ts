@@ -61,7 +61,9 @@ function pdfEscape(value: string): string {
 function assemblePdf(lines: string[]): Buffer {
   const content =
     'BT /F1 11 Tf 14 TL 50 780 Td\n' +
-    lines.map((line, index) => `${index === 0 ? '' : 'T* '}(${pdfEscape(line.slice(0, 120))}) Tj`).join('\n') +
+    lines
+      .map((line, index) => `${index === 0 ? '' : 'T* '}(${pdfEscape(line.slice(0, 120))}) Tj`)
+      .join('\n') +
     '\nET\n';
   const objects = [
     '<< /Type /Catalog /Pages 2 0 R >>',

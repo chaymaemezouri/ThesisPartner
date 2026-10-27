@@ -87,7 +87,10 @@ describe('billing phase 4', () => {
     const csrf = csrfFrom(registered);
     const userId = registered.body.user.id as string;
 
-    const firstStart = await student.post('/api/v1/billing/trial/start').set('x-csrf-token', csrf).send({});
+    const firstStart = await student
+      .post('/api/v1/billing/trial/start')
+      .set('x-csrf-token', csrf)
+      .send({});
     expect(firstStart.status).toBe(409);
 
     await prisma.trial.update({
@@ -95,15 +98,22 @@ describe('billing phase 4', () => {
       data: { status: 'NOT_STARTED', startedAt: null, expiresAt: null },
     });
 
-    const unverified = await student.post('/api/v1/billing/trial/start').set('x-csrf-token', csrf).send({});
+    const unverified = await student
+      .post('/api/v1/billing/trial/start')
+      .set('x-csrf-token', csrf)
+      .send({});
     expect(unverified.status).toBe(403);
 
     const token = tokenFrom(mailer, 'Confirmez votre adresse ThesisPartner');
-    expect((await request(app.getHttpServer()).post('/api/v1/auth/email-verification').send({ token })).status).toBe(
-      200,
-    );
+    expect(
+      (await request(app.getHttpServer()).post('/api/v1/auth/email-verification').send({ token }))
+        .status,
+    ).toBe(200);
 
-    const started = await student.post('/api/v1/billing/trial/start').set('x-csrf-token', csrf).send({});
+    const started = await student
+      .post('/api/v1/billing/trial/start')
+      .set('x-csrf-token', csrf)
+      .send({});
     expect(started.status).toBe(200);
     const trial = billingTrialSchema.parse(started.body);
     expect(trial.status).toBe('ACTIVE');
@@ -113,10 +123,16 @@ describe('billing phase 4', () => {
     const expiresAt = new Date(trial.expiresAt!);
     expect(expiresAt.getTime() - startedAt.getTime()).toBe(30 * 24 * 60 * 60 * 1000);
 
-    const again = await student.post('/api/v1/billing/trial/start').set('x-csrf-token', csrf).send({});
+    const again = await student
+      .post('/api/v1/billing/trial/start')
+      .set('x-csrf-token', csrf)
+      .send({});
     expect(again.status).toBe(409);
 
-    const thesis = await student.post('/api/v1/theses').set('x-csrf-token', csrf).send({ title: 'Couverture essai' });
+    const thesis = await student
+      .post('/api/v1/theses')
+      .set('x-csrf-token', csrf)
+      .send({ title: 'Couverture essai' });
     expect(thesis.status).toBe(201);
     const thesisId = thesis.body.id as string;
     const objective = await student
@@ -139,7 +155,9 @@ describe('billing phase 4', () => {
 
     const readable = await student.get(`/api/v1/theses/${thesisId}/objectives`);
     expect(readable.status).toBe(200);
-    expect(readable.body.objectives.some((item: { title: string }) => item.title === 'Chapitre 1')).toBe(true);
+    expect(
+      readable.body.objectives.some((item: { title: string }) => item.title === 'Chapitre 1'),
+    ).toBe(true);
 
     const status = billingStatusSchema.parse((await student.get('/api/v1/billing/status')).body);
     expect(status.trial.status).toBe('EXPIRED');
@@ -162,7 +180,10 @@ describe('billing phase 4', () => {
       familyName: 'Admin',
     });
     expect(adminReg.status).toBe(201);
-    await prisma.user.update({ where: { email: adminEmail }, data: { platformRole: 'SUPER_ADMIN' } });
+    await prisma.user.update({
+      where: { email: adminEmail },
+      data: { platformRole: 'SUPER_ADMIN' },
+    });
     await admin.post('/api/v1/auth/logout').set('x-csrf-token', csrfFrom(adminReg));
     const adminLogin = await admin.post('/api/v1/auth/login').send({ email: adminEmail, password });
     expect(adminLogin.status).toBe(200);
@@ -240,6 +261,8 @@ describe('billing phase 4', () => {
     expect(extend.status).toBe(200);
     const extended = billingTrialSchema.parse(extend.body);
     expect(extended.status).toBe('ACTIVE');
-    expect(new Date(extended.expiresAt!).getTime()).toBeGreaterThan(addUtcDays(new Date(), 4).getTime());
+    expect(new Date(extended.expiresAt!).getTime()).toBeGreaterThan(
+      addUtcDays(new Date(), 4).getTime(),
+    );
   });
 });

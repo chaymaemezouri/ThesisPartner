@@ -50,9 +50,14 @@ export function trialReminders(
   return keys;
 }
 
-export function subscriptionWrites(status: SubscriptionStatus, now: Date, graceEndsAt: Date | null) {
+export function subscriptionWrites(
+  status: SubscriptionStatus,
+  now: Date,
+  graceEndsAt: Date | null,
+) {
   if (status === 'ACTIVE') return true;
-  if (status === 'GRACE_PERIOD' && graceEndsAt && now.getTime() < graceEndsAt.getTime()) return true;
+  if (status === 'GRACE_PERIOD' && graceEndsAt && now.getTime() < graceEndsAt.getTime())
+    return true;
   return false;
 }
 

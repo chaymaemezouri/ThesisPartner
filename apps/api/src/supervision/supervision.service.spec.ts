@@ -15,7 +15,10 @@ describe('SupervisionService access', () => {
 
   it('lists only theses where the actor is the supervisor', async () => {
     const findMany = jest.fn().mockResolvedValue([]);
-    const service = new SupervisionService({ thesisMembership: { findMany } } as never, access as never);
+    const service = new SupervisionService(
+      { thesisMembership: { findMany } } as never,
+      access as never,
+    );
 
     await expect(service.list(actorId)).resolves.toEqual({ theses: [] });
     expect(findMany).toHaveBeenCalledWith(
@@ -95,7 +98,10 @@ describe('SupervisionService access', () => {
         },
       },
     ]);
-    const service = new SupervisionService({ thesisMembership: { findMany } } as never, access as never);
+    const service = new SupervisionService(
+      { thesisMembership: { findMany } } as never,
+      access as never,
+    );
     const result = await service.list(actorId);
     expect(result.theses[0]).toMatchObject({
       nextDeadline: {

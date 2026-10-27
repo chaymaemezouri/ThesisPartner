@@ -65,15 +65,18 @@ export class BillingService {
     });
     if (!user || user.disabledAt) throw new AppException(404, 'NOT_FOUND', 'Resource not found');
     const existingTrial = await this.prisma.trial.findUnique({ where: { userId } });
-    if (existingTrial?.startedAt || existingTrial?.status === 'ACTIVE' || existingTrial?.status === 'EXPIRED') {
+    if (
+      existingTrial?.startedAt ||
+      existingTrial?.status === 'ACTIVE' ||
+      existingTrial?.status === 'EXPIRED'
+    ) {
       throw new AppException(409, 'CONFLICT', 'This account already used its trial');
     }
     if (!user.emailVerifiedAt) {
       throw new AppException(403, 'FORBIDDEN', 'Verify your email before starting the trial');
     }
     const onlySupervisor =
-      user.memberships.length > 0 &&
-      user.memberships.every((item) => item.role === 'SUPERVISOR');
+      user.memberships.length > 0 && user.memberships.every((item) => item.role === 'SUPERVISOR');
     if (onlySupervisor) {
       throw new AppException(403, 'FORBIDDEN', 'Supervisors do not start a personal trial');
     }
@@ -82,7 +85,11 @@ export class BillingService {
     try {
       const trial = await this.prisma.$transaction(async (tx) => {
         const existing = await tx.trial.findUnique({ where: { userId } });
-        if (existing?.status === 'ACTIVE' || existing?.status === 'EXPIRED' || existing?.startedAt) {
+        if (
+          existing?.status === 'ACTIVE' ||
+          existing?.status === 'EXPIRED' ||
+          existing?.startedAt
+        ) {
           throw new AppException(409, 'CONFLICT', 'This account already used its trial');
         }
         const startedAt = now;
@@ -143,7 +150,10 @@ export class BillingService {
     if (!plan?.active) throw new AppException(404, 'NOT_FOUND', 'Plan not found');
     const now = new Date();
     const current = await this.currentSubscription(userId, now);
-    if (current && OPEN_SUB_STATUSES.includes(current.status as (typeof OPEN_SUB_STATUSES)[number])) {
+    if (
+      current &&
+      OPEN_SUB_STATUSES.includes(current.status as (typeof OPEN_SUB_STATUSES)[number])
+    ) {
       if (current.planId === plan.id && current.status === 'PENDING') {
         return this.toSubscriptionDto(current);
       }
@@ -205,7 +215,10 @@ export class BillingService {
       });
       return row;
     });
-    const user = await this.prisma.user.findUnique({ where: { id: userId }, select: { email: true } });
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { email: true },
+    });
     if (user) {
       await this.mail.sendOnce({
         userId,
@@ -277,7 +290,10 @@ export class BillingService {
         where: { status: 'ACTIVE', user: { trial: { startedAt: { not: null } } } },
       }),
       this.prisma.payment.aggregate({
-        where: { environment: 'LIVE', status: { in: ['SUCCEEDED', 'REFUNDED', 'PARTIALLY_REFUNDED'] } },
+        where: {
+          environment: 'LIVE',
+          status: { in: ['SUCCEEDED', 'REFUNDED', 'PARTIALLY_REFUNDED'] },
+        },
         _sum: { amountMinor: true },
       }),
       this.prisma.payment.aggregate({
@@ -530,7 +546,12 @@ export class BillingService {
     };
   }
 
-  async activateSubscription(actorId: string, subscriptionId: string, reason: string, requestId?: string) {
+  async activateSubscription(
+    actorId: string,
+    subscriptionId: string,
+    reason: string,
+    requestId?: string,
+  ) {
     const now = new Date();
     const settings = await this.settings();
     const row = await this.prisma.subscription.findUnique({
@@ -765,7 +786,11 @@ export class BillingService {
   }
 
   private toTrialDto(
-    trial: { status: 'NOT_STARTED' | 'ACTIVE' | 'EXPIRED'; startedAt: Date | null; expiresAt: Date | null },
+    trial: {
+      status: 'NOT_STARTED' | 'ACTIVE' | 'EXPIRED';
+      startedAt: Date | null;
+      expiresAt: Date | null;
+    },
     now: Date,
     canStartRole: boolean,
   ) {

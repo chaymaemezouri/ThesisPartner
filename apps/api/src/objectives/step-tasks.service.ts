@@ -416,7 +416,12 @@ export class StepTasksService {
   }
 
   private async write(actorId: string, thesisId: string) {
-    await this.access.assertCanAccess({ actorId, thesisId, allowedRoles: WRITE_ROLES, write: true });
+    await this.access.assertCanAccess({
+      actorId,
+      thesisId,
+      allowedRoles: WRITE_ROLES,
+      write: true,
+    });
   }
 
   private async assertStudent(actorId: string, thesisId: string) {

@@ -59,7 +59,12 @@ export class PaymentController {
   async checkout(@Body() body: unknown, @Req() request: Request) {
     const parsed = checkoutBodySchema.parse(body);
     return checkoutResponseSchema.parse(
-      await this.payments.checkout(actorId(request), parsed.planCode, parsed.idempotencyKey, request.requestId),
+      await this.payments.checkout(
+        actorId(request),
+        parsed.planCode,
+        parsed.idempotencyKey,
+        request.requestId,
+      ),
     );
   }
 
@@ -85,7 +90,10 @@ export class PaymentController {
   }
 
   @Get('invoices/:invoiceId/download')
-  async downloadInvoice(@Param('invoiceId', ParseUUIDPipe) invoiceId: string, @Req() request: Request) {
+  async downloadInvoice(
+    @Param('invoiceId', ParseUUIDPipe) invoiceId: string,
+    @Req() request: Request,
+  ) {
     return invoiceDownloadSchema.parse(
       await this.invoices.signedDownload(invoiceId, actorId(request), false),
     );
@@ -96,13 +104,14 @@ export class PaymentController {
   @Post('webhooks/:provider')
   @HttpCode(200)
   @ApiOperation({ summary: 'Verified payment provider notifications' })
-  async webhook(
-    @Param('provider') provider: string,
-    @Req() request: Request,
-  ) {
+  async webhook(@Param('provider') provider: string, @Req() request: Request) {
     const raw = request.rawBody ?? Buffer.from(JSON.stringify(request.body ?? {}));
     return webhookAckSchema.parse(
-      await this.payments.handleWebhook(provider, request.headers as Record<string, string | string[] | undefined>, raw),
+      await this.payments.handleWebhook(
+        provider,
+        request.headers as Record<string, string | string[] | undefined>,
+        raw,
+      ),
     );
   }
 }
@@ -114,7 +123,9 @@ export class MockBillingController {
 
   @Get('sessions/:sessionId')
   async session(@Param('sessionId') sessionId: string, @Req() request: Request) {
-    return mockCheckoutSessionSchema.parse(await this.payments.mockSession(actorId(request), sessionId));
+    return mockCheckoutSessionSchema.parse(
+      await this.payments.mockSession(actorId(request), sessionId),
+    );
   }
 
   @Post('sessions/:sessionId/complete')

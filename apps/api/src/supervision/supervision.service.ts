@@ -174,7 +174,11 @@ export class SupervisionService {
           doctoralStudent: students[0] ?? null,
           doctoralStudents: students,
           objectiveSummary: supervisionSummary(counts),
-          coverage: coverages[index] ?? { writable: false, source: 'none' as const, expiresAt: null },
+          coverage: coverages[index] ?? {
+            writable: false,
+            source: 'none' as const,
+            expiresAt: null,
+          },
         };
       }),
     };

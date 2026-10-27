@@ -116,7 +116,9 @@ export class MockPaymentProvider implements PaymentProvider {
   sign(rawBody: Buffer, timestamp = Math.floor(Date.now() / 1000)): string {
     const secret = this.env.MOCK_WEBHOOK_SECRET;
     if (!secret) throw new Error('MOCK_WEBHOOK_SECRET missing');
-    return createHmac('sha256', secret).update(`${timestamp}.${rawBody.toString('utf8')}`).digest('hex');
+    return createHmac('sha256', secret)
+      .update(`${timestamp}.${rawBody.toString('utf8')}`)
+      .digest('hex');
   }
 
   signatureHeader(rawBody: Buffer, timestamp = Math.floor(Date.now() / 1000)): string {
@@ -207,11 +209,13 @@ function parseEvent(body: unknown): VerifiedPaymentEvent {
     externalEventId: row.externalEventId,
     eventType: row.eventType,
     providerPaymentId: row.providerPaymentId,
-    checkoutSessionId: typeof row.checkoutSessionId === 'string' ? row.checkoutSessionId : undefined,
+    checkoutSessionId:
+      typeof row.checkoutSessionId === 'string' ? row.checkoutSessionId : undefined,
     amountMinor: row.amountMinor,
     currency: row.currency,
     environment: 'TEST',
     occurredAt: new Date(typeof row.occurredAt === 'string' ? row.occurredAt : Date.now()),
-    refundedAmountMinor: typeof row.refundedAmountMinor === 'number' ? row.refundedAmountMinor : undefined,
+    refundedAmountMinor:
+      typeof row.refundedAmountMinor === 'number' ? row.refundedAmountMinor : undefined,
   };
 }

@@ -11,9 +11,9 @@ describe('billing.util', () => {
 
   it('keeps a 30-day trial active until expiresAt', () => {
     const expires = addUtcDays(started, 30);
-    expect(trialStatusAt({ stored: 'ACTIVE', startedAt: started, expiresAt: expires, now: started })).toBe(
-      'ACTIVE',
-    );
+    expect(
+      trialStatusAt({ stored: 'ACTIVE', startedAt: started, expiresAt: expires, now: started }),
+    ).toBe('ACTIVE');
     expect(
       trialStatusAt({
         stored: 'ACTIVE',

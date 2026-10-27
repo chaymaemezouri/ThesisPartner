@@ -36,17 +36,27 @@ export function AdminPlansPage() {
   });
   const saveSettings = useMutation({
     mutationFn: () =>
-      apiSend('/api/v1/admin/billing/settings', adminBillingSettingsSchema, {
-        trialDays: Number(trialDays),
-        graceDays: Number(graceDays),
-      }, 'PATCH'),
+      apiSend(
+        '/api/v1/admin/billing/settings',
+        adminBillingSettingsSchema,
+        {
+          trialDays: Number(trialDays),
+          graceDays: Number(graceDays),
+        },
+        'PATCH',
+      ),
     onSuccess: () => client.invalidateQueries({ queryKey: ['admin', 'billing'] }),
   });
   const savePlan = useMutation({
     mutationFn: (planId: string) =>
-      apiSend(`/api/v1/admin/plans/${planId}`, billingPlanSchema, {
-        priceMad: Number(prices[planId] ?? 0),
-      }, 'PATCH'),
+      apiSend(
+        `/api/v1/admin/plans/${planId}`,
+        billingPlanSchema,
+        {
+          priceMad: Number(prices[planId] ?? 0),
+        },
+        'PATCH',
+      ),
     onSuccess: () => client.invalidateQueries({ queryKey: ['admin', 'plans'] }),
   });
 
@@ -69,7 +79,11 @@ export function AdminPlansPage() {
               onChange={(event) => setGraceDays(event.target.value)}
             />
           </div>
-          <Button className="mt-3" disabled={saveSettings.isPending} onClick={() => saveSettings.mutate()}>
+          <Button
+            className="mt-3"
+            disabled={saveSettings.isPending}
+            onClick={() => saveSettings.mutate()}
+          >
             {t('common.save')}
           </Button>
         </AdminPanel>

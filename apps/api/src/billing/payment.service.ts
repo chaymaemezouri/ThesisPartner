@@ -9,7 +9,11 @@ import { BillingService } from './billing.service';
 import { addUtcDays, periodEnd } from './billing.util';
 import { InvoiceService } from './invoice.service';
 import { MockPaymentProvider } from './mock-payment.provider';
-import { PAYMENT_PROVIDER, type PaymentProvider, type VerifiedPaymentEvent } from './payment-provider';
+import {
+  PAYMENT_PROVIDER,
+  type PaymentProvider,
+  type VerifiedPaymentEvent,
+} from './payment-provider';
 
 const OPEN_SUB = ['PENDING', 'ACTIVE', 'PAST_DUE', 'GRACE_PERIOD'] as const;
 const OPEN_PAY = ['PENDING', 'PROCESSING'] as const;
@@ -74,7 +78,11 @@ export class PaymentService {
       orderBy: { createdAt: 'desc' },
     });
     if (current && current.status === 'PENDING' && current.planId !== plan.id) {
-      throw new AppException(409, 'CONFLICT', 'An incompatible pending subscription already exists');
+      throw new AppException(
+        409,
+        'CONFLICT',
+        'An incompatible pending subscription already exists',
+      );
     }
     if (
       current &&
@@ -143,7 +151,11 @@ export class PaymentService {
     return this.toCheckoutDto(saved);
   }
 
-  async handleWebhook(providerId: string, headers: Record<string, string | string[] | undefined>, rawBody: Buffer) {
+  async handleWebhook(
+    providerId: string,
+    headers: Record<string, string | string[] | undefined>,
+    rawBody: Buffer,
+  ) {
     if (providerId !== this.provider.id) {
       throw new AppException(404, 'NOT_FOUND', 'Unknown payment provider');
     }
@@ -192,7 +204,8 @@ export class PaymentService {
       where: { id: paymentId },
       include: { plan: true },
     });
-    if (!row || row.userId !== userId) throw new AppException(404, 'NOT_FOUND', 'Payment not found');
+    if (!row || row.userId !== userId)
+      throw new AppException(404, 'NOT_FOUND', 'Payment not found');
     return this.toDto(row);
   }
 
@@ -322,7 +335,13 @@ export class PaymentService {
     return `${header}\n${lines.join('\n')}\n`;
   }
 
-  async refund(actorId: string, paymentId: string, reason: string, amountMinor?: number, requestId?: string) {
+  async refund(
+    actorId: string,
+    paymentId: string,
+    reason: string,
+    amountMinor?: number,
+    requestId?: string,
+  ) {
     const payment = await this.prisma.payment.findUnique({ where: { id: paymentId } });
     if (!payment?.providerPaymentId) throw new AppException(404, 'NOT_FOUND', 'Payment not found');
     if (payment.status !== 'SUCCEEDED' && payment.status !== 'PARTIALLY_REFUNDED') {
@@ -360,7 +379,7 @@ export class PaymentService {
     });
   }
 
-  async mockComplete(userId: string, sessionId: string, requestId?: string) {
+  async mockComplete(userId: string, sessionId: string, _requestId?: string) {
     if (this.env.NODE_ENV === 'production' || !(this.provider instanceof MockPaymentProvider)) {
       throw new AppException(404, 'NOT_FOUND', 'Resource not found');
     }
@@ -420,7 +439,12 @@ export class PaymentService {
     for (const row of rows) {
       if (!row.currentPeriodEnd) continue;
       const days = Math.ceil((row.currentPeriodEnd.getTime() - now.getTime()) / 86_400_000);
-      const keys = days <= 1 ? (['J-7', 'J-3', 'J-1'] as const) : days <= 3 ? (['J-7', 'J-3'] as const) : (['J-7'] as const);
+      const keys =
+        days <= 1
+          ? (['J-7', 'J-3', 'J-1'] as const)
+          : days <= 3
+            ? (['J-7', 'J-3'] as const)
+            : (['J-7'] as const);
       for (const key of keys) {
         await this.mail.sendOnce({
           userId: row.userId,
@@ -446,7 +470,11 @@ export class PaymentService {
         test: false,
       });
     }
-    return { reminded: rows.length, graceNotices: graceEnded.length, graceDays: settings.graceDays };
+    return {
+      reminded: rows.length,
+      graceNotices: graceEnded.length,
+      graceDays: settings.graceDays,
+    };
   }
 
   private async persistAndProcess(verified: VerifiedPaymentEvent) {
@@ -482,7 +510,11 @@ export class PaymentService {
     if (!payment) {
       await this.prisma.paymentEvent.update({
         where: { id: eventId },
-        data: { processingStatus: 'FAILED', errorCode: 'PAYMENT_NOT_FOUND', processedAt: new Date() },
+        data: {
+          processingStatus: 'FAILED',
+          errorCode: 'PAYMENT_NOT_FOUND',
+          processedAt: new Date(),
+        },
       });
       throw new AppException(400, 'BAD_REQUEST', 'Payment reference not found');
     }
@@ -536,11 +568,16 @@ export class PaymentService {
           where: { id: payment.id },
           data: {
             status: outcome.status,
-            confirmedAt: outcome.status === 'SUCCEEDED' ? (payment.confirmedAt ?? now) : payment.confirmedAt,
+            confirmedAt:
+              outcome.status === 'SUCCEEDED' ? (payment.confirmedAt ?? now) : payment.confirmedAt,
             failedAt:
-              outcome.status === 'FAILED' || outcome.status === 'CANCELLED' ? now : payment.failedAt,
+              outcome.status === 'FAILED' || outcome.status === 'CANCELLED'
+                ? now
+                : payment.failedAt,
             refundedAt:
-              outcome.status === 'REFUNDED' || outcome.status === 'PARTIALLY_REFUNDED' ? now : payment.refundedAt,
+              outcome.status === 'REFUNDED' || outcome.status === 'PARTIALLY_REFUNDED'
+                ? now
+                : payment.refundedAt,
             refundedAmountMinor:
               verified.refundedAmountMinor != null
                 ? payment.refundedAmountMinor + verified.refundedAmountMinor
@@ -549,7 +586,13 @@ export class PaymentService {
           },
         });
         if (outcome.status === 'SUCCEEDED' && payment.status !== 'SUCCEEDED') {
-          await this.activateFromPayment(tx, payment.id, payment.userId, payment.subscriptionId, now);
+          await this.activateFromPayment(
+            tx,
+            payment.id,
+            payment.userId,
+            payment.subscriptionId,
+            now,
+          );
         }
         if (outcome.status === 'REFUNDED' || outcome.status === 'PARTIALLY_REFUNDED') {
           await tx.subscriptionEvent.create({
@@ -647,7 +690,11 @@ export class PaymentService {
         actorId: userId,
         subscriptionId: subscription.id,
         type: stillCovered ? 'subscription.renewed' : 'subscription.activated_by_payment',
-        metadata: { paymentId, periodStart: periodStart.toISOString(), periodEnd: periodEndAt.toISOString() },
+        metadata: {
+          paymentId,
+          periodStart: periodStart.toISOString(),
+          periodEnd: periodEndAt.toISOString(),
+        },
       },
     });
     await this.audit.record(tx, {
@@ -761,7 +808,10 @@ export class PaymentService {
   }
 }
 
-function transition(current: PaymentStatus, eventType: string): {
+function transition(
+  current: PaymentStatus,
+  eventType: string,
+): {
   status: PaymentStatus;
   ignore?: boolean;
   reason?: string;
@@ -791,7 +841,8 @@ function transition(current: PaymentStatus, eventType: string): {
     return { status: current, ignore: true, reason: 'OUT_OF_ORDER' };
   }
   if (eventType === 'payment.partially_refunded') {
-    if (current === 'SUCCEEDED' || current === 'PARTIALLY_REFUNDED') return { status: 'PARTIALLY_REFUNDED' };
+    if (current === 'SUCCEEDED' || current === 'PARTIALLY_REFUNDED')
+      return { status: 'PARTIALLY_REFUNDED' };
     return { status: current, ignore: true, reason: 'OUT_OF_ORDER' };
   }
   return { status: current, ignore: true, reason: 'UNKNOWN_EVENT' };
@@ -811,7 +862,9 @@ function outcomesFor(scenario: Env['MOCK_PAYMENT_SCENARIO']): Array<{
       return [{ eventType: 'payment.cancelled', status: 'CANCELLED' }];
     case 'pending':
     case 'delayed':
-      return [{ eventType: 'payment.pending', status: 'PROCESSING', delay: scenario === 'delayed' }];
+      return [
+        { eventType: 'payment.pending', status: 'PROCESSING', delay: scenario === 'delayed' },
+      ];
     case 'duplicate':
       return [
         { eventType: 'payment.succeeded', status: 'SUCCEEDED', externalEventId: 'mock_dup_1' },

@@ -24,7 +24,12 @@ export function AdminInvoicesPage() {
     <div className="space-y-6">
       <AdminPageHeader title={t('admin.invoices.title')} subtitle={t('admin.invoices.subtitle')} />
       <div className="flex flex-wrap gap-3">
-        <Input id="inv-search" label={t('common.search')} value={search} onChange={(e) => setSearch(e.target.value)} />
+        <Input
+          id="inv-search"
+          label={t('common.search')}
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
         <Select
           id="inv-env"
           label={t('admin.payments.environment')}
@@ -40,7 +45,10 @@ export function AdminInvoicesPage() {
         <AdminPanel title={t('admin.invoices.documents')}>
           <ul className="space-y-2 text-sm">
             {invoices.data?.invoices.map((row) => (
-              <li key={row.id} className="flex flex-wrap justify-between gap-2 border-b border-line py-2">
+              <li
+                key={row.id}
+                className="flex flex-wrap justify-between gap-2 border-b border-line py-2"
+              >
                 <span>
                   {row.invoiceNumber} · {row.email} · {(row.totalMinor / 100).toFixed(2)} MAD
                   {row.specimen ? ` · ${t('billing.specimen')}` : ''}

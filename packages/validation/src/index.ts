@@ -2002,9 +2002,7 @@ export const billingEventListSchema = z
 
 export const selectPlanBodySchema = z.object({ planCode: planCodeSchema }).strict();
 
-export const cancelSubscriptionBodySchema = z
-  .object({ confirm: z.literal(true) })
-  .strict();
+export const cancelSubscriptionBodySchema = z.object({ confirm: z.literal(true) }).strict();
 
 export const adminBillingSettingsSchema = z
   .object({

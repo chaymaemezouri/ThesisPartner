@@ -8,7 +8,11 @@ import { BillingMailer } from './billing-mailer';
 import { BillingService } from './billing.service';
 import { InvoiceService } from './invoice.service';
 import { MockPaymentProvider } from './mock-payment.provider';
-import { AdminPaymentController, MockBillingController, PaymentController } from './payment.controller';
+import {
+  AdminPaymentController,
+  MockBillingController,
+  PaymentController,
+} from './payment.controller';
 import { PAYMENT_PROVIDER } from './payment-provider';
 import { PaymentService } from './payment.service';
 import { SubscriptionAccessService } from './subscription-access.service';

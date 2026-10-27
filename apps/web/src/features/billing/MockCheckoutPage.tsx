@@ -17,7 +17,9 @@ export function MockCheckoutPage() {
   });
   const complete = useMutation({
     mutationFn: () =>
-      apiSend(`/api/v1/billing/mock/sessions/${sessionId}/complete`, webhookAckSchema, { confirm: true }),
+      apiSend(`/api/v1/billing/mock/sessions/${sessionId}/complete`, webhookAckSchema, {
+        confirm: true,
+      }),
     onSuccess: () => {
       const id = session.data?.paymentId;
       navigate(id ? `/abonnement?payment=${id}` : '/abonnement');
@@ -41,7 +43,8 @@ export function MockCheckoutPage() {
           </p>
           <p className="mt-5 text-sm text-white/80">{t('billing.mockAmount')}</p>
           <p className="mt-1 text-4xl font-semibold tabular-nums tracking-tight">
-            {(data.amountMinor / 100).toFixed(2)} <span className="text-lg font-medium">{data.currency}</span>
+            {(data.amountMinor / 100).toFixed(2)}{' '}
+            <span className="text-lg font-medium">{data.currency}</span>
           </p>
         </div>
         <div className="space-y-5 px-6 py-6">
@@ -63,14 +66,20 @@ export function MockCheckoutPage() {
             {t('billing.mockSecure')}
           </p>
           <div className="flex flex-col gap-2">
-            <Button className="w-full" disabled={complete.isPending} onClick={() => complete.mutate()}>
+            <Button
+              className="w-full"
+              disabled={complete.isPending}
+              onClick={() => complete.mutate()}
+            >
               {t('billing.mockConfirm')}
             </Button>
             <Button variant="ghost" className="w-full" onClick={() => navigate('/abonnement')}>
               {t('common.cancel')}
             </Button>
           </div>
-          {complete.isError ? <p className="text-sm text-danger">{complete.error.message}</p> : null}
+          {complete.isError ? (
+            <p className="text-sm text-danger">{complete.error.message}</p>
+          ) : null}
         </div>
       </section>
     </div>

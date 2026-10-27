@@ -31,7 +31,10 @@ export function AdminDashboardPage() {
 
   return (
     <div className="space-y-8">
-      <AdminPageHeader title={t('admin.dashboard.title')} subtitle={t('admin.dashboard.subtitle')} />
+      <AdminPageHeader
+        title={t('admin.dashboard.title')}
+        subtitle={t('admin.dashboard.subtitle')}
+      />
       <AdminState loading={stats.isLoading} error={stats.error}>
         {stats.data ? <AdminDashboardBody data={stats.data} /> : null}
       </AdminState>
@@ -112,13 +115,19 @@ function AdminDashboardBody({ data }: { data: AdminStats }) {
             value={data.theses}
             tone="muted"
             icon={<Scroll size={16} />}
-            share={shareOf(data.theses - data.activeTheses, data.theses, t('admin.kpi.ofInactiveTheses'))}
+            share={shareOf(
+              data.theses - data.activeTheses,
+              data.theses,
+              t('admin.kpi.ofInactiveTheses'),
+            )}
           />
         </dl>
       </section>
 
       <section className="space-y-3">
-        <h2 className="text-sm font-semibold text-ink">{t('admin.dashboard.invitationsHeading')}</h2>
+        <h2 className="text-sm font-semibold text-ink">
+          {t('admin.dashboard.invitationsHeading')}
+        </h2>
         <dl className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <AdminKpi
             label={t('admin.dashboard.invitationsPending')}
@@ -195,9 +204,14 @@ function AdminDashboardBody({ data }: { data: AdminStats }) {
         <AdminPanel title={t('admin.dashboard.healthHeading')}>
           <div className="flex items-center justify-between rounded-2xl bg-canvas px-4 py-3">
             <div className="flex items-center gap-3">
-              <Pulse size={22} className={data.health.status === 'ok' ? 'text-ok' : 'text-danger'} />
+              <Pulse
+                size={22}
+                className={data.health.status === 'ok' ? 'text-ok' : 'text-danger'}
+              />
               <div>
-                <p className="text-sm font-semibold text-ink">{t('admin.dashboard.healthStatus')}</p>
+                <p className="text-sm font-semibold text-ink">
+                  {t('admin.dashboard.healthStatus')}
+                </p>
                 <p className="text-xs text-muted">{t('admin.dashboard.healthHeading')}</p>
               </div>
             </div>

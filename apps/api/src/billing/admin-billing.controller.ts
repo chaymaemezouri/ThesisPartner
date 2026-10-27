@@ -76,7 +76,9 @@ export class AdminBillingController {
 
   @Get('billing/settings')
   async getSettings() {
-    return adminBillingSettingsSchema.parse(this.billing.toSettingsDto(await this.billing.settings()));
+    return adminBillingSettingsSchema.parse(
+      this.billing.toSettingsDto(await this.billing.settings()),
+    );
   }
 
   @Patch('billing/settings')
@@ -165,7 +167,12 @@ export class AdminBillingController {
   ) {
     const parsed = adminActivateSubscriptionBodySchema.parse(body);
     return billingSubscriptionSchema.parse(
-      await this.billing.markPastDue(actorId(request), subscriptionId, parsed.reason, request.requestId),
+      await this.billing.markPastDue(
+        actorId(request),
+        subscriptionId,
+        parsed.reason,
+        request.requestId,
+      ),
     );
   }
 

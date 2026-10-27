@@ -97,116 +97,119 @@ export function AdminUsersPage() {
         {list.data && list.data.users.length === 0 ? (
           <AdminEmpty>{t('admin.users.empty')}</AdminEmpty>
         ) : list.data ? (
-        <>
-          <AdminPanel>
-            <div className="overflow-x-auto">
-            <table className="min-w-full text-left text-sm">
-              <thead className="border-b border-line text-[11px] tracking-wide text-muted uppercase">
-                <tr>
-                  <th className="px-4 py-3 font-medium">{t('admin.users.colName')}</th>
-                  <th className="px-4 py-3 font-medium">{t('admin.users.colEmail')}</th>
-                  <th className="px-4 py-3 font-medium">{t('admin.users.colRoles')}</th>
-                  <th className="px-4 py-3 font-medium">{t('admin.users.colStatus')}</th>
-                  <th className="px-4 py-3 font-medium">{t('admin.users.colCreated')}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {list.data.users.map((user) => (
-                  <tr key={user.id} className="border-b border-line last:border-0 transition-colors hover:bg-brand-soft/40">
-                    <td className="px-4 py-3">
-                      <Link
-                        to={`/admin/utilisateurs/${user.id}`}
-                        className="font-medium text-brand hover:underline"
+          <>
+            <AdminPanel>
+              <div className="overflow-x-auto">
+                <table className="min-w-full text-left text-sm">
+                  <thead className="border-b border-line text-[11px] tracking-wide text-muted uppercase">
+                    <tr>
+                      <th className="px-4 py-3 font-medium">{t('admin.users.colName')}</th>
+                      <th className="px-4 py-3 font-medium">{t('admin.users.colEmail')}</th>
+                      <th className="px-4 py-3 font-medium">{t('admin.users.colRoles')}</th>
+                      <th className="px-4 py-3 font-medium">{t('admin.users.colStatus')}</th>
+                      <th className="px-4 py-3 font-medium">{t('admin.users.colCreated')}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {list.data.users.map((user) => (
+                      <tr
+                        key={user.id}
+                        className="border-b border-line last:border-0 transition-colors hover:bg-brand-soft/40"
                       >
-                        {user.displayName}
-                      </Link>
-                      {user.platformRole === 'SUPER_ADMIN' ? (
-                        <span className="ml-2">
-                          <AdminBadge tone="violet">{t('admin.roles.superAdmin')}</AdminBadge>
-                        </span>
-                      ) : null}
-                    </td>
-                    <td className="px-4 py-3 break-all text-muted">{user.email}</td>
-                    <td className="px-4 py-3">
-                      <div className="flex flex-wrap gap-1">
-                        {user.membershipRoles.length === 0
-                          ? t('common.none')
-                          : user.membershipRoles.map((role) => (
-                              <AdminBadge
-                                key={role}
-                                tone={
-                                  role === 'DOCTORAL_STUDENT'
-                                    ? 'teal'
-                                    : role === 'SUPERVISOR'
-                                      ? 'brand'
-                                      : 'muted'
-                                }
-                              >
-                                {role === 'DOCTORAL_STUDENT'
-                                  ? t('admin.roles.doctoral')
-                                  : role === 'SUPERVISOR'
-                                    ? t('admin.roles.supervisor')
-                                    : t('admin.roles.thesisAdmin')}
-                              </AdminBadge>
-                            ))}
-                      </div>
-                    </td>
-                    <td className="px-4 py-3">
-                      <AdminBadge tone={user.disabledAt ? 'danger' : 'ok'}>
-                        {user.disabledAt
-                          ? t('admin.users.statusDisabled')
-                          : t('admin.users.statusActive')}
-                      </AdminBadge>
-                    </td>
-                    <td className="px-4 py-3 tabular-nums text-muted">
-                      {new Date(user.createdAt).toLocaleDateString()}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            </div>
-          </AdminPanel>
+                        <td className="px-4 py-3">
+                          <Link
+                            to={`/admin/utilisateurs/${user.id}`}
+                            className="font-medium text-brand hover:underline"
+                          >
+                            {user.displayName}
+                          </Link>
+                          {user.platformRole === 'SUPER_ADMIN' ? (
+                            <span className="ml-2">
+                              <AdminBadge tone="violet">{t('admin.roles.superAdmin')}</AdminBadge>
+                            </span>
+                          ) : null}
+                        </td>
+                        <td className="px-4 py-3 break-all text-muted">{user.email}</td>
+                        <td className="px-4 py-3">
+                          <div className="flex flex-wrap gap-1">
+                            {user.membershipRoles.length === 0
+                              ? t('common.none')
+                              : user.membershipRoles.map((role) => (
+                                  <AdminBadge
+                                    key={role}
+                                    tone={
+                                      role === 'DOCTORAL_STUDENT'
+                                        ? 'teal'
+                                        : role === 'SUPERVISOR'
+                                          ? 'brand'
+                                          : 'muted'
+                                    }
+                                  >
+                                    {role === 'DOCTORAL_STUDENT'
+                                      ? t('admin.roles.doctoral')
+                                      : role === 'SUPERVISOR'
+                                        ? t('admin.roles.supervisor')
+                                        : t('admin.roles.thesisAdmin')}
+                                  </AdminBadge>
+                                ))}
+                          </div>
+                        </td>
+                        <td className="px-4 py-3">
+                          <AdminBadge tone={user.disabledAt ? 'danger' : 'ok'}>
+                            {user.disabledAt
+                              ? t('admin.users.statusDisabled')
+                              : t('admin.users.statusActive')}
+                          </AdminBadge>
+                        </td>
+                        <td className="px-4 py-3 tabular-nums text-muted">
+                          {new Date(user.createdAt).toLocaleDateString()}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </AdminPanel>
 
-          <div className="flex flex-wrap items-center justify-between gap-3 text-sm">
-            <p className="text-muted">
-              {t('admin.users.pagination', {
-                page: String(list.data.page),
-                totalPages: String(totalPages),
-                total: String(list.data.total),
-              })}
-            </p>
-            <div className="flex gap-2">
-              <Button
-                type="button"
-                variant="ghost"
-                disabled={list.data.page <= 1}
-                onClick={() =>
-                  setParams((current) => ({
-                    ...current,
-                    page: Math.max(1, (current.page ?? 1) - 1),
-                  }))
-                }
-              >
-                {t('admin.users.prev')}
-              </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                disabled={list.data.page >= totalPages}
-                onClick={() =>
-                  setParams((current) => ({
-                    ...current,
-                    page: Math.min(totalPages, (current.page ?? 1) + 1),
-                  }))
-                }
-              >
-                {t('admin.users.next')}
-              </Button>
+            <div className="flex flex-wrap items-center justify-between gap-3 text-sm">
+              <p className="text-muted">
+                {t('admin.users.pagination', {
+                  page: String(list.data.page),
+                  totalPages: String(totalPages),
+                  total: String(list.data.total),
+                })}
+              </p>
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  disabled={list.data.page <= 1}
+                  onClick={() =>
+                    setParams((current) => ({
+                      ...current,
+                      page: Math.max(1, (current.page ?? 1) - 1),
+                    }))
+                  }
+                >
+                  {t('admin.users.prev')}
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  disabled={list.data.page >= totalPages}
+                  onClick={() =>
+                    setParams((current) => ({
+                      ...current,
+                      page: Math.min(totalPages, (current.page ?? 1) + 1),
+                    }))
+                  }
+                >
+                  {t('admin.users.next')}
+                </Button>
+              </div>
             </div>
-          </div>
-        </>
-      ) : null}
+          </>
+        ) : null}
       </AdminState>
     </div>
   );

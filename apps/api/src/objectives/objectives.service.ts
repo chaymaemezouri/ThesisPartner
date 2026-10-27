@@ -64,7 +64,12 @@ export class ObjectivesService {
   }
 
   async create(actorId: string, thesisId: string, body: CreateBody, requestId?: string) {
-    await this.access.assertCanAccess({ actorId, thesisId, allowedRoles: WRITE_ROLES, write: true });
+    await this.access.assertCanAccess({
+      actorId,
+      thesisId,
+      allowedRoles: WRITE_ROLES,
+      write: true,
+    });
     const role = await this.roleOf(actorId, thesisId);
     this.assertMayComplete(role, body.status);
     await this.assertResponsible(thesisId, body.responsibleUserId);
@@ -119,7 +124,12 @@ export class ObjectivesService {
     body: UpdateBody,
     requestId?: string,
   ) {
-    await this.access.assertCanAccess({ actorId, thesisId, allowedRoles: WRITE_ROLES, write: true });
+    await this.access.assertCanAccess({
+      actorId,
+      thesisId,
+      allowedRoles: WRITE_ROLES,
+      write: true,
+    });
     const role = await this.roleOf(actorId, thesisId);
     const existing = await this.findInThesis(thesisId, objectiveId);
     this.assertStudentMayRevise(role, existing);
@@ -190,7 +200,12 @@ export class ObjectivesService {
   }
 
   async remove(actorId: string, thesisId: string, objectiveId: string, requestId?: string) {
-    await this.access.assertCanAccess({ actorId, thesisId, allowedRoles: WRITE_ROLES, write: true });
+    await this.access.assertCanAccess({
+      actorId,
+      thesisId,
+      allowedRoles: WRITE_ROLES,
+      write: true,
+    });
     const role = await this.roleOf(actorId, thesisId);
     const existing = await this.findInThesis(thesisId, objectiveId);
     this.assertStudentMayRevise(role, existing);
@@ -271,7 +286,12 @@ export class ObjectivesService {
     objectiveId: string,
     requestId?: string,
   ) {
-    await this.access.assertCanAccess({ actorId, thesisId, allowedRoles: ['SUPERVISOR'], write: true });
+    await this.access.assertCanAccess({
+      actorId,
+      thesisId,
+      allowedRoles: ['SUPERVISOR'],
+      write: true,
+    });
     const now = new Date();
     const updated = await this.prisma.$transaction(async (tx) => {
       await lockObjective(tx, objectiveId, thesisId, now);
@@ -318,7 +338,12 @@ export class ObjectivesService {
     message: string | undefined,
     requestId?: string,
   ) {
-    await this.access.assertCanAccess({ actorId, thesisId, allowedRoles: ['SUPERVISOR'], write: true });
+    await this.access.assertCanAccess({
+      actorId,
+      thesisId,
+      allowedRoles: ['SUPERVISOR'],
+      write: true,
+    });
     const now = new Date();
     const updated = await this.prisma.$transaction(async (tx) => {
       await lockObjective(tx, objectiveId, thesisId, now);

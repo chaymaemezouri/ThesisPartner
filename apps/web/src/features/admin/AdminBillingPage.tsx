@@ -45,7 +45,8 @@ export function AdminBillingPage() {
   });
   const events = useQuery({
     queryKey: ['admin', 'billing', 'events'],
-    queryFn: () => apiGet('/api/v1/admin/billing/events?page=1&pageSize=20', billingEventListSchema),
+    queryFn: () =>
+      apiGet('/api/v1/admin/billing/events?page=1&pageSize=20', billingEventListSchema),
   });
   const extend = useMutation({
     mutationFn: () =>
@@ -69,8 +70,16 @@ export function AdminBillingPage() {
       <AdminState loading={stats.isLoading} error={stats.error}>
         {stats.data ? (
           <dl className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            <AdminKpi label={t('admin.billing.trialsActive')} value={stats.data.trialsActive} tone="ok" />
-            <AdminKpi label={t('admin.billing.trialsExpired')} value={stats.data.trialsExpired} tone="warn" />
+            <AdminKpi
+              label={t('admin.billing.trialsActive')}
+              value={stats.data.trialsActive}
+              tone="ok"
+            />
+            <AdminKpi
+              label={t('admin.billing.trialsExpired')}
+              value={stats.data.trialsExpired}
+              tone="warn"
+            />
             <AdminKpi
               label={t('admin.billing.subscriptionsActive')}
               value={stats.data.subscriptionsActive}
@@ -126,7 +135,10 @@ export function AdminBillingPage() {
       <AdminPanel title={t('admin.billing.trials')}>
         <ul className="space-y-2 text-sm">
           {trials.data?.trials.map((row) => (
-            <li key={row.id} className="flex flex-wrap justify-between gap-2 border-b border-line py-2">
+            <li
+              key={row.id}
+              className="flex flex-wrap justify-between gap-2 border-b border-line py-2"
+            >
               <span>
                 {row.displayName} · {row.email}
               </span>
@@ -142,7 +154,10 @@ export function AdminBillingPage() {
       <AdminPanel title={t('admin.billing.subscriptions')}>
         <ul className="space-y-2 text-sm">
           {subscriptions.data?.subscriptions.map((row) => (
-            <li key={row.id} className="flex flex-wrap items-center justify-between gap-2 border-b border-line py-2">
+            <li
+              key={row.id}
+              className="flex flex-wrap items-center justify-between gap-2 border-b border-line py-2"
+            >
               <span>
                 {row.displayName} · {row.planCode} · {row.status}
               </span>

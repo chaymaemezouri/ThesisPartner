@@ -1,4 +1,13 @@
-import { Clock, EnvelopeSimple, SignIn, UsersThree, Warning, ArrowsLeftRight, ChartLine, Pulse } from '@phosphor-icons/react';
+import {
+  Clock,
+  EnvelopeSimple,
+  SignIn,
+  UsersThree,
+  Warning,
+  ArrowsLeftRight,
+  ChartLine,
+  Pulse,
+} from '@phosphor-icons/react';
 import { useT } from '../../i18n/LocaleContext';
 import { AdminSparkline } from './AdminSparkline';
 import {
@@ -32,7 +41,10 @@ export function AdminAnalyticsPage() {
 
   return (
     <div className="space-y-8">
-      <AdminPageHeader title={t('admin.analytics.title')} subtitle={t('admin.analytics.subtitle')} />
+      <AdminPageHeader
+        title={t('admin.analytics.title')}
+        subtitle={t('admin.analytics.subtitle')}
+      />
       <AdminState loading={analytics.isLoading} error={analytics.error}>
         {data ? (
           <>
@@ -72,7 +84,11 @@ export function AdminAnalyticsPage() {
                 value={data.expiredInvitations}
                 tone="muted"
                 icon={<EnvelopeSimple size={16} />}
-                share={shareOf(data.expiredInvitations, invitationTotal, t('admin.kpi.ofInvitations'))}
+                share={shareOf(
+                  data.expiredInvitations,
+                  invitationTotal,
+                  t('admin.kpi.ofInvitations'),
+                )}
               />
               <AdminKpi
                 label={t('admin.analytics.activeSessions')}

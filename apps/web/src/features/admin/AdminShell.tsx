@@ -28,7 +28,12 @@ const ADMIN_NAV = [
   },
   { to: '/admin/audit', end: false, labelKey: 'admin.nav.audit' as const, Icon: ClipboardText },
   { to: '/admin/system', end: false, labelKey: 'admin.nav.system' as const, Icon: HardDrives },
-  { to: '/admin/abonnements', end: false, labelKey: 'admin.nav.billing' as const, Icon: ClipboardText },
+  {
+    to: '/admin/abonnements',
+    end: false,
+    labelKey: 'admin.nav.billing' as const,
+    Icon: ClipboardText,
+  },
   { to: '/admin/plans', end: false, labelKey: 'admin.nav.plans' as const, Icon: ChartLine },
   { to: '/admin/paiements', end: false, labelKey: 'admin.nav.payments' as const, Icon: CreditCard },
   { to: '/admin/factures', end: false, labelKey: 'admin.nav.invoices' as const, Icon: Receipt },
@@ -110,7 +115,10 @@ function AdminSidebar({ onNavigate }: { onNavigate?: () => void }) {
           </span>
         </Link>
       </div>
-      <nav aria-label={t('admin.navLabel')} className="flex flex-1 flex-col gap-1 overflow-y-auto p-2">
+      <nav
+        aria-label={t('admin.navLabel')}
+        className="flex flex-1 flex-col gap-1 overflow-y-auto p-2"
+      >
         {ADMIN_NAV.map((item) => {
           const NavIcon = item.Icon;
           const label = t(item.labelKey);
@@ -131,12 +139,7 @@ function AdminSidebar({ onNavigate }: { onNavigate?: () => void }) {
                 ].join(' ')
               }
             >
-              <NavIcon
-                aria-hidden="true"
-                size={20}
-                weight="duotone"
-                className="shrink-0"
-              />
+              <NavIcon aria-hidden="true" size={20} weight="duotone" className="shrink-0" />
               <span>{label}</span>
             </NavLink>
           );

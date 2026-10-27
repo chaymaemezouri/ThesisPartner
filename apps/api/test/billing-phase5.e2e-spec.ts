@@ -85,9 +85,10 @@ describe('billing phase 5', () => {
     expect(registered.status).toBe(201);
     const mailer = app.get(AuthMailer);
     const token = tokenFrom(mailer, 'Confirmez votre adresse ThesisPartner');
-    expect((await request(app.getHttpServer()).post('/api/v1/auth/email-verification').send({ token })).status).toBe(
-      200,
-    );
+    expect(
+      (await request(app.getHttpServer()).post('/api/v1/auth/email-verification').send({ token }))
+        .status,
+    ).toBe(200);
     return { agent, csrf: csrfFrom(registered), userId: registered.body.user.id as string };
   }
 
@@ -105,8 +106,12 @@ describe('billing phase 5', () => {
     const student = await registerVerified(`pay-month-${stamp}@example.test`, 'Lea');
     const plans = await student.agent.get('/api/v1/billing/plans');
     expect(plans.status).toBe(200);
-    const monthly = plans.body.plans.find((item: { code: string }) => item.code === 'THESISPARTNER_PRO_MONTHLY');
-    const yearly = plans.body.plans.find((item: { code: string }) => item.code === 'THESISPARTNER_PRO_YEARLY');
+    const monthly = plans.body.plans.find(
+      (item: { code: string }) => item.code === 'THESISPARTNER_PRO_MONTHLY',
+    );
+    const yearly = plans.body.plans.find(
+      (item: { code: string }) => item.code === 'THESISPARTNER_PRO_YEARLY',
+    );
     expect(monthly.priceMad).toBeGreaterThan(0);
 
     const first = checkoutResponseSchema.parse(
@@ -131,8 +136,12 @@ describe('billing phase 5', () => {
     );
     expect(replay.paymentId).toBe(first.paymentId);
 
-    const before = billingStatusSchema.parse((await student.agent.get('/api/v1/billing/status')).body);
-    expect(before.subscription.status === 'PENDING' || before.subscription.status === null).toBe(true);
+    const before = billingStatusSchema.parse(
+      (await student.agent.get('/api/v1/billing/status')).body,
+    );
+    expect(before.subscription.status === 'PENDING' || before.subscription.status === null).toBe(
+      true,
+    );
     expect(before.subscription.paymentProviderReady).toBe(true);
 
     const payment = await prisma.payment.findUniqueOrThrow({ where: { id: first.paymentId } });
@@ -145,7 +154,9 @@ describe('billing phase 5', () => {
       environment: 'TEST',
     });
     expect(fraud.status).toBe(400);
-    expect((await prisma.payment.findUniqueOrThrow({ where: { id: first.paymentId } })).status).toBe('PENDING');
+    expect(
+      (await prisma.payment.findUniqueOrThrow({ where: { id: first.paymentId } })).status,
+    ).toBe('PENDING');
 
     const invalid = await request(app.getHttpServer())
       .post('/api/v1/billing/webhooks/mock')
@@ -173,7 +184,9 @@ describe('billing phase 5', () => {
     expect(paid.status).toBe('SUCCEEDED');
     expect(paid.environment).toBe('TEST');
 
-    const after = billingStatusSchema.parse((await student.agent.get('/api/v1/billing/status')).body);
+    const after = billingStatusSchema.parse(
+      (await student.agent.get('/api/v1/billing/status')).body,
+    );
     expect(after.subscription.status).toBe('ACTIVE');
     expect(after.coverage.writable).toBe(true);
 
@@ -186,9 +199,13 @@ describe('billing phase 5', () => {
       environment: 'TEST',
     });
     expect(unordered.status).toBe(200);
-    expect((await prisma.subscription.findMany({ where: { userId: student.userId } })).length).toBe(1);
+    expect((await prisma.subscription.findMany({ where: { userId: student.userId } })).length).toBe(
+      1,
+    );
 
-    const invoices = invoiceListSchema.parse((await student.agent.get('/api/v1/billing/invoices')).body);
+    const invoices = invoiceListSchema.parse(
+      (await student.agent.get('/api/v1/billing/invoices')).body,
+    );
     expect(invoices.invoices[0]?.specimen).toBe(true);
     expect(invoices.invoices[0]?.planCode).toBe('THESISPARTNER_PRO_MONTHLY');
 
@@ -208,7 +225,9 @@ describe('billing phase 5', () => {
       ).body,
     );
     expect(declinedCheckout.amountMinor).toBe(yearly.priceMad * 100);
-    const declinedPay = await prisma.payment.findUniqueOrThrow({ where: { id: declinedCheckout.paymentId } });
+    const declinedPay = await prisma.payment.findUniqueOrThrow({
+      where: { id: declinedCheckout.paymentId },
+    });
     const refused = await postWebhook({
       externalEventId: `fail-${stamp}`,
       eventType: 'payment.failed',
@@ -218,8 +237,12 @@ describe('billing phase 5', () => {
       environment: 'TEST',
     });
     expect(refused.status).toBe(200);
-    expect((await prisma.payment.findUniqueOrThrow({ where: { id: declinedPay.id } })).status).toBe('FAILED');
-    const declinedStatus = billingStatusSchema.parse((await declinedStudent.agent.get('/api/v1/billing/status')).body);
+    expect((await prisma.payment.findUniqueOrThrow({ where: { id: declinedPay.id } })).status).toBe(
+      'FAILED',
+    );
+    const declinedStatus = billingStatusSchema.parse(
+      (await declinedStudent.agent.get('/api/v1/billing/status')).body,
+    );
     expect(declinedStatus.subscription.status).not.toBe('ACTIVE');
   });
 
@@ -229,9 +252,14 @@ describe('billing phase 5', () => {
     const second = await registerVerified(`pay-renew2-${stamp}@example.test`, 'Ines');
     const supervisor = await registerVerified(`pay-sup-${stamp}@example.test`, 'Paul');
     const admin = await registerVerified(`pay-admin-${stamp}@example.test`, 'Ada');
-    await prisma.user.update({ where: { id: admin.userId }, data: { platformRole: 'SUPER_ADMIN' } });
+    await prisma.user.update({
+      where: { id: admin.userId },
+      data: { platformRole: 'SUPER_ADMIN' },
+    });
     await admin.agent.post('/api/v1/auth/logout').set('x-csrf-token', admin.csrf);
-    const adminLogin = await admin.agent.post('/api/v1/auth/login').send({ email: `pay-admin-${stamp}@example.test`, password });
+    const adminLogin = await admin.agent
+      .post('/api/v1/auth/login')
+      .send({ email: `pay-admin-${stamp}@example.test`, password });
     expect(adminLogin.status).toBe(200);
     const adminCsrf = csrfFrom(adminLogin);
 
@@ -246,7 +274,10 @@ describe('billing phase 5', () => {
       .send({ title: 'These B paiement' });
     expect(thesisB.status).toBe(201);
 
-    async function pay(actor: { agent: ReturnType<typeof request.agent>; csrf: string }, key: string) {
+    async function pay(
+      actor: { agent: ReturnType<typeof request.agent>; csrf: string },
+      key: string,
+    ) {
       const checkout = checkoutResponseSchema.parse(
         (
           await actor.agent
@@ -294,9 +325,15 @@ describe('billing phase 5', () => {
 
     await prisma.subscription.update({
       where: { id: sub.id },
-      data: { currentPeriodEnd: new Date(Date.now() - 1000), cancelAtPeriodEnd: false, status: 'ACTIVE' },
+      data: {
+        currentPeriodEnd: new Date(Date.now() - 1000),
+        cancelAtPeriodEnd: false,
+        status: 'ACTIVE',
+      },
     });
-    const stats = adminBillingStatsSchema.parse((await admin.agent.get('/api/v1/admin/billing/stats')).body);
+    const stats = adminBillingStatsSchema.parse(
+      (await admin.agent.get('/api/v1/admin/billing/stats')).body,
+    );
     expect(stats.liveCollectedMinor).toBe(0);
     expect(stats.testPaymentCount).toBeGreaterThan(0);
 
@@ -308,8 +345,12 @@ describe('billing phase 5', () => {
       .set('x-csrf-token', adminCsrf)
       .send({ reason: 'Test refund' });
     expect(refund.status).toBe(200);
-    expect((await prisma.payment.findUniqueOrThrow({ where: { id: renewal.id } })).status).toBe('REFUNDED');
-    const credits = await prisma.invoice.findMany({ where: { paymentId: renewal.id, kind: 'CREDIT_NOTE' } });
+    expect((await prisma.payment.findUniqueOrThrow({ where: { id: renewal.id } })).status).toBe(
+      'REFUNDED',
+    );
+    const credits = await prisma.invoice.findMany({
+      where: { paymentId: renewal.id, kind: 'CREDIT_NOTE' },
+    });
     expect(credits.length).toBe(1);
 
     expect((await student.agent.get('/api/v1/admin/payments')).status).toBe(403);
@@ -356,8 +397,12 @@ describe('billing phase 5', () => {
       ).status,
     ).toBe(200);
 
-    expect((await supervisor.agent.get(`/api/v1/theses/${thesisA.body.id}/objectives`)).status).toBe(200);
-    expect((await supervisor.agent.get(`/api/v1/theses/${thesisB.body.id}/objectives`)).status).toBe(200);
+    expect(
+      (await supervisor.agent.get(`/api/v1/theses/${thesisA.body.id}/objectives`)).status,
+    ).toBe(200);
+    expect(
+      (await supervisor.agent.get(`/api/v1/theses/${thesisB.body.id}/objectives`)).status,
+    ).toBe(200);
     const afterSup = await supervisor.agent
       .post('/api/v1/billing/checkout')
       .set('x-csrf-token', supervisor.csrf)

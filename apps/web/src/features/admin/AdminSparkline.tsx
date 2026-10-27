@@ -36,7 +36,9 @@ export function AdminSparkline({ points, label, emptyLabel, tone = 'brand' }: Pr
     const last = coords[coords.length - 1];
     if (!first || !last) return '';
     const line = coords
-      .map((coord, index) => `${index === 0 ? 'M' : 'L'} ${coord.x.toFixed(1)} ${coord.y.toFixed(1)}`)
+      .map(
+        (coord, index) => `${index === 0 ? 'M' : 'L'} ${coord.x.toFixed(1)} ${coord.y.toFixed(1)}`,
+      )
       .join(' ');
     const area = `${line} L ${last.x.toFixed(1)} ${height - padY} L ${first.x.toFixed(1)} ${height - padY} Z`;
     return { line, area, coords, width, height, padY };
@@ -93,33 +95,33 @@ export function AdminSparkline({ points, label, emptyLabel, tone = 'brand' }: Pr
           const point = points[index];
           if (!point) return null;
           return (
-          <g key={point.date}>
-            <rect
-              x={coord.x - 6}
-              y={0}
-              width={12}
-              height={path.height}
-              fill="transparent"
-              onMouseEnter={() => setActive(index)}
-            >
-              <title>
-                {point.date}: {point.count}
-              </title>
-            </rect>
-            {active === index ? (
-              <>
-                <line
-                  x1={coord.x}
-                  x2={coord.x}
-                  y1={path.padY}
-                  y2={path.height - path.padY}
-                  stroke={color}
-                  strokeOpacity="0.25"
-                />
-                <circle cx={coord.x} cy={coord.y} r="4.5" fill={color} />
-              </>
-            ) : null}
-          </g>
+            <g key={point.date}>
+              <rect
+                x={coord.x - 6}
+                y={0}
+                width={12}
+                height={path.height}
+                fill="transparent"
+                onMouseEnter={() => setActive(index)}
+              >
+                <title>
+                  {point.date}: {point.count}
+                </title>
+              </rect>
+              {active === index ? (
+                <>
+                  <line
+                    x1={coord.x}
+                    x2={coord.x}
+                    y1={path.padY}
+                    y2={path.height - path.padY}
+                    stroke={color}
+                    strokeOpacity="0.25"
+                  />
+                  <circle cx={coord.x} cy={coord.y} r="4.5" fill={color} />
+                </>
+              ) : null}
+            </g>
           );
         })}
       </svg>
