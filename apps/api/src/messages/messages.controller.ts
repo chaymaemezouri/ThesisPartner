@@ -1,6 +1,22 @@
-import { Body, Controller, Get, HttpCode, Param, ParseUUIDPipe, Post, Req } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  Param,
+  ParseUUIDPipe,
+  Patch,
+  Post,
+  Req,
+} from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
-import { createMessageGroupSchema, createMessageSchema } from '@thesispartner/validation';
+import {
+  createMessageGroupSchema,
+  createMessageSchema,
+  emptyBodySchema,
+  updateMessageSchema,
+} from '@thesispartner/validation';
 import type { Request } from 'express';
 import { AppException } from '../common/errors/app.exception';
 import { ValidateBody } from '../common/validation/zod-body.interceptor';
@@ -52,6 +68,57 @@ export class MessagesController {
     );
   }
 
+  @Patch(':conversationId/messages/:messageId')
+  @ValidateBody(updateMessageSchema)
+  @ApiOperation({ summary: 'Edit a message the caller authored' })
+  editMessage(
+    @Param('conversationId', ParseUUIDPipe) conversationId: string,
+    @Param('messageId', ParseUUIDPipe) messageId: string,
+    @Body() body: unknown,
+    @Req() request: Request,
+  ) {
+    return this.messages.edit(
+      actorId(request),
+      conversationId,
+      messageId,
+      updateMessageSchema.parse(body),
+      request.requestId,
+    );
+  }
+
+  @Delete(':conversationId/messages/:messageId')
+  @HttpCode(200)
+  @ValidateBody(emptyBodySchema)
+  @ApiOperation({ summary: 'Delete a message the caller authored' })
+  removeMessage(
+    @Param('conversationId', ParseUUIDPipe) conversationId: string,
+    @Param('messageId', ParseUUIDPipe) messageId: string,
+    @Req() request: Request,
+  ) {
+    return this.messages.removeMessage(
+      actorId(request),
+      conversationId,
+      messageId,
+      request.requestId,
+    );
+  }
+
+  @Post(':conversationId/clear')
+  @HttpCode(200)
+  @ValidateBody(emptyBodySchema)
+  @ApiOperation({ summary: 'Remove every message from a conversation the caller belongs to' })
+  clear(@Param('conversationId', ParseUUIDPipe) conversationId: string, @Req() request: Request) {
+    return this.messages.clear(actorId(request), conversationId, request.requestId);
+  }
+
+  @Post(':conversationId/leave')
+  @HttpCode(200)
+  @ValidateBody(emptyBodySchema)
+  @ApiOperation({ summary: 'Leave a group conversation' })
+  leave(@Param('conversationId', ParseUUIDPipe) conversationId: string, @Req() request: Request) {
+    return this.messages.leave(actorId(request), conversationId, request.requestId);
+  }
+
   @Post(':conversationId/members')
   @HttpCode(200)
   @ValidateBody(createMessageGroupSchema)
@@ -67,6 +134,17 @@ export class MessagesController {
       createMessageGroupSchema.parse(body),
       request.requestId,
     );
+  }
+
+  @Delete(':conversationId')
+  @HttpCode(200)
+  @ValidateBody(emptyBodySchema)
+  @ApiOperation({ summary: 'Delete a group the caller created' })
+  removeConversation(
+    @Param('conversationId', ParseUUIDPipe) conversationId: string,
+    @Req() request: Request,
+  ) {
+    return this.messages.removeConversation(actorId(request), conversationId, request.requestId);
   }
 }
 

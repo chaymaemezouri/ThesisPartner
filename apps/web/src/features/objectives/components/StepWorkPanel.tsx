@@ -576,7 +576,7 @@ function FileList({
                 .catch((caught: unknown) => setError(fileErrorMessage(caught, t)));
             }}
           >
-            {files.length > 0 ? t('objectives.work.replace') : t('common.attachFile')}
+            {t('objectives.work.replace')}
           </Button>
         </div>
       ) : null}

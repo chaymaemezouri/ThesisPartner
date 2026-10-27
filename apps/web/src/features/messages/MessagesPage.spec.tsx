@@ -88,10 +88,12 @@ function mockMailbox({
   ];
   let attempts = 0;
   const posts: { url: string; body: string }[] = [];
+  const conversations = [summary, second];
   vi.stubGlobal(
     'fetch',
     vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
       const url = String(input);
+      const method = init?.method ?? 'GET';
       if (url.includes('/auth/me'))
         return json({
           user: {
@@ -104,12 +106,44 @@ function mockMailbox({
             displayName: 'Noa Bernard',
           },
         });
-      if (url.endsWith('/messages/conversations'))
-        return json({ conversations: [summary, second], students: [] });
+      if (url.endsWith('/messages/conversations') && method === 'GET')
+        return json({ conversations, students: [] });
       const item = url.includes(secondId) ? second : summary;
-      if (init?.method === 'POST') {
+      if (method === 'PATCH' && url.includes('/messages/')) {
+        const payload = JSON.parse(String(init?.body)) as { body: string };
+        const messageId = url.split('/').pop();
+        const found = messages.find((message) => message.id === messageId) as
+          | (typeof messages)[number] & { editedAt?: string }
+          | undefined;
+        if (found) {
+          found.body = payload.body;
+          found.editedAt = '2026-10-09T13:30:00.000Z';
+        }
+      }
+      if (method === 'DELETE' && /\/messages\/[0-9a-f-]+$/i.test(url)) {
+        const messageId = url.split('/').pop();
+        const found = messages.find((message) => message.id === messageId) as
+          | (typeof messages)[number] & { deleted?: boolean }
+          | undefined;
+        if (found) {
+          found.body = '';
+          found.deleted = true;
+        }
+      }
+      if (method === 'POST' && url.endsWith('/clear')) {
+        messages.splice(0, messages.length);
+      }
+      if (method === 'POST' && url.endsWith('/leave')) {
+        return json({ id: secondId });
+      }
+      if (method === 'DELETE' && url.endsWith(`/conversations/${secondId}`)) {
+        const index = conversations.findIndex((row) => row.id === secondId);
+        if (index >= 0) conversations.splice(index, 1);
+        return json({ id: secondId });
+      }
+      if (method === 'POST' && url.includes('/messages') && !url.endsWith('/clear')) {
         attempts++;
-        const payload = JSON.parse(String(init.body)) as { body: string };
+        const payload = JSON.parse(String(init?.body)) as { body: string };
         posts.push({ url, body: payload.body });
         if (failFirstSend && attempts === 1)
           return new Response('{}', {
@@ -126,7 +160,7 @@ function mockMailbox({
       }
       return json({
         ...item,
-        createdById: actorId,
+        createdById: item.id === secondId ? actorId : studentId,
         messages: item.id === conversationId ? messages : [],
         lastMessage: undefined,
         unread: undefined,
@@ -357,5 +391,44 @@ describe('messages page', () => {
       screen.getByText('Choose the doctoral students who belong to this group.'),
     ).toBeInTheDocument();
     expect(screen.getByRole('checkbox', { name: 'Youssef El Amrani' })).toBeInTheDocument();
+  });
+
+  it('lets the author edit and delete a message, and clear the thread', async () => {
+    const user = userEvent.setup();
+    mockMailbox();
+    renderPage();
+    await user.click(await screen.findByRole('link', { name: /Youssef/ }));
+    await user.click(await screen.findByRole('button', { name: 'Edit message' }));
+    const editor = await screen.findByRole('textbox', { name: 'Edit message' });
+    await user.clear(editor);
+    await user.type(editor, 'Updated reply');
+    await user.click(screen.getByRole('button', { name: 'Save' }));
+    expect(await screen.findByText('Updated reply')).toBeInTheDocument();
+    expect(screen.getByText(/Edited/)).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Delete message' }));
+    const deleteDialog = await screen.findByRole('dialog', { name: 'Delete message' });
+    await user.click(within(deleteDialog).getByRole('button', { name: 'Delete' }));
+    expect(await screen.findByText('This message was deleted.')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Conversation actions' }));
+    await user.click(screen.getByRole('menuitem', { name: 'Clear messages' }));
+    const clearDialog = await screen.findByRole('dialog', { name: 'Clear messages' });
+    await user.click(within(clearDialog).getByRole('button', { name: 'Confirm' }));
+    expect(await screen.findByText('No message yet.')).toBeInTheDocument();
+  });
+
+  it('lets the group creator remove the conversation', async () => {
+    const user = userEvent.setup();
+    mockMailbox();
+    renderPage();
+    await user.click(await screen.findByRole('link', { name: /Research group/ }));
+    await user.click(await screen.findByRole('button', { name: 'Conversation actions' }));
+    await user.click(screen.getByRole('menuitem', { name: 'Delete group' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Delete group' });
+    await user.click(within(dialog).getByRole('button', { name: 'Confirm' }));
+    await waitFor(() => {
+      expect(screen.queryByRole('link', { name: /Research group/ })).not.toBeInTheDocument();
+    });
   });
 });

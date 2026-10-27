@@ -47,7 +47,7 @@ export class S3ObjectStorage implements ObjectStorage, OnModuleInit {
 
   async onModuleInit(): Promise<void> {
     try {
-      await this.ensurePrivateBucket();
+      await withTimeout(this.ensurePrivateBucket(), 2500);
       this.ready = true;
     } catch {
       this.ready = false;
@@ -61,7 +61,7 @@ export class S3ObjectStorage implements ObjectStorage, OnModuleInit {
 
   async ping(): Promise<boolean> {
     try {
-      await this.ensurePrivateBucket();
+      await withTimeout(this.ensurePrivateBucket(), 2500);
       this.ready = true;
       return true;
     } catch {
@@ -169,6 +169,22 @@ export function policyAllowsPublicRead(policy: string | undefined): boolean {
   return (
     /"Effect"\s*:\s*"Allow"/i.test(policy) && /\*/.test(policy) && /s3:GetObject/i.test(policy)
   );
+}
+
+function withTimeout<T>(action: Promise<T>, ms: number): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error('timeout')), ms);
+    action.then(
+      (value) => {
+        clearTimeout(timer);
+        resolve(value);
+      },
+      (error: unknown) => {
+        clearTimeout(timer);
+        reject(error);
+      },
+    );
+  });
 }
 
 function isMissing(error: unknown): boolean {

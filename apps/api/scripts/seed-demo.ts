@@ -101,6 +101,7 @@ async function upsertUser(input: {
     country?: string;
     orcid?: string;
     googleScholarUrl?: string;
+    phone?: string;
   };
 }) {
   const passwordHash = await hash(PASSWORD, ARGON2);
@@ -616,6 +617,7 @@ async function main() {
       specialty: 'Apprentissage automatique',
       city: 'Rabat',
       country: 'Maroc',
+      phone: '+212 5 37 00 00 00',
     },
   });
 

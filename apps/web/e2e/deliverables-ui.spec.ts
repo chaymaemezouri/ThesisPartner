@@ -134,12 +134,14 @@ async function workspace(page: Page, supervisor = false, withFile = true) {
                   {
                     id: deliverableId,
                     title: listed.title,
+                    versionCount: 2,
                     latestVersionNumber: 2,
                     submittedAt: detail.submittedAt,
                   },
                 ],
                 supervisors: [],
                 meetings: [],
+                coverage: { writable: true, source: 'subscription', expiresAt: null },
                 doctoralStudent: {
                   id: author.id,
                   givenName: author.givenName,
@@ -246,7 +248,7 @@ test('deliverables are readable on desktop and mobile, with a clear deposit and 
   for (const width of [1440, 1024, 375]) {
     await page.setViewportSize({ width, height: 900 });
     await page.goto('/livrables');
-    await expect(page.getByRole('heading', { name: 'Mes livrables' })).toBeVisible();
+    await expect(page.getByRole('tablist', { name: 'Livrables' })).toBeVisible();
     await expect(page.getByRole('link', { name: listed.title })).toBeVisible();
     expect(await page.evaluate(() => getComputedStyle(document.documentElement).fontSize)).toBe(
       '13px',

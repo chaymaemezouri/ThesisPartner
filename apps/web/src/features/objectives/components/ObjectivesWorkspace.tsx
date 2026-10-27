@@ -51,33 +51,35 @@ export function ObjectivesWorkspace({
 
   return (
     <div className="min-w-0">
-      <div className="mb-3 flex min-w-0 items-center gap-2">
-        <div className="min-w-0 flex-1">
-          <ObjectiveFilters
-            tab={tab}
-            search={search}
-            onTab={setTab}
-            onSearch={setSearch}
-            part="tabs"
-          />
-        </div>
-        {showCreate ? (
-          <IconAction
-            className="shrink-0"
-            label={t('objectives.new')}
-            icon="plus"
-            onClick={() => setCreating(true)}
-          />
-        ) : null}
-      </div>
-      <div>
+      <div className="mb-3">
         <ObjectiveFilters
           tab={tab}
           search={search}
           onTab={setTab}
           onSearch={setSearch}
-          part="search"
+          part="tabs"
         />
+      </div>
+      <div>
+        <div className="flex min-w-0 flex-wrap items-center gap-2">
+          <div className="min-w-[8rem] flex-1">
+            <ObjectiveFilters
+              tab={tab}
+              search={search}
+              onTab={setTab}
+              onSearch={setSearch}
+              part="search"
+            />
+          </div>
+          {showCreate ? (
+            <IconAction
+              className="shrink-0"
+              label={t('objectives.new')}
+              icon="plus"
+              onClick={() => setCreating(true)}
+            />
+          ) : null}
+        </div>
         {canManage && standardPath.data && !standardPath.data.applied ? (
           <div className="mt-4">
             <Button

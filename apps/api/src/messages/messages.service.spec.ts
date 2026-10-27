@@ -77,3 +77,129 @@ describe('MessagesService profile photos', () => {
     },
   );
 });
+
+describe('MessagesService edit, delete and conversation management', () => {
+  const actorId = '11111111-1111-4111-8111-111111111111';
+  const otherId = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
+  const conversationId = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
+  const messageId = 'dddddddd-dddd-4ddd-8ddd-dddddddddddd';
+
+  function conversation(kind: 'DIRECT' | 'GROUP' = 'GROUP', createdById = actorId) {
+    return {
+      id: conversationId,
+      kind,
+      title: 'Research group',
+      thesisId: null,
+      thesis: null,
+      createdById,
+      members: [
+        {
+          userId: actorId,
+          user: {
+            id: actorId,
+            email: 'noa@example.test',
+            profile: { displayName: 'Noa Bernard', avatarUrl: null },
+          },
+        },
+      ],
+    };
+  }
+
+  function serviceWith(prisma: object) {
+    return new MessagesService(prisma as never, { record: jest.fn() } as never);
+  }
+
+  it('edits a message the caller authored', async () => {
+    const row = conversation();
+    const tx = {
+      message: { update: jest.fn() },
+      conversation: { update: jest.fn() },
+    };
+    const prisma = {
+      conversationMember: {
+        findUnique: jest.fn().mockResolvedValue({ conversation: row }),
+        update: jest.fn().mockResolvedValue({}),
+      },
+      message: {
+        findFirst: jest.fn().mockResolvedValue({
+          id: messageId,
+          conversationId,
+          authorId: actorId,
+          deletedAt: null,
+        }),
+        findMany: jest.fn().mockResolvedValue([]),
+        update: tx.message.update,
+      },
+      conversation: { update: tx.conversation.update },
+      $transaction: jest.fn(async (fn: (client: typeof tx) => Promise<void>) => fn(tx)),
+    };
+    const service = serviceWith(prisma);
+    await service.edit(actorId, conversationId, messageId, { body: '  Updated note  ' });
+    expect(prisma.message.findFirst).toHaveBeenCalledWith({
+      where: { id: messageId, conversationId, authorId: actorId, deletedAt: null },
+    });
+    expect(tx.message.update).toHaveBeenCalledWith({
+      where: { id: messageId },
+      data: { body: 'Updated note', editedAt: expect.any(Date) },
+    });
+  });
+
+  it('soft-deletes an authored message and clears a thread', async () => {
+    const row = conversation('GROUP');
+    const tx = {
+      message: { update: jest.fn(), deleteMany: jest.fn() },
+      conversation: { update: jest.fn() },
+    };
+    const prisma = {
+      conversationMember: {
+        findUnique: jest.fn().mockResolvedValue({ conversation: row }),
+        update: jest.fn().mockResolvedValue({}),
+      },
+      message: {
+        findFirst: jest.fn().mockResolvedValue({
+          id: messageId,
+          conversationId,
+          authorId: actorId,
+          deletedAt: null,
+        }),
+        findMany: jest.fn().mockResolvedValue([]),
+      },
+      $transaction: jest.fn(async (fn: (client: typeof tx) => Promise<void>) => fn(tx)),
+    };
+    const service = serviceWith(prisma);
+    await service.removeMessage(actorId, conversationId, messageId);
+    expect(tx.message.update).toHaveBeenCalledWith({
+      where: { id: messageId },
+      data: { deletedAt: expect.any(Date), body: '' },
+    });
+    await service.clear(actorId, conversationId);
+    expect(tx.message.deleteMany).toHaveBeenCalledWith({ where: { conversationId } });
+  });
+
+  it('lets a member leave a group and the creator delete it', async () => {
+    const group = conversation('GROUP', otherId);
+    const owned = conversation('GROUP', actorId);
+    const tx = {
+      conversationMember: { delete: jest.fn() },
+      conversation: { delete: jest.fn() },
+    };
+    const prisma = {
+      conversationMember: {
+        findUnique: jest
+          .fn()
+          .mockResolvedValueOnce({ conversation: group })
+          .mockResolvedValueOnce({ conversation: owned }),
+      },
+      $transaction: jest.fn(async (fn: (client: typeof tx) => Promise<void>) => fn(tx)),
+    };
+    const service = serviceWith(prisma);
+    await expect(service.leave(actorId, conversationId)).resolves.toEqual({ id: conversationId });
+    expect(tx.conversationMember.delete).toHaveBeenCalledWith({
+      where: { conversationId_userId: { conversationId, userId: actorId } },
+    });
+    await expect(service.removeConversation(actorId, conversationId)).resolves.toEqual({
+      id: conversationId,
+    });
+    expect(tx.conversation.delete).toHaveBeenCalledWith({ where: { id: conversationId } });
+  });
+});

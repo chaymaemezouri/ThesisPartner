@@ -51,6 +51,7 @@ export class SupervisionService {
                 status: true,
                 dueDate: true,
                 submittedAt: true,
+                _count: { select: { versions: true } },
                 versions: {
                   orderBy: { versionNumber: 'desc' },
                   take: 1,
@@ -160,6 +161,7 @@ export class SupervisionService {
             .map((item) => ({
               id: item.id,
               title: item.title,
+              versionCount: item._count.versions,
               latestVersionNumber: item.versions[0]?.versionNumber ?? null,
               submittedAt: item.submittedAt?.toISOString() ?? null,
             })),

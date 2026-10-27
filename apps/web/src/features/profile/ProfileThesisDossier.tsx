@@ -134,13 +134,11 @@ function Dossier({ thesisId, canDelete }: { thesisId: string; canDelete: boolean
           <h3 className="text-sm font-semibold text-ink">{thesis.title}</h3>
           <p className="mt-1 truncate text-sm text-muted">
             {t('profile.supervisorLabel')} ·{' '}
-            {supervisor?.email ? (
-              <a
-                className="font-medium text-brand hover:underline"
-                href={`mailto:${supervisor.email}`}
-              >
-                {supervisor.email}
-              </a>
+            {supervisor ? (
+              <span className="text-ink">
+                {[supervisor.givenName, supervisor.familyName].filter(Boolean).join(' ').trim() ||
+                  supervisor.displayName}
+              </span>
             ) : (
               <span className="text-ink">{t('profile.noSupervisor')}</span>
             )}
@@ -170,6 +168,7 @@ function Dossier({ thesisId, canDelete }: { thesisId: string; canDelete: boolean
           thesisId={thesis.id}
           hasSupervisor={Boolean(supervisor)}
           canManage={thesis.role === 'DOCTORAL_STUDENT'}
+          supervisor={supervisor}
         />
       ) : null}
       <Modal

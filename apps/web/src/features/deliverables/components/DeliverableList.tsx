@@ -51,7 +51,7 @@ export function DeliverableList({
               {t('deliverables.statusLabel')}
             </th>
             <th scope="col" className="w-[10%] px-2 py-2">
-              {t('deliverables.versionLabel')}
+              {t('deliverables.versions')}
             </th>
             <th scope="col" className="px-2 py-2">
               {t('deliverables.dueDate')}
@@ -110,10 +110,13 @@ export function DeliverableList({
                 <DeliverableStatusBadge status={item.status} />
               </td>
               <td className="text-right text-[11px] tabular-nums text-muted sm:text-xs md:px-2 md:py-3 md:text-left md:align-top">
+                <span className="mb-1 block text-[10px] tracking-wide text-muted uppercase md:hidden">
+                  {t('deliverables.versions')}
+                </span>
                 <span className="inline-flex rounded-md bg-violet-soft/60 px-2 py-0.5 text-violet">
-                  {item.latestVersionNumber
-                    ? t('deliverables.versionShort', { number: item.latestVersionNumber })
-                    : t('deliverables.noVersionShort')}
+                  {item.versionCount === 1
+                    ? t('deliverables.versionCountOne')
+                    : t('deliverables.versionCountMany', { count: item.versionCount })}
                 </span>
               </td>
               <td className="col-span-2 text-[11px] tabular-nums sm:text-xs md:px-2 md:py-3 md:align-top">

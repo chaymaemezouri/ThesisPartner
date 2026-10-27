@@ -74,6 +74,7 @@ function ProfileForm({
       specialty: initial.specialty ?? '',
       city: initial.city ?? '',
       country: initial.country ?? '',
+      phone: initial.phone ?? '',
       orcid: initial.orcid ?? '',
       googleScholarUrl: initial.googleScholarUrl ?? '',
       linkedinUrl: initial.linkedinUrl ?? '',
@@ -242,6 +243,14 @@ function ProfileForm({
         />
         <Input id="city" label={t('profile.city')} {...form.register('city')} />
         <Input id="country" label={t('profile.country')} {...form.register('country')} />
+        <Input
+          id="phone"
+          label={t('profile.phone')}
+          type="tel"
+          autoComplete="tel"
+          error={form.formState.errors.phone?.message}
+          {...form.register('phone')}
+        />
         <Input
           id="orcid"
           label={t('profile.orcid')}

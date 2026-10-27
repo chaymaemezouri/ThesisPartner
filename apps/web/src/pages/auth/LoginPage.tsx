@@ -22,7 +22,7 @@ export function LoginPage() {
     <main className="min-h-screen bg-[#e7eef8] p-3 sm:p-4">
       <div className="mx-auto grid min-h-[calc(100vh-1.5rem)] max-w-[1180px] overflow-hidden rounded-[1.75rem] bg-white shadow-[0_24px_70px_rgba(30,64,175,0.14)] lg:grid-cols-[1.15fr_0.85fr]">
         <section className="relative hidden overflow-hidden bg-[linear-gradient(165deg,#3b82f6_0%,#1d4ed8_42%,#1e3a8a_100%)] px-10 py-10 text-white lg:flex lg:flex-col">
-          <BrandMark light />
+          <BrandLogo className="h-24 w-auto max-w-[18rem]" />
           <h1 className="mt-10 max-w-md text-4xl font-semibold leading-tight tracking-tight">
             {t('auth.loginHeroTitle')}
           </h1>
@@ -52,11 +52,12 @@ export function LoginPage() {
         </section>
         <section className="flex items-center justify-center px-6 py-10 sm:px-10">
           <div className="w-full max-w-[22rem]">
-            <BrandMark />
-            <h2 className="mt-8 text-3xl font-semibold tracking-tight text-ink">
+            <div className="flex justify-center">
+              <BrandLogo className="h-36 w-auto max-w-[16rem]" />
+            </div>
+            <h2 className="mt-8 text-center text-3xl font-semibold tracking-tight text-ink">
               {t('auth.loginTitle')}
             </h2>
-            <p className="mt-2 text-sm text-muted">{t('auth.loginSubtitle')}</p>
             <form
               className="mt-8 flex flex-col gap-4"
               onSubmit={form.handleSubmit(async (values) => {
@@ -131,21 +132,6 @@ export function LoginPage() {
         </section>
       </div>
     </main>
-  );
-}
-
-function BrandMark({ light = false }: { light?: boolean }) {
-  return (
-    <div className="flex items-center gap-2.5">
-      <span className={light ? 'rounded-xl bg-white p-1' : undefined}>
-        <BrandLogo />
-      </span>
-      <span
-        className={`text-base font-semibold tracking-tight ${light ? 'text-white' : 'text-ink'}`}
-      >
-        ThesisPartner
-      </span>
-    </div>
   );
 }
 

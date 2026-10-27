@@ -182,21 +182,11 @@ export function DeliverablesWorkspace({
 
   return (
     <div className="min-w-0">
-      <div className="mb-3 flex min-w-0 items-center gap-2">
-        <div className="min-w-0 flex-1">{statusTabs}</div>
-        {canCreate ? (
-          <IconAction
-            className="shrink-0"
-            label={t('deliverables.new')}
-            icon="plus"
-            onClick={() => setCreating(true)}
-          />
-        ) : null}
-      </div>
+      <div className="mb-3">{statusTabs}</div>
       <div className="min-w-0 rounded-[14px] border border-line bg-surface p-3 shadow-[0_3px_18px_rgba(15,23,42,0.03)] sm:p-4">
         <div className="flex flex-col gap-3">
-          <div className="flex flex-wrap items-center gap-3">
-            <label className="relative min-w-40 flex-1 text-[11px] sm:max-w-sm sm:text-xs">
+          <div className="flex min-w-0 flex-wrap items-center gap-2">
+            <label className="relative min-w-[8rem] flex-1 text-[11px] sm:text-xs">
               <span className="sr-only">{t('common.search')}</span>
               <svg
                 aria-hidden="true"
@@ -229,6 +219,16 @@ export function DeliverablesWorkspace({
                 </button>
               ) : null}
             </label>
+            {canCreate ? (
+              <IconAction
+                className="shrink-0"
+                label={t('deliverables.new')}
+                icon="plus"
+                onClick={() => setCreating(true)}
+              />
+            ) : null}
+          </div>
+          <div className="flex flex-wrap items-center gap-3">
             <button
               type="button"
               className={`inline-flex min-h-10 shrink-0 items-center gap-2 rounded-[10px] border px-3 text-xs font-medium transition-colors ${filtersOpen ? 'border-brand/25 bg-brand-soft text-brand' : 'border-line bg-surface text-muted hover:border-brand/30 hover:text-brand'}`}

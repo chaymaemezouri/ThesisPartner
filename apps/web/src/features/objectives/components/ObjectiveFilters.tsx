@@ -86,7 +86,7 @@ export function ObjectiveFilters({
     </div>
   );
   const searchField = (
-    <label className="min-w-0 text-sm">
+    <label className="block min-w-0 text-sm">
       <span className="sr-only">{t('common.search')}</span>
       <input
         value={search}

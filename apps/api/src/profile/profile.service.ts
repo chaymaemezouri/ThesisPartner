@@ -21,6 +21,7 @@ export type AcademicProfile = {
   specialty: string | null;
   city: string | null;
   country: string | null;
+  phone: string | null;
   orcid: string | null;
   avatarUrl: string | null;
   cvUrl: string | null;
@@ -59,6 +60,7 @@ export class ProfileService {
       specialty: cleared(body.specialty),
       city: cleared(body.city),
       country: cleared(body.country),
+      phone: cleared(body.phone),
       orcid: cleared(body.orcid),
       avatarUrl: cleared(body.avatarUrl),
       cvUrl: cleared(body.cvUrl),
@@ -134,6 +136,7 @@ export function toAcademicProfile(profile: Profile): AcademicProfile {
     specialty: profile.specialty,
     city: profile.city,
     country: profile.country,
+    phone: profile.phone,
     orcid: profile.orcid,
     avatarUrl: profile.avatarUrl,
     cvUrl: profile.cvUrl,

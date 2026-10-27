@@ -91,7 +91,7 @@ export function BillingPage() {
         <div className="pointer-events-none absolute -right-10 -top-16 h-48 w-48 rounded-full bg-brand/10 blur-2xl" />
         <p className="inline-flex items-center gap-1.5 rounded-full border border-brand/20 bg-surface/80 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-brand">
           <Sparkle size={12} weight="fill" />
-          ThesisPartner Pro
+          Thesis Flow Pro
         </p>
         <h1 className="mt-3 text-2xl font-semibold tracking-tight text-ink sm:text-3xl">
           {t('billing.title')}

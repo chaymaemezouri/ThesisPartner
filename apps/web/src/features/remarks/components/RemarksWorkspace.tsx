@@ -124,20 +124,10 @@ export function RemarksWorkspace({
 
   return (
     <div className="min-w-0">
-      <div className="mb-3 flex min-w-0 items-center gap-2">
-        <div className="min-w-0 flex-1">{statusTabs}</div>
-        {canCreate ? (
-          <IconAction
-            className="shrink-0"
-            label={t('remarks.new')}
-            icon="plus"
-            onClick={() => setCreating(true)}
-          />
-        ) : null}
-      </div>
+      <div className="mb-3">{statusTabs}</div>
       <div>
-        <div className="flex flex-wrap items-center gap-3">
-          <label className="min-w-40 flex-1 text-xs">
+        <div className="flex min-w-0 flex-wrap items-center gap-2">
+          <label className="min-w-[8rem] flex-1 text-xs">
             <span className="sr-only">{t('common.search')}</span>
             <input
               value={params.get('search') ?? ''}
@@ -148,6 +138,14 @@ export function RemarksWorkspace({
               }
             />
           </label>
+          {canCreate ? (
+            <IconAction
+              className="shrink-0"
+              label={t('remarks.new')}
+              icon="plus"
+              onClick={() => setCreating(true)}
+            />
+          ) : null}
         </div>
         {remarks.isLoading ? (
           <div className="mt-4" aria-busy="true">

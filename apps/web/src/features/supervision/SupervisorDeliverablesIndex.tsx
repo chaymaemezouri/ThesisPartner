@@ -109,7 +109,7 @@ export function SupervisorDeliverablesIndex() {
                       {t('deliverables.studentLabel')}
                     </th>
                     <th scope="col" className="px-3 py-3">
-                      {t('deliverables.versionLabel')}
+                      {t('deliverables.versions')}
                     </th>
                     <th scope="col" className="px-3 py-3">
                       {t('deliverables.submittedOn')}
@@ -148,9 +148,11 @@ export function SupervisorDeliverablesIndex() {
                           {item.studentName}
                         </td>
                         <td className="text-xs text-muted sm:px-3 sm:py-4 sm:align-top">
-                          {item.latestVersionNumber
-                            ? t('deliverables.versionShort', { number: item.latestVersionNumber })
-                            : t('common.notProvided')}
+                          {(item.versionCount ?? 0) === 1
+                            ? t('deliverables.versionCountOne')
+                            : t('deliverables.versionCountMany', {
+                                count: item.versionCount ?? 0,
+                              })}
                         </td>
                         <td className="text-right text-xs text-muted sm:px-3 sm:py-4 sm:text-left sm:align-top">
                           {item.submittedAt ? (

@@ -82,6 +82,7 @@ describe('SupervisionService access', () => {
               status: 'VALIDATED',
               submittedAt: null,
               versions: [],
+              _count: { versions: 0 },
               dueDate: new Date('2026-01-02'),
             },
             {
@@ -90,6 +91,7 @@ describe('SupervisionService access', () => {
               status: 'SUBMITTED',
               submittedAt: new Date('2026-10-18T09:00:00.000Z'),
               versions: [{ versionNumber: 2 }],
+              _count: { versions: 2 },
               dueDate: new Date('2026-10-21'),
             },
           ],
@@ -115,6 +117,7 @@ describe('SupervisionService access', () => {
         {
           id: 'pending',
           title: 'To review',
+          versionCount: 2,
           latestVersionNumber: 2,
           submittedAt: '2026-10-18T09:00:00.000Z',
         },

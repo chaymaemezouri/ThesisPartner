@@ -254,7 +254,7 @@ describe('deliverables', () => {
     expect(row).toHaveTextContent('Thesis chapter');
     expect(row).toHaveTextContent('Draft');
     expect(row).toHaveTextContent('Finaliser l’état de l’art');
-    expect(row).toHaveTextContent('V2');
+    expect(row).toHaveTextContent('2 versions');
 
     await user.click(screen.getByRole('tab', { name: 'Drafts' }));
     await user.type(screen.getByPlaceholderText('Search…'), 'anomalie');
@@ -449,6 +449,7 @@ describe('deliverables', () => {
                 {
                   id: deliverableId,
                   title: deliverable.title,
+                  versionCount: 2,
                   latestVersionNumber: 2,
                   submittedAt: '2026-10-18T09:00:00.000Z',
                 },
@@ -467,7 +468,7 @@ describe('deliverables', () => {
     renderAt('/livrables', <SupervisorDeliverablesIndex />);
     const link = await screen.findByRole('link', { name: deliverable.title });
     expect(link).toHaveAttribute('href', `/encadrement/${thesisId}/livrables/${deliverableId}`);
-    expect(screen.getByText('V2')).toBeInTheDocument();
+    expect(screen.getByText('2 versions')).toBeInTheDocument();
     await userEvent.click(screen.getByRole('tab', { name: 'By student' }));
     expect(screen.getByText('Thesis A')).toBeInTheDocument();
   });

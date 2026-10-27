@@ -4,7 +4,7 @@ import {
   conversationListSchema,
   type createMessageGroupSchema,
 } from '@thesispartner/validation';
-import type { z } from 'zod';
+import { z } from 'zod';
 import { apiGet, apiSend } from '../../../api/client';
 
 export type ConversationList = z.infer<typeof conversationListSchema>;
@@ -83,6 +83,88 @@ export function useUpdateGroup(conversationId: string) {
     onSuccess: (detail) => {
       queryClient.setQueryData(messageDetailKey(detail.id), detail);
       void queryClient.invalidateQueries({ queryKey: listKey });
+    },
+  });
+}
+
+function refreshThread(
+  queryClient: ReturnType<typeof useQueryClient>,
+  detail: ConversationDetail,
+) {
+  queryClient.setQueryData(messageDetailKey(detail.id), detail);
+  void queryClient.invalidateQueries({ queryKey: listKey });
+}
+
+export function useEditMessage(conversationId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: { messageId: string; body: string }) =>
+      apiSend(
+        `/api/v1/messages/conversations/${conversationId}/messages/${input.messageId}`,
+        conversationDetailSchema,
+        { body: input.body },
+        'PATCH',
+      ),
+    onSuccess: (detail) => refreshThread(queryClient, detail),
+  });
+}
+
+export function useDeleteMessage(conversationId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (messageId: string) =>
+      apiSend(
+        `/api/v1/messages/conversations/${conversationId}/messages/${messageId}`,
+        conversationDetailSchema,
+        {},
+        'DELETE',
+      ),
+    onSuccess: (detail) => refreshThread(queryClient, detail),
+  });
+}
+
+export function useClearConversation(conversationId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () =>
+      apiSend(
+        `/api/v1/messages/conversations/${conversationId}/clear`,
+        conversationDetailSchema,
+        {},
+      ),
+    onSuccess: (detail) => refreshThread(queryClient, detail),
+  });
+}
+
+export function useLeaveConversation(conversationId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () =>
+      apiSend(
+        `/api/v1/messages/conversations/${conversationId}/leave`,
+        z.object({ id: z.string().uuid() }),
+        {},
+      ),
+    onSuccess: async () => {
+      queryClient.removeQueries({ queryKey: messageDetailKey(conversationId) });
+      await queryClient.invalidateQueries({ queryKey: listKey });
+    },
+  });
+}
+
+export function useDeleteConversation(conversationId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () =>
+      apiSend(
+        `/api/v1/messages/conversations/${conversationId}`,
+        z.object({ id: z.string().uuid() }),
+        {},
+        'DELETE',
+      ),
+    onSuccess: async () => {
+      queryClient.removeQueries({ queryKey: messageDetailKey(conversationId) });
+      await queryClient.invalidateQueries({ queryKey: listKey });
     },
   });
 }

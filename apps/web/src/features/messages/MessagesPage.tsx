@@ -1,4 +1,4 @@
-import { Button, Input, Modal, Skeleton } from '@thesispartner/ui';
+import { Button, Dropdown, Input, Modal, Skeleton } from '@thesispartner/ui';
 import { Fragment, useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { IconAction } from '../../components/IconAction';
@@ -7,9 +7,14 @@ import { useMeQuery } from '../../hooks/use-session';
 import { useLocale, useT } from '../../i18n/LocaleContext';
 import { QueryError, queryErrorMessage } from '../objectives/components/QueryError';
 import {
+  useClearConversation,
   useConversation,
   useConversations,
   useCreateGroup,
+  useDeleteConversation,
+  useDeleteMessage,
+  useEditMessage,
+  useLeaveConversation,
   useSendMessage,
   useUpdateGroup,
   type ConversationSummary,
@@ -280,11 +285,21 @@ function Thread({
 }) {
   const t = useT();
   const { dateLocale } = useLocale();
+  const navigate = useNavigate();
   const conversation = useConversation(conversationId);
   const send = useSendMessage(conversationId ?? '');
+  const editMessage = useEditMessage(conversationId ?? '');
+  const deleteMessage = useDeleteMessage(conversationId ?? '');
+  const clearConversation = useClearConversation(conversationId ?? '');
+  const leaveConversation = useLeaveConversation(conversationId ?? '');
+  const deleteConversation = useDeleteConversation(conversationId ?? '');
   const [editing, setEditing] = useState(false);
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [showLatest, setShowLatest] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editDraft, setEditDraft] = useState('');
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+  const [confirm, setConfirm] = useState<'clear' | 'leave' | 'deleteGroup' | null>(null);
   const bottomRef = useRef<HTMLLIElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const nearBottom = useRef(true);
@@ -318,7 +333,21 @@ function Thread({
 
   const data = conversation.data;
   const canManage = data?.kind === 'GROUP' && actorId !== undefined && data.createdById === actorId;
+  const canLeave = data?.kind === 'GROUP' && actorId !== undefined && data.createdById !== actorId;
   const name = data ? labelFor(data, actorId, t('messages.conversation')) : '';
+  const busy =
+    send.isPending ||
+    editMessage.isPending ||
+    deleteMessage.isPending ||
+    clearConversation.isPending ||
+    leaveConversation.isPending ||
+    deleteConversation.isPending;
+
+  async function afterLeave() {
+    setConfirm(null);
+    setDetailsOpen(false);
+    await navigate('/messagerie');
+  }
 
   return (
     <section className="relative flex min-h-0 min-w-0 flex-1 flex-col bg-surface">
@@ -347,15 +376,70 @@ function Thread({
                   : (data.thesisTitle ?? t('messages.directHelp'))}
               </p>
             </div>
-            {canManage ? (
-              <Button
-                variant="secondary"
-                className="h-8 shrink-0 px-2.5 text-xs"
-                onClick={() => setEditing(true)}
-              >
-                {t('messages.editGroup')}
-              </Button>
-            ) : null}
+            <Dropdown
+              menuLabel={t('messages.conversationActions')}
+              label={
+                <span className="grid h-9 w-9 place-items-center">
+                  <span className="sr-only">{t('messages.conversationActions')}</span>
+                  <Icon name="menu" className="h-5 w-5" />
+                </span>
+              }
+            >
+              {(close) => (
+                <>
+                  {canManage ? (
+                    <button
+                      type="button"
+                      role="menuitem"
+                      className="flex w-full px-3 py-2 text-left text-sm text-ink hover:bg-canvas"
+                      onClick={() => {
+                        close();
+                        setEditing(true);
+                      }}
+                    >
+                      {t('messages.editGroup')}
+                    </button>
+                  ) : null}
+                  <button
+                    type="button"
+                    role="menuitem"
+                    className="flex w-full px-3 py-2 text-left text-sm text-ink hover:bg-canvas"
+                    onClick={() => {
+                      close();
+                      setConfirm('clear');
+                    }}
+                  >
+                    {t('messages.clearConversation')}
+                  </button>
+                  {canLeave ? (
+                    <button
+                      type="button"
+                      role="menuitem"
+                      className="flex w-full px-3 py-2 text-left text-sm text-danger hover:bg-danger-soft"
+                      onClick={() => {
+                        close();
+                        setConfirm('leave');
+                      }}
+                    >
+                      {t('messages.leaveGroup')}
+                    </button>
+                  ) : null}
+                  {canManage ? (
+                    <button
+                      type="button"
+                      role="menuitem"
+                      className="flex w-full px-3 py-2 text-left text-sm text-danger hover:bg-danger-soft"
+                      onClick={() => {
+                        close();
+                        setConfirm('deleteGroup');
+                      }}
+                    >
+                      {t('messages.deleteGroup')}
+                    </button>
+                  ) : null}
+                </>
+              )}
+            </Dropdown>
             <button
               type="button"
               aria-label={t('messages.details')}
@@ -445,17 +529,100 @@ function Thread({
                   </span>
                 ) : null}
                 <div className="min-w-0 max-w-[min(36rem,82%)] sm:max-w-[72%]">
+                  {own && !message.deleted && editingId !== message.id ? (
+                    <div className="mb-1 flex justify-end gap-0.5">
+                      <button
+                        type="button"
+                        aria-label={t('messages.editMessage')}
+                        title={t('messages.editMessage')}
+                        className="grid h-7 w-7 place-items-center rounded-full text-muted hover:bg-canvas hover:text-ink"
+                        onClick={() => {
+                          setEditingId(message.id);
+                          setEditDraft(message.body);
+                        }}
+                      >
+                        <Icon name="pencil" className="h-3.5 w-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        aria-label={t('messages.deleteMessage')}
+                        title={t('messages.deleteMessage')}
+                        className="grid h-7 w-7 place-items-center rounded-full text-danger hover:bg-danger-soft"
+                        onClick={() => setPendingDeleteId(message.id)}
+                      >
+                        <Icon name="trash" className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  ) : null}
                   <div
-                    className={`rounded-[20px] px-3.5 py-2.5 ${own ? `bg-gradient-to-br from-[#8061f2] via-[#6956e9] to-[#5368e8] text-white ${continuesPrevious ? 'rounded-tr-md' : ''} ${continuesNext ? 'rounded-br-md' : ''}` : `bg-[#f1f2f5] text-ink ${continuesPrevious ? 'rounded-tl-md' : ''} ${continuesNext ? 'rounded-bl-md' : ''}`}`}
+                    className={`rounded-[20px] px-3.5 py-2.5 ${
+                      message.deleted
+                        ? 'bg-canvas text-muted'
+                        : own
+                          ? `bg-gradient-to-br from-[#8061f2] via-[#6956e9] to-[#5368e8] text-white ${continuesPrevious ? 'rounded-tr-md' : ''} ${continuesNext ? 'rounded-br-md' : ''}`
+                          : `bg-[#f1f2f5] text-ink ${continuesPrevious ? 'rounded-tl-md' : ''} ${continuesNext ? 'rounded-bl-md' : ''}`
+                    }`}
                   >
                     {!own && data.kind === 'GROUP' && !continuesPrevious ? (
                       <p className="mb-1 text-[11px] font-medium text-muted">
                         {message.authorName}
                       </p>
                     ) : null}
-                    <p className="whitespace-pre-wrap text-sm leading-relaxed [overflow-wrap:anywhere]">
-                      {message.body}
-                    </p>
+                    {message.deleted ? (
+                      <p className="text-sm italic">{t('messages.deletedMessage')}</p>
+                    ) : editingId === message.id ? (
+                      <form
+                        className="flex flex-col gap-2"
+                        onSubmit={async (event) => {
+                          event.preventDefault();
+                          const text = editDraft.trim();
+                          if (!text) return;
+                          try {
+                            await editMessage.mutateAsync({ messageId: message.id, body: text });
+                            setEditingId(null);
+                          } catch {
+                            // The mutation error is shown on the composer.
+                          }
+                        }}
+                      >
+                        <label className="sr-only" htmlFor={`edit-${message.id}`}>
+                          {t('messages.editMessage')}
+                        </label>
+                        <textarea
+                          id={`edit-${message.id}`}
+                          value={editDraft}
+                          maxLength={4000}
+                          rows={3}
+                          className="w-full rounded-xl bg-white/90 px-2 py-1.5 text-sm text-ink outline-none"
+                          onChange={(event) => setEditDraft(event.target.value)}
+                        />
+                        {editMessage.isError ? (
+                          <p className="text-[11px] text-white" role="alert">
+                            {queryErrorMessage(editMessage.error, t)}
+                          </p>
+                        ) : null}
+                        <div className="flex justify-end gap-2">
+                          <button
+                            type="button"
+                            className="text-xs text-white/80 hover:text-white"
+                            onClick={() => setEditingId(null)}
+                          >
+                            {t('common.cancel')}
+                          </button>
+                          <button
+                            type="submit"
+                            disabled={editMessage.isPending || editDraft.trim().length === 0}
+                            className="text-xs font-semibold text-white"
+                          >
+                            {t('messages.saveEdit')}
+                          </button>
+                        </div>
+                      </form>
+                    ) : (
+                      <p className="whitespace-pre-wrap text-sm leading-relaxed [overflow-wrap:anywhere]">
+                        {message.body}
+                      </p>
+                    )}
                   </div>
                   {!continuesNext ? (
                     <time
@@ -463,6 +630,7 @@ function Thread({
                       className={`mt-1 block px-1 text-[10px] text-muted ${own ? 'text-right' : 'text-left'}`}
                     >
                       {formatClock(message.createdAt, dateLocale)}
+                      {message.editedAt && !message.deleted ? ` · ${t('messages.edited')}` : ''}
                     </time>
                   ) : null}
                 </div>
@@ -599,6 +767,138 @@ function Thread({
               </li>
             ))}
           </ul>
+          <div className="mt-5 flex flex-col gap-2 border-t border-line pt-4">
+            <Button
+              type="button"
+              variant="secondary"
+              className="h-9 text-xs"
+              onClick={() => {
+                setDetailsOpen(false);
+                setConfirm('clear');
+              }}
+            >
+              {t('messages.clearConversation')}
+            </Button>
+            {canLeave ? (
+              <Button
+                type="button"
+                variant="secondary"
+                className="h-9 text-xs text-danger"
+                onClick={() => {
+                  setDetailsOpen(false);
+                  setConfirm('leave');
+                }}
+              >
+                {t('messages.leaveGroup')}
+              </Button>
+            ) : null}
+            {canManage ? (
+              <Button
+                type="button"
+                variant="secondary"
+                className="h-9 text-xs text-danger"
+                onClick={() => {
+                  setDetailsOpen(false);
+                  setConfirm('deleteGroup');
+                }}
+              >
+                {t('messages.deleteGroup')}
+              </Button>
+            ) : null}
+          </div>
+        </Modal>
+      ) : null}
+      {pendingDeleteId ? (
+        <Modal
+          open
+          title={t('messages.deleteMessage')}
+          closeLabel={t('common.close')}
+          onClose={() => setPendingDeleteId(null)}
+        >
+          <p className="text-sm text-ink">{t('messages.deleteMessageConfirm')}</p>
+          {deleteMessage.isError ? (
+            <p className="mt-3 text-sm text-danger" role="alert">
+              {queryErrorMessage(deleteMessage.error, t)}
+            </p>
+          ) : null}
+          <div className="mt-4 flex flex-wrap gap-2">
+            <Button
+              type="button"
+              disabled={busy}
+              onClick={async () => {
+                try {
+                  await deleteMessage.mutateAsync(pendingDeleteId);
+                  setPendingDeleteId(null);
+                } catch {
+                  // Keep the dialog open so the error can be read.
+                }
+              }}
+            >
+              {t('common.delete')}
+            </Button>
+            <Button type="button" variant="secondary" onClick={() => setPendingDeleteId(null)}>
+              {t('common.cancel')}
+            </Button>
+          </div>
+        </Modal>
+      ) : null}
+      {confirm ? (
+        <Modal
+          open
+          title={
+            confirm === 'clear'
+              ? t('messages.clearConversation')
+              : confirm === 'leave'
+                ? t('messages.leaveGroup')
+                : t('messages.deleteGroup')
+          }
+          closeLabel={t('common.close')}
+          onClose={() => setConfirm(null)}
+        >
+          <p className="text-sm text-ink">
+            {confirm === 'clear'
+              ? t('messages.clearConversationConfirm')
+              : confirm === 'leave'
+                ? t('messages.leaveGroupConfirm')
+                : t('messages.deleteGroupConfirm')}
+          </p>
+          {(clearConversation.isError || leaveConversation.isError || deleteConversation.isError) ? (
+            <p className="mt-3 text-sm text-danger" role="alert">
+              {queryErrorMessage(
+                clearConversation.error ?? leaveConversation.error ?? deleteConversation.error,
+                t,
+              )}
+            </p>
+          ) : null}
+          <div className="mt-4 flex flex-wrap gap-2">
+            <Button
+              type="button"
+              disabled={busy}
+              onClick={async () => {
+                try {
+                  if (confirm === 'clear') {
+                    await clearConversation.mutateAsync();
+                    setConfirm(null);
+                    return;
+                  }
+                  if (confirm === 'leave') {
+                    await leaveConversation.mutateAsync();
+                    await afterLeave();
+                    return;
+                  }
+                  await deleteConversation.mutateAsync();
+                  await afterLeave();
+                } catch {
+                  // Keep the dialog open so the error can be read.
+                }
+              }}
+            >
+              {t('common.confirm')}
+            </Button>
+            <Button type="button" variant="secondary" onClick={() => setConfirm(null)}>
+              {t('common.cancel')}
+            </Button>
+          </div>
         </Modal>
       ) : null}
       {data && canManage && editing ? (

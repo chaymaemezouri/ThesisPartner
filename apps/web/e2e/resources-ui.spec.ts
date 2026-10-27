@@ -171,6 +171,7 @@ async function mockDocuments(page: Page) {
                 pendingDeliverables: [],
                 supervisors: [],
                 meetings: [],
+                coverage: { writable: true, source: 'subscription', expiresAt: null },
                 doctoralStudent: { ...author, avatarUrl: null, institution: null, specialty: null },
                 doctoralStudents: [],
                 objectiveSummary: { total: 0, inProgress: 0, completed: 0, overdue: 0 },

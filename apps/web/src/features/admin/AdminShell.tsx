@@ -76,7 +76,7 @@ export function AdminShell() {
                 <Icon name="menu" />
               </Button>
               <Link to="/admin" aria-label={t('admin.title')} className="shrink-0 lg:hidden">
-                <BrandLogo className="h-8 w-8" />
+                <BrandLogo className="h-10 w-auto max-w-[12rem]" />
               </Link>
               <p className="truncate text-sm font-semibold tracking-tight">
                 {current ? t(current.labelKey) : t('admin.title')}
@@ -108,11 +108,13 @@ function AdminSidebar({ onNavigate }: { onNavigate?: () => void }) {
   return (
     <div className="flex h-full min-h-0 flex-col">
       <div className="px-3 pt-5 pb-4">
-        <Link to="/admin" onClick={onNavigate} className="flex items-center gap-2.5 px-1">
-          <BrandLogo />
-          <span className="block text-sm font-semibold leading-none tracking-tight text-ink">
-            {t('admin.title')}
-          </span>
+        <Link
+          to="/admin"
+          onClick={onNavigate}
+          aria-label={t('admin.title')}
+          className="flex items-center gap-2 px-1"
+        >
+          <BrandLogo className="h-14 w-auto max-w-full" />
         </Link>
       </div>
       <nav

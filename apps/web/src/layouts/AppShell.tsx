@@ -209,7 +209,7 @@ function Topbar({
           aria-label={t('common.appName')}
           className={sidebarHidden || !desktopNav ? 'shrink-0' : 'hidden'}
         >
-          <BrandLogo className="h-8 w-8" />
+          <BrandLogo className="h-10 w-auto max-w-[12rem]" />
         </Link>
         <p className="truncate text-sm font-semibold tracking-tight">{currentLabel}</p>
       </div>
@@ -310,13 +310,15 @@ function Sidebar({
   return (
     <div className="flex h-full min-h-0 flex-col">
       <div className="px-3 pt-5 pb-4">
-        <Link to="/" onClick={onNavigate} className="flex items-center gap-2.5 px-1">
-          <BrandLogo />
-          <span className={labelClass}>
-            <span className="block text-sm font-semibold leading-none tracking-tight text-ink">
-              {t('common.appName')}
-            </span>
-          </span>
+        <Link
+          to="/"
+          onClick={onNavigate}
+          aria-label={t('common.appName')}
+          className="flex items-center px-1"
+        >
+          <BrandLogo
+            className={variant === 'compact' ? 'h-10 w-auto max-w-full' : 'h-14 w-auto max-w-full'}
+          />
         </Link>
       </div>
       <nav aria-label="Main navigation" className="flex flex-1 flex-col gap-1 overflow-y-auto p-2">

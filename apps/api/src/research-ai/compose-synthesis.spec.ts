@@ -1,7 +1,7 @@
 import { composeRulesSynthesis } from './compose-synthesis';
 
 describe('composeRulesSynthesis', () => {
-  it('builds a homogeneous subject-focused text without per-item inventory', () => {
+  it('separates problématique, subject summary and state of the art', () => {
     const result = composeRulesSynthesis(
       {
         thesisTitle: 'Apprentissage profond pour la détection d’anomalies',
@@ -9,19 +9,26 @@ describe('composeRulesSynthesis', () => {
         objectives: [
           {
             id: 'o1',
-            title: 'État de l’art',
+            title: 'Définir la problématique de recherche',
             status: 'COMPLETED',
             progress: 100,
+            description: 'Poser le sujet, la question de recherche et les hypothèses.',
+            templateCode: 'PROBLEMATIQUE',
             reviewMessage: null,
-            tasks: [{ id: 't1', title: 'Comparer les approches', status: 'DONE' }],
+            tasks: [
+              { id: 't1', title: 'Formuler la question de recherche', status: 'DONE' },
+              { id: 't2', title: 'Définir les hypothèses', status: 'DONE' },
+            ],
           },
           {
             id: 'o2',
-            title: 'Définir la méthodologie',
-            status: 'IN_PROGRESS',
-            progress: 40,
+            title: 'Construire l’état de l’art',
+            status: 'COMPLETED',
+            progress: 100,
+            description: 'Recenser, comparer et synthétiser les publications utiles.',
+            templateCode: 'ETAT_ART',
             reviewMessage: null,
-            tasks: [{ id: 't2', title: 'Construire le protocole', status: 'TODO' }],
+            tasks: [{ id: 't3', title: 'Comparer les approches', status: 'DONE' }],
           },
         ],
         documents: [
@@ -34,35 +41,26 @@ describe('composeRulesSynthesis', () => {
             reviewMessage: null,
           },
         ],
-        remarks: [
-          {
-            id: 'r1',
-            title: 'Clarifier la méthode',
-            status: 'OPEN',
-            message: 'Préciser le protocole expérimental.',
-            replies: [],
-          },
-        ],
-        deliverables: [
-          {
-            id: 'v1',
-            title: 'Chapitre 2',
-            status: 'SUBMITTED',
-            reviewMessage: null,
-          },
-        ],
+        remarks: [],
+        deliverables: [],
       },
       'fr',
     );
 
-    expect(result.sections).toEqual([]);
-    expect(result.reportTitle.toLowerCase()).toContain('apprentissage profond');
-    expect(result.overview).toContain('Youssef El Amrani');
-    expect(result.overview).toContain('Guide FAIR');
-    expect(result.overview.includes('Concernant l’objectif')).toBe(false);
-    expect(result.overview.includes('L’objectif «')).toBe(false);
+    expect(result.sections.map((item) => item.kind)).toEqual([
+      'PROBLEM',
+      'SUBJECT_SUMMARY',
+      'STATE_OF_ART',
+    ]);
+    expect(result.sections[0]?.title).toBe('Problématique');
+    expect(result.sections[1]?.title).toBe('Résumé du sujet');
+    expect(result.sections[2]?.title).toBe('État de l’art');
+    expect(result.sections[0]?.summary.toLowerCase()).toContain('problématique');
+    expect(result.sections[1]?.summary).toContain('article');
+    expect(result.sections[1]?.summary).not.toContain('Youssef');
+    expect(result.sections[1]?.summary).not.toMatch(/%/);
+    expect(result.sections[1]?.summary.toLowerCase()).not.toContain('dossier');
+    expect(result.sections[2]?.summary).toContain('FAIR');
     expect(result.overview.includes('•')).toBe(false);
-    expect(result.overview.split(/\n\n+/).length).toBeGreaterThanOrEqual(3);
-    expect(result.overview.split(/\n\n+/).length).toBeLessThanOrEqual(8);
   });
 });

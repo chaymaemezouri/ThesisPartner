@@ -1,6 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
-import type { createMessageGroupSchema, createMessageSchema } from '@thesispartner/validation';
+import type {
+  createMessageGroupSchema,
+  createMessageSchema,
+  updateMessageSchema,
+} from '@thesispartner/validation';
 import type { z } from 'zod';
 import { AuditService } from '../audit/audit.service';
 import { AppException } from '../common/errors/app.exception';
@@ -10,6 +14,7 @@ import { isUnread, oneThreadPerCounterpart, singleSupervisorThread } from './mes
 
 type GroupDraft = z.infer<typeof createMessageGroupSchema>;
 type MessageDraft = z.infer<typeof createMessageSchema>;
+type MessageUpdate = z.infer<typeof updateMessageSchema>;
 
 const personSelect = {
   id: true,
@@ -36,7 +41,11 @@ export class MessagesService {
             include: {
               thesis: { select: { title: true } },
               members: { include: { user: { select: personSelect } } },
-              messages: { orderBy: { createdAt: 'desc' }, take: 1 },
+              messages: {
+                where: { deletedAt: null },
+                orderBy: { createdAt: 'desc' },
+                take: 1,
+              },
             },
           },
         },
@@ -199,6 +208,126 @@ export class MessagesService {
       });
     });
     return this.get(actorId, conversationId);
+  }
+
+  async edit(
+    actorId: string,
+    conversationId: string,
+    messageId: string,
+    body: MessageUpdate,
+    requestId?: string,
+  ) {
+    await this.ownedMessage(actorId, conversationId, messageId);
+    await this.prisma.$transaction(async (tx) => {
+      await tx.message.update({
+        where: { id: messageId },
+        data: { body: body.body.trim(), editedAt: new Date() },
+      });
+      await tx.conversation.update({
+        where: { id: conversationId },
+        data: { updatedAt: new Date() },
+      });
+      await this.audit.record(tx, {
+        actorId,
+        action: 'message.edited',
+        entityType: 'message',
+        entityId: messageId,
+        requestId,
+      });
+    });
+    return this.get(actorId, conversationId);
+  }
+
+  async removeMessage(
+    actorId: string,
+    conversationId: string,
+    messageId: string,
+    requestId?: string,
+  ) {
+    await this.ownedMessage(actorId, conversationId, messageId);
+    await this.prisma.$transaction(async (tx) => {
+      await tx.message.update({
+        where: { id: messageId },
+        data: { deletedAt: new Date(), body: '' },
+      });
+      await this.audit.record(tx, {
+        actorId,
+        action: 'message.deleted',
+        entityType: 'message',
+        entityId: messageId,
+        requestId,
+      });
+    });
+    return this.get(actorId, conversationId);
+  }
+
+  async clear(actorId: string, conversationId: string, requestId?: string) {
+    await this.visibleConversation(actorId, conversationId);
+    await this.prisma.$transaction(async (tx) => {
+      await tx.message.deleteMany({ where: { conversationId } });
+      await tx.conversation.update({
+        where: { id: conversationId },
+        data: { updatedAt: new Date() },
+      });
+      await this.audit.record(tx, {
+        actorId,
+        action: 'conversation.cleared',
+        entityType: 'conversation',
+        entityId: conversationId,
+        requestId,
+      });
+    });
+    return this.get(actorId, conversationId);
+  }
+
+  async leave(actorId: string, conversationId: string, requestId?: string) {
+    const conversation = await this.visibleConversation(actorId, conversationId);
+    if (conversation.kind !== 'GROUP') {
+      throw new AppException(400, 'BAD_REQUEST', 'Only a group can be left');
+    }
+    if (conversation.createdById === actorId) {
+      throw new AppException(400, 'BAD_REQUEST', 'Delete the group instead of leaving it');
+    }
+    await this.prisma.$transaction(async (tx) => {
+      await tx.conversationMember.delete({
+        where: { conversationId_userId: { conversationId, userId: actorId } },
+      });
+      await this.audit.record(tx, {
+        actorId,
+        action: 'conversation.left',
+        entityType: 'conversation',
+        entityId: conversationId,
+        requestId,
+      });
+    });
+    return { id: conversationId };
+  }
+
+  async removeConversation(actorId: string, conversationId: string, requestId?: string) {
+    const conversation = await this.visibleConversation(actorId, conversationId);
+    if (conversation.kind !== 'GROUP' || conversation.createdById !== actorId) {
+      throw new AppException(403, 'FORBIDDEN', 'Only the group creator can delete it');
+    }
+    await this.prisma.$transaction(async (tx) => {
+      await tx.conversation.delete({ where: { id: conversationId } });
+      await this.audit.record(tx, {
+        actorId,
+        action: 'conversation.deleted',
+        entityType: 'conversation',
+        entityId: conversationId,
+        requestId,
+      });
+    });
+    return { id: conversationId };
+  }
+
+  private async ownedMessage(actorId: string, conversationId: string, messageId: string) {
+    await this.visibleConversation(actorId, conversationId);
+    const message = await this.prisma.message.findFirst({
+      where: { id: messageId, conversationId, authorId: actorId, deletedAt: null },
+    });
+    if (!message) throw new AppException(404, 'NOT_FOUND', 'Resource not found');
+    return message;
   }
 
   private async ensureDirectConversations(actorId: string): Promise<void> {
@@ -406,8 +535,10 @@ export class MessagesService {
         id: message.id,
         authorId: message.authorId,
         authorName: personName(message.author),
-        body: message.body,
+        body: message.deletedAt ? '' : message.body,
         createdAt: message.createdAt.toISOString(),
+        editedAt: message.editedAt?.toISOString() ?? null,
+        deleted: Boolean(message.deletedAt),
       })),
     };
   }

@@ -175,6 +175,7 @@ export function ThesisDocuments({ canManage }: { canManage: boolean }) {
                   type="button"
                   role="tab"
                   aria-selected={sourceTab === id}
+                  aria-label={`${t(label)} (${count})`}
                   title={`${t(label)} (${count})`}
                   className={`inline-flex min-w-0 items-center justify-center gap-1.5 rounded-md px-2 py-2 text-xs font-medium sm:justify-start sm:px-3 sm:py-1.5 ${
                     sourceTab === id ? 'bg-brand-soft text-brand' : 'text-muted hover:bg-canvas'
@@ -211,7 +212,7 @@ export function ThesisDocuments({ canManage }: { canManage: boolean }) {
       {!canManage && summary ? (
         <dl
           aria-label={t('resources.proposed.documentSummary')}
-          className="mb-2 grid grid-cols-2 gap-x-3 gap-y-2 border-b border-line py-2 sm:grid-cols-4 sm:gap-0 sm:divide-x sm:divide-line"
+          className="mb-2 grid grid-cols-4 gap-x-2 border-b border-line py-1.5 sm:gap-0 sm:divide-x sm:divide-line sm:py-2"
         >
           <Stat label={t('resources.proposed.proposedCount')} value={summary.proposed} />
           <Stat label={t('resources.proposed.consultedCount')} value={summary.consulted} />
@@ -1685,11 +1686,11 @@ function DocumentForm({
 
 function Stat({ label, value }: { label: string; value: number }) {
   return (
-    <div className="flex min-w-0 flex-col gap-0.5 sm:flex-row sm:items-center sm:gap-2 sm:px-3 sm:first:pl-0 sm:last:pr-0">
-      <dt className="truncate text-[11px] text-muted" title={label}>
+    <div className="flex min-w-0 flex-col gap-0 sm:flex-row sm:items-center sm:gap-2 sm:px-3 sm:first:pl-0 sm:last:pr-0">
+      <dt className="truncate text-[10px] leading-4 text-muted sm:text-[11px]" title={label}>
         {label}
       </dt>
-      <dd className="text-sm font-semibold tabular-nums text-ink">{value}</dd>
+      <dd className="text-sm leading-5 font-semibold tabular-nums text-ink">{value}</dd>
     </div>
   );
 }

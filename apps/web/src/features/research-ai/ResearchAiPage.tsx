@@ -1,5 +1,7 @@
-import { Button, Skeleton } from '@thesispartner/ui';
+import { Button, EmptyState, Skeleton } from '@thesispartner/ui';
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { ApiClientError } from '../../api/client';
 import { Icon } from '../../components/Icon';
 import { useLocale, useT } from '../../i18n/LocaleContext';
 import { useDashboard } from '../dashboard/hooks/use-dashboard';
@@ -32,11 +34,16 @@ export function ResearchAiPage() {
   }, [thesisId, locale]);
 
   const loading = dashboard.isLoading || (Boolean(thesisId) && !result && generate.isPending);
+  const subscriptionRequired =
+    generate.error instanceof ApiClientError && generate.error.body.code === 'SUBSCRIPTION_REQUIRED';
 
   return (
     <div className="min-w-0">
-      <h1 className="sr-only">{t('researchAi.title')}</h1>
-      <header className="mb-3 flex justify-end">
+      <header className="mb-4 flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h1 className="text-xl font-semibold tracking-tight text-ink">{t('researchAi.title')}</h1>
+          <p className="mt-1 max-w-xl text-sm text-muted">{t('researchAi.subtitle')}</p>
+        </div>
         <Button
           className="h-9 px-3 text-sm"
           disabled={!thesisId || generate.isPending}
@@ -54,15 +61,30 @@ export function ResearchAiPage() {
 
       {dashboard.isError ? <QueryError error={dashboard.error} /> : null}
       {!thesisId && !dashboard.isLoading ? (
-        <p className="text-sm text-muted">{t('researchAi.noThesis')}</p>
+        <EmptyState title={t('researchAi.noThesis')} description={t('researchAi.subtitle')} />
       ) : null}
-      {generate.isError ? (
-        <p className="mb-3 text-sm text-danger">{queryErrorMessage(generate.error, t)}</p>
+      {generate.isError && !loading ? (
+        <div className="mb-4">
+          <p className="text-sm text-danger" role="alert">
+            {queryErrorMessage(generate.error, t)}
+          </p>
+          {subscriptionRequired ? (
+            <p className="mt-3">
+              <Link
+                to="/abonnement"
+                className="inline-flex rounded-md bg-brand px-3 py-2 text-sm font-medium text-white"
+              >
+                {t('nav.billing')}
+              </Link>
+            </p>
+          ) : null}
+        </div>
       ) : null}
       {loading ? (
-        <div className="grid gap-3" aria-busy="true">
-          <Skeleton className="h-28" />
-          <Skeleton className="h-40" />
+        <div className="grid gap-3 md:grid-cols-2" aria-busy="true">
+          <Skeleton className="h-44" />
+          <Skeleton className="h-44" />
+          <Skeleton className="h-40 md:col-span-2" />
         </div>
       ) : null}
       {result ? <SynthesisView data={result} /> : null}
@@ -70,31 +92,61 @@ export function ResearchAiPage() {
   );
 }
 
+const REPORT_CHAPTERS = ['PROBLEM', 'SUBJECT_SUMMARY', 'STATE_OF_ART'] as const;
+
 function SynthesisView({ data }: { data: ResearchAiSynthesis }) {
   const t = useT();
+  const chapters = REPORT_CHAPTERS.map((kind) => ({
+    kind,
+    chapter: data.sections.find((item) => item.kind === kind),
+  })).filter((item) => item.chapter);
+
+  if (chapters.length === 0) {
+    return (
+      <article className="rounded-[12px] border border-line bg-surface p-5">
+        <div className="space-y-4 text-sm leading-7 text-ink">
+          {data.overview
+            .split(/\n\n+/)
+            .map((paragraph) => paragraph.trim())
+            .filter(Boolean)
+            .map((paragraph, index) => (
+              <p key={index}>{paragraph}</p>
+            ))}
+        </div>
+      </article>
+    );
+  }
+
   return (
-    <article className="mx-auto max-w-3xl rounded-[12px] border border-line bg-surface px-5 py-7 shadow-[0_1px_2px_rgba(15,23,42,0.03)] sm:px-8 sm:py-9">
-      <header className="mb-8 border-b border-line pb-5 text-center">
-        <h2 className="font-serif text-[1.45rem] font-semibold leading-snug tracking-tight text-ink sm:text-[1.7rem]">
-          {data.reportTitle}
-        </h2>
-        <p className="mt-3 text-xs text-muted">
-          {t('researchAi.generatedAt', {
-            date: new Date(data.generatedAt).toLocaleString(),
-          })}
-        </p>
-      </header>
-      <div className="space-y-5 text-[15.5px] leading-8 text-ink">
-        {data.overview
-          .split(/\n\n+/)
-          .map((paragraph) => paragraph.trim())
-          .filter(Boolean)
-          .map((paragraph, index) => (
-            <p key={index} className="text-justify">
-              {paragraph}
-            </p>
-          ))}
+    <div>
+      <p className="mb-3 text-xs text-muted">
+        {t('researchAi.generatedAt', {
+          date: new Date(data.generatedAt).toLocaleString(),
+        })}
+      </p>
+      <div className="grid gap-3 md:grid-cols-2">
+        {chapters.map(({ kind, chapter }) => (
+          <article
+            key={chapter?.id ?? kind}
+            className={`flex min-h-[12rem] min-w-0 flex-col rounded-[14px] border border-line bg-surface p-4 shadow-[0_2px_12px_rgba(15,23,42,0.04)] sm:p-5 ${
+              kind === 'STATE_OF_ART' ? 'md:col-span-2' : ''
+            }`}
+          >
+            <h2 className="text-sm font-semibold tracking-tight text-ink">
+              {t(`researchAi.kind.${kind}`)}
+            </h2>
+            <div className="mt-3 space-y-3 text-sm leading-7 text-ink">
+              {(chapter?.summary ?? '')
+                .split(/\n\n+/)
+                .map((paragraph) => paragraph.trim())
+                .filter(Boolean)
+                .map((paragraph, index) => (
+                  <p key={index}>{paragraph}</p>
+                ))}
+            </div>
+          </article>
+        ))}
       </div>
-    </article>
+    </div>
   );
 }

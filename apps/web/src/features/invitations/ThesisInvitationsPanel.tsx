@@ -14,10 +14,17 @@ export function ThesisInvitationsPanel({
   thesisId,
   hasSupervisor,
   canManage,
+  supervisor,
 }: {
   thesisId: string;
   hasSupervisor: boolean;
   canManage: boolean;
+  supervisor?: {
+    givenName?: string;
+    familyName?: string;
+    email: string;
+    phone?: string | null;
+  } | null;
 }) {
   const t = useT();
   const list = useThesisInvitations(thesisId);
@@ -63,7 +70,51 @@ export function ThesisInvitationsPanel({
       <h3 id="thesis-invites" className="text-sm font-medium text-ink">
         {t('invitations.manageTitle')}
       </h3>
-      <p className="mt-1 text-sm text-muted">{t('invitations.manageSubtitle')}</p>
+      <p className="mt-1 text-sm text-muted">
+        {hasSupervisor ? t('invitations.acceptedSubtitle') : t('invitations.manageSubtitle')}
+      </p>
+      {supervisor ? (
+        <dl className="mt-3 grid gap-3 rounded-xl border border-line bg-surface/80 p-3 sm:grid-cols-2">
+          <div>
+            <dt className="text-xs font-medium text-muted">{t('profile.givenName')}</dt>
+            <dd className="mt-0.5 text-sm text-ink">
+              {supervisor.givenName?.trim() || t('common.notProvided')}
+            </dd>
+          </div>
+          <div>
+            <dt className="text-xs font-medium text-muted">{t('profile.familyName')}</dt>
+            <dd className="mt-0.5 text-sm text-ink">
+              {supervisor.familyName?.trim() || t('common.notProvided')}
+            </dd>
+          </div>
+          <div>
+            <dt className="text-xs font-medium text-muted">{t('auth.email')}</dt>
+            <dd className="mt-0.5 text-sm text-ink">
+              <a
+                className="font-medium text-brand hover:underline"
+                href={`mailto:${supervisor.email}`}
+              >
+                {supervisor.email}
+              </a>
+            </dd>
+          </div>
+          <div>
+            <dt className="text-xs font-medium text-muted">{t('profile.phone')}</dt>
+            <dd className="mt-0.5 text-sm text-ink">
+              {supervisor.phone?.trim() ? (
+                <a
+                  className="font-medium text-brand hover:underline"
+                  href={`tel:${supervisor.phone}`}
+                >
+                  {supervisor.phone}
+                </a>
+              ) : (
+                t('common.notProvided')
+              )}
+            </dd>
+          </div>
+        </dl>
+      ) : null}
 
       {hasSupervisor ? (
         <div className="mt-3 flex gap-2 text-xs">

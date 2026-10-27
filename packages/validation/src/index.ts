@@ -157,7 +157,10 @@ export const thesisMemberSchema = z
     id: uuidSchema,
     userId: uuidSchema,
     displayName: boundedTextSchema(160),
+    givenName: boundedTextSchema(80).optional(),
+    familyName: boundedTextSchema(80).optional(),
     email: z.string().email(),
+    phone: nullableText(40).optional(),
     role: membershipRoleSchema,
     academicTitle: nullableText(80),
     institution: nullableText(200),
@@ -332,6 +335,7 @@ export const updateProfileSchema = z
     specialty: clearable(160).optional(),
     city: clearable(80).optional(),
     country: clearable(80).optional(),
+    phone: clearable(40).optional(),
     orcid: z.union([orcidSchema, z.literal('')]).optional(),
     avatarUrl: z.union([httpUrlSchema, z.literal('')]).optional(),
     cvUrl: z.union([httpUrlSchema, z.literal('')]).optional(),
@@ -352,6 +356,7 @@ export const academicProfileSchema = z
     specialty: nullableText(160),
     city: nullableText(80),
     country: nullableText(80),
+    phone: nullableText(40).optional(),
     orcid: nullableText(19),
     avatarUrl: nullableText(500),
     cvUrl: nullableText(500),
@@ -852,6 +857,7 @@ export const supervisedThesisSchema = z
           .object({
             id: uuidSchema,
             title: boundedTextSchema(200),
+            versionCount: z.number().int().min(0).optional(),
             latestVersionNumber: z.number().int().min(1).nullable().optional(),
             submittedAt: z.string().datetime().nullable().optional(),
           })
@@ -1373,6 +1379,8 @@ export const createMessageSchema = z
   })
   .strict();
 
+export const updateMessageSchema = createMessageSchema;
+
 export const messageParticipantSchema = z
   .object({
     userId: z.string().uuid(),
@@ -1426,6 +1434,8 @@ export const conversationMessageSchema = z
     authorName: z.string().max(160),
     body: z.string().max(4000),
     createdAt: z.string().datetime(),
+    editedAt: z.string().datetime().nullable().optional(),
+    deleted: z.boolean().optional(),
   })
   .strict();
 
@@ -1740,7 +1750,16 @@ export const researchAiLocaleSchema = z.enum(['en', 'fr']);
 export const researchAiSectionSchema = z
   .object({
     id: z.string().max(80),
-    kind: z.enum(['OBJECTIVE', 'STEP', 'DOCUMENT', 'REMARK', 'DELIVERABLE']),
+    kind: z.enum([
+      'OBJECTIVE',
+      'STEP',
+      'DOCUMENT',
+      'REMARK',
+      'DELIVERABLE',
+      'PROBLEM',
+      'SUBJECT_SUMMARY',
+      'STATE_OF_ART',
+    ]),
     title: boundedTextSchema(300),
     summary: z.string().trim().max(4000),
     status: z.string().max(80).nullable(),

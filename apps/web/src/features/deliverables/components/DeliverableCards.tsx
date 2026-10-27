@@ -63,9 +63,9 @@ export function DeliverableCards({
                 </div>
                 <div className="mt-4 flex flex-wrap items-center justify-between gap-2 border-t border-line pt-3 text-[11px] sm:text-xs">
                   <span className="rounded-md bg-violet-soft/70 px-2 py-1 tabular-nums text-violet">
-                    {item.latestVersionNumber
-                      ? t('deliverables.versionShort', { number: item.latestVersionNumber })
-                      : t('deliverables.noVersionShort')}
+                    {item.versionCount === 1
+                      ? t('deliverables.versionCountOne')
+                      : t('deliverables.versionCountMany', { count: item.versionCount })}
                   </span>
                   <span
                     className={`flex items-center gap-1.5 ${item.isOverdue ? 'text-danger' : 'text-muted'}`}

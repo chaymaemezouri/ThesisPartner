@@ -82,6 +82,7 @@ test('messaging stays readable for both participants on desktop and mobile', asy
                   pendingDeliverables: [],
                   supervisors: [],
                   meetings: [],
+                  coverage: { writable: true, source: 'subscription', expiresAt: null },
                   doctoralStudent: {
                     id: participants[1]!.userId,
                     givenName: 'Youssef',

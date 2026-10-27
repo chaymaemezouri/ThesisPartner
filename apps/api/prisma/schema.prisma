@@ -83,6 +83,7 @@ model Profile {
   specialty        String?  @db.VarChar(160)
   city             String?  @db.VarChar(80)
   country          String?  @db.VarChar(80)
+  phone            String?  @db.VarChar(40)
   orcid            String?  @db.VarChar(19)
   avatarUrl        String?  @map("avatar_url") @db.VarChar(500)
   cvUrl            String?  @map("cv_url") @db.VarChar(500)
@@ -786,11 +787,13 @@ model ConversationMember {
 }
 
 model Message {
-  id             String   @id @default(uuid()) @db.Uuid
-  conversationId String   @map("conversation_id") @db.Uuid
-  authorId       String   @map("author_id") @db.Uuid
-  body           String   @db.VarChar(4000)
-  createdAt      DateTime @default(now()) @map("created_at")
+  id             String    @id @default(uuid()) @db.Uuid
+  conversationId String    @map("conversation_id") @db.Uuid
+  authorId       String    @map("author_id") @db.Uuid
+  body           String    @db.VarChar(4000)
+  createdAt      DateTime  @default(now()) @map("created_at")
+  editedAt       DateTime? @map("edited_at")
+  deletedAt      DateTime? @map("deleted_at")
 
   conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
   author       User         @relation("MessageAuthor", fields: [authorId], references: [id], onDelete: Restrict)

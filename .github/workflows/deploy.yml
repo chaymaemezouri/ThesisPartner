@@ -44,6 +44,7 @@ jobs:
   deploy:
     name: Deploy to Hostinger
     needs: validate
+    if: ${{ vars.THESIS_APP_URL != '' }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     environment: production
