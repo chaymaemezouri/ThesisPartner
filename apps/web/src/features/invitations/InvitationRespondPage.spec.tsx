@@ -162,6 +162,7 @@ function stubFetch(options: {
         email: 'supervisor@example.test',
         role: 'SUPERVISOR',
         status: url.includes('accept') ? 'ACCEPTED' : 'REJECTED',
+        emailStatus: 'SENT',
         replacesSupervisor: false,
         changeReason: null,
         invitedByName: 'Ada Student',

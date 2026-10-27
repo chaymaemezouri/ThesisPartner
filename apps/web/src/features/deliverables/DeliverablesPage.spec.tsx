@@ -455,6 +455,7 @@ describe('deliverables', () => {
               ],
               supervisors: [],
               meetings: [],
+              coverage: { writable: true, source: 'subscription' as const, expiresAt: null },
               doctoralStudent: person,
               doctoralStudents: [person],
               objectiveSummary: { total: 0, inProgress: 0, completed: 0, overdue: 0 },

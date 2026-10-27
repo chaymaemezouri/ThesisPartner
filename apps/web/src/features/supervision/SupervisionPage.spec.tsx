@@ -1,7 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { LocaleProvider } from '../../i18n/LocaleContext';
 import { SupervisionPage } from './SupervisionPage';
 
@@ -36,6 +36,7 @@ function student(thesisId: string, givenName: string, title: string) {
     pendingDeliverables: [],
     supervisors: [{ displayName: 'Noa Bernard' }],
     meetings: [],
+    coverage: { writable: true, source: 'subscription' as const, expiresAt: null },
     doctoralStudent: person,
     doctoralStudents: [person],
     objectiveSummary: { total: 0, inProgress: 0, completed: 0, overdue: 0 },
@@ -59,6 +60,10 @@ function renderPage(initialPath = '/encadrement') {
 }
 
 describe('supervised theses', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
   it('shows a skeleton while loading', () => {
     vi.stubGlobal(
       'fetch',
