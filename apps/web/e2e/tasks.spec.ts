@@ -24,9 +24,9 @@ test('a doctoral student completes tasks and the supervisor validates the object
   await expect(page.getByRole('heading', { name: title })).toBeVisible();
 
   for (const task of tasks) {
-    await page.getByRole('button', { name: 'Ajouter une tâche' }).click();
+    await page.getByRole('button', { name: 'Nouvelle étape' }).click();
     await page.getByLabel('Titre').fill(task);
-    await page.getByRole('button', { name: 'Ajouter la tâche' }).click();
+    await page.getByRole('button', { name: 'Ajouter l’étape' }).click();
     await expect(page.locator('li').filter({ hasText: task })).toBeVisible();
   }
 
@@ -35,10 +35,11 @@ test('a doctoral student completes tasks and the supervisor validates the object
   await page.goto('/objectifs');
   await page.getByRole('link', { name: new RegExp(title) }).click();
   for (const task of tasks) {
+    await page.getByRole('button', { name: task, exact: true }).click();
     await page.getByLabel(`Statut de ${task}`).selectOption({ label: 'Terminée' });
   }
-  await expect(page.getByText('100 %')).toBeVisible();
-  await expect(page.getByText('4 / 4 tâches terminées')).toBeVisible();
+  await expect(page.getByRole('img', { name: 'Progression 100 pour cent' })).toBeVisible();
+  await expect(page.getByText('4 / 4 étapes terminées')).toBeVisible();
   await page.getByRole('button', { name: 'Demander la validation' }).click();
   await expect(page.getByText('Validation demandée')).toBeVisible();
 

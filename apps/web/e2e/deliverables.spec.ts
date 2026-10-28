@@ -38,11 +38,9 @@ test('a doctoral student creates a deliverable that only the thesis supervisor c
   await dialog.getByLabel('Échéance').fill('2026-10-12');
   await dialog.getByRole('button', { name: 'Enregistrer le brouillon' }).click();
   await expect(dialog).toBeHidden();
-  const created = page.getByRole('row').filter({ hasText: title });
-  await expect(created.getByText('Chapitre de thèse')).toBeVisible();
-  await expect(created.getByText('Brouillon')).toBeVisible();
-  await created.getByRole('link', { name: title, exact: true }).click();
   await expect(page.getByRole('heading', { name: title })).toBeVisible();
+  await expect(page.getByText('Chapitre de thèse')).toBeVisible();
+  await expect(page.getByText('Brouillon', { exact: true })).toBeVisible();
   await expect(page.getByText('Aucune version pour l’instant.')).toBeVisible();
 
   await page.goto('/objectifs');
@@ -121,7 +119,9 @@ test('a doctoral student records versions that the supervisor can only read', as
   await page.getByRole('button', { name: 'Historique des versions' }).click();
   await expect(page.getByText('V2')).toBeVisible();
   await expect(page.getByText('V1')).toBeVisible();
-  await expect(page.getByRole('link', { name: 'Mes doctorants' })).toBeVisible();
+  await expect(
+    page.getByRole('navigation', { name: 'Fil d’Ariane' }).getByRole('link', { name: 'Mes doctorants' }),
+  ).toBeVisible();
   await expect(page.getByRole('button', { name: 'Ajouter une nouvelle version' })).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Créer la première version' })).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Ajouter un fichier' })).toHaveCount(0);

@@ -35,7 +35,7 @@ test('a supervisor creates an objective that only that doctoral student can see'
   await expect(page.getByRole('link', { name: new RegExp(title) })).toBeVisible();
   await page.getByRole('link', { name: new RegExp(title) }).click();
   await expect(page.getByRole('heading', { name: title })).toBeVisible();
-  await expect(page.getByText('Aucune tâche définie.')).toBeVisible();
+  await expect(page.getByText('Aucune étape pour le moment.')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Modifier' })).toBeVisible();
   await page.goto('/objectifs');
   const ownTitle = `Etape doctorant ${stamp}`;
