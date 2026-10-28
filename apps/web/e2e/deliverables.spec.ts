@@ -32,7 +32,7 @@ test('a doctoral student creates a deliverable that only the thesis supervisor c
 
   await login(page, ada.email);
   await page.goto('/livrables');
-  await expect(page.getByText('Aucun livrable n’a encore été créé.')).toBeVisible();
+  await expect(page.getByText('Aucun livrable')).toBeVisible();
   await page.getByRole('button', { name: 'Nouveau livrable' }).click();
   const dialog = page.getByRole('dialog');
   await dialog.getByLabel('Titre').fill(title);
@@ -41,14 +41,14 @@ test('a doctoral student creates a deliverable that only the thesis supervisor c
     .getByLabel('Objectif associé')
     .selectOption({ label: `${objectiveTitle} · À venir` });
   await dialog.getByLabel('Échéance').fill('2026-10-12');
-  await dialog.getByRole('button', { name: 'Créer le livrable' }).click();
+  await dialog.getByRole('button', { name: 'Enregistrer le brouillon' }).click();
   await expect(dialog).toBeHidden();
   const created = page.getByRole('row').filter({ hasText: title });
   await expect(created.getByText('Chapitre de thèse')).toBeVisible();
   await expect(created.getByText('Brouillon')).toBeVisible();
   await created.getByRole('link', { name: title, exact: true }).click();
   await expect(page.getByRole('heading', { name: title })).toBeVisible();
-  await expect(page.getByText('Aucune version n’a encore été créée.')).toBeVisible();
+  await expect(page.getByText('Aucune version pour l’instant.')).toBeVisible();
 
   await page.goto('/objectifs');
   await page.getByRole('link', { name: new RegExp(objectiveTitle) }).click();
@@ -97,7 +97,7 @@ test('a doctoral student records versions that the supervisor can only read', as
   await page.goto('/livrables');
   await page.getByRole('link', { name: new RegExp(title) }).click();
   await expect(page.getByRole('heading', { name: title })).toBeVisible();
-  await expect(page.getByText('Aucune version n’a encore été créée.')).toBeVisible();
+  await expect(page.getByText('Aucune version pour l’instant.')).toBeVisible();
   await page.getByRole('button', { name: 'Créer la première version' }).click();
   const dialog = page.getByRole('dialog');
   await dialog.getByLabel('Résumé des modifications').fill('Première version du chapitre');
@@ -121,7 +121,7 @@ test('a doctoral student records versions that the supervisor can only read', as
   await page.getByRole('button', { name: 'Historique des versions' }).click();
   await expect(history.getByText('V2')).toBeVisible();
   await expect(history.getByText('Première version du chapitre')).toBeVisible();
-  await expect(page.getByText('Aucun fichier associé à cette version.')).toHaveCount(2);
+  await expect(page.getByText('Sans fichier')).toHaveCount(2);
   await logout(page, 'Ada Martin');
 
   await login(page, noa.email);
@@ -164,7 +164,7 @@ test('a doctoral student uploads a file the supervisor can only download', async
   await dialog.getByLabel('Résumé des modifications').fill('Version avec document');
   await dialog.getByRole('button', { name: 'Enregistrer la version' }).click();
   await expect(dialog).toBeHidden();
-  await expect(page.getByText('Aucun fichier associé à cette version.')).toBeVisible();
+  await expect(page.getByText('Sans fichier')).toBeVisible();
   await page.getByLabel('Choisir un fichier').setInputFiles('e2e/fixtures/chapitre.pdf');
   await expect(page.getByText('chapitre.pdf')).toBeVisible();
   await expect(page.getByText('· PDF ·')).toBeVisible();
@@ -207,6 +207,7 @@ test('deliverable filters stay in the address bar', async ({ page, request }) =>
   await page.goto('/livrables');
   await page.getByRole('tab', { name: 'Brouillons' }).click();
   await page.getByPlaceholder('Rechercher…').fill('anomalie');
+  await page.getByRole('button', { name: 'Afficher les filtres' }).click();
   await page.getByLabel('Type', { exact: true }).selectOption({ label: 'Article' });
   await page.getByLabel('Objectif', { exact: true }).selectOption({ label: objectiveTitle });
   await expect(page).toHaveURL(/status=DRAFT/);
@@ -323,7 +324,8 @@ async function login(page: Page, email: string) {
   await page.getByLabel('Mot de passe', { exact: true }).fill(password);
   await page.getByRole('button', { name: 'Se connecter' }).click();
   try {
-    await expect(page.getByRole('heading', { name: /Bonjour/ })).toBeVisible();
+    await expect(page).not.toHaveURL(/connexion/);
+    await expect(page.getByRole('navigation', { name: 'Main navigation' })).toBeVisible();
   } catch (error) {
     const diagnostic = [
       `E2E current URL: ${page.url()}`,

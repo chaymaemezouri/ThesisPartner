@@ -128,7 +128,8 @@ async function login(page: Page, email: string) {
   await page.getByLabel('Mot de passe', { exact: true }).fill(password);
   await page.getByRole('button', { name: 'Se connecter' }).click();
   try {
-    await expect(page.getByRole('heading', { name: /Bonjour/ })).toBeVisible();
+    await expect(page).not.toHaveURL(/connexion/);
+    await expect(page.getByRole('navigation', { name: 'Main navigation' })).toBeVisible();
   } catch (error) {
     const diagnostic = [
       `E2E current URL: ${page.url()}`,
