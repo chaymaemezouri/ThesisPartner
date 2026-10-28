@@ -118,33 +118,26 @@ export function ThesisDocuments({ canManage }: { canManage: boolean }) {
 
   return (
     <div className="min-w-0">
+      {(canManage && theses.length > 1) || !canManage ? (
       <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
         {canManage ? (
-          <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:items-end">
-            {theses.length > 1 ? (
-              <label className="text-sm text-ink">
-                {t('resources.proposed.student')}
-                <select
-                  className="mt-1 block w-full rounded-md border border-line bg-surface px-2 py-1.5 text-sm sm:w-auto"
-                  value={studentFilter}
-                  onChange={(event) => setStudentFilter(event.target.value)}
-                >
-                  <option value="ALL">{t('resources.proposed.allStudents')}</option>
-                  {theses.map((thesis) => (
-                    <option key={thesis.thesisId} value={thesis.thesisId}>
-                      {thesis.doctoralStudent
-                        ? `${thesis.doctoralStudent.givenName} ${thesis.doctoralStudent.familyName}`
-                        : thesis.title}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            ) : null}
-            <Button className="w-full sm:w-auto" onClick={() => setCreating(true)}>
-              <Icon name="plus" className="h-4 w-4" />
-              {t('resources.proposed.addDocument')}
-            </Button>
-          </div>
+            <label className="text-sm text-ink">
+              {t('resources.proposed.student')}
+              <select
+                className="mt-1 block w-full rounded-md border border-line bg-surface px-2 py-1.5 text-sm sm:w-auto"
+                value={studentFilter}
+                onChange={(event) => setStudentFilter(event.target.value)}
+              >
+                <option value="ALL">{t('resources.proposed.allStudents')}</option>
+                {theses.map((thesis) => (
+                  <option key={thesis.thesisId} value={thesis.thesisId}>
+                    {thesis.doctoralStudent
+                      ? `${thesis.doctoralStudent.givenName} ${thesis.doctoralStudent.familyName}`
+                      : thesis.title}
+                  </option>
+                ))}
+              </select>
+            </label>
         ) : (
           <>
             <div
@@ -195,17 +188,10 @@ export function ThesisDocuments({ canManage }: { canManage: boolean }) {
                 </button>
               ))}
             </div>
-            <Button
-              className="w-full sm:w-auto"
-              disabled={!thesisId}
-              onClick={() => setCreating(true)}
-            >
-              <Icon name="plus" className="h-4 w-4" />
-              {t('resources.proposed.addOwn')}
-            </Button>
           </>
         )}
       </div>
+      ) : null}
       {!canManage && sourceTab === 'SUPERVISOR' ? (
         <p className="mb-2 text-xs text-muted">{t('resources.proposed.supervisorSynthesisHint')}</p>
       ) : null}
@@ -221,9 +207,9 @@ export function ThesisDocuments({ canManage }: { canManage: boolean }) {
         </dl>
       ) : null}
       {desk.isError ? <QueryError error={desk.error} /> : null}
-      {total > 0 ? (
-        <div role="search" aria-label={t('resources.proposed.search')} className="mb-3">
-          <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-2 sm:grid-cols-[minmax(0,1fr)_10rem_13rem]">
+      <div role="search" aria-label={t('resources.proposed.search')} className="mb-3">
+          <div className="flex min-w-0 flex-wrap items-center gap-2">
+          <div className="grid min-w-[12rem] flex-1 grid-cols-[minmax(0,1fr)_auto] gap-2 sm:grid-cols-[minmax(0,1fr)_10rem_13rem]">
             <div className="relative min-w-0">
               <label htmlFor="document-search" className="sr-only">
                 {t('resources.proposed.search')}
@@ -314,6 +300,23 @@ export function ThesisDocuments({ canManage }: { canManage: boolean }) {
               </div>
             </div>
           </div>
+          {canManage ? (
+            <IconAction
+              className="shrink-0"
+              label={t('resources.proposed.addDocument')}
+              icon="plus"
+              onClick={() => setCreating(true)}
+            />
+          ) : (
+            <IconAction
+              className="shrink-0"
+              label={t('resources.proposed.addOwn')}
+              icon="plus"
+              disabled={!thesisId}
+              onClick={() => setCreating(true)}
+            />
+          )}
+          </div>
           <div className="mt-1.5 flex min-h-4 items-center justify-between gap-2 text-xs">
             <p className="text-muted" role="status">
               {t('resources.proposed.resultCount', { shown, total })}
@@ -329,7 +332,6 @@ export function ThesisDocuments({ canManage }: { canManage: boolean }) {
             ) : null}
           </div>
         </div>
-      ) : null}
       {!canManage && desk.data && sourceDocuments.length === 0 ? (
         <div className="rounded-[12px] border border-dashed border-line bg-surface px-4 py-10 text-center">
           <span className="mx-auto grid h-11 w-11 place-items-center rounded-[10px] bg-brand-soft text-brand">

@@ -25,26 +25,45 @@ export function MeetingsWorkspace({
   const request = useRequestMeeting(thesisId);
   const [creating, setCreating] = useState(false);
   const [requesting, setRequesting] = useState(false);
-  const upcoming = meetings.data?.upcoming ?? [];
-  const history = meetings.data?.history ?? [];
-  const empty = upcoming.length === 0 && history.length === 0;
+  const [search, setSearch] = useState('');
+  const needle = search.trim().toLocaleLowerCase();
+  const match = (item: { title: string; agenda?: string | null; location?: string | null }) =>
+    !needle ||
+    `${item.title} ${item.agenda ?? ''} ${item.location ?? ''}`.toLocaleLowerCase().includes(needle);
+  const upcoming = (meetings.data?.upcoming ?? []).filter(match);
+  const history = (meetings.data?.history ?? []).filter(match);
+  const empty = upcoming.length === 0 && history.length === 0 && !needle;
 
   return (
     <div className="min-w-0">
-      {canCreate || canRequest ? (
-        <div className="mb-4 flex flex-wrap justify-end gap-3">
-          {canRequest ? (
-            <IconAction
-              label={t('meetings.request')}
-              icon="plus"
-              onClick={() => setRequesting(true)}
-            />
-          ) : null}
-          {canCreate ? (
-            <IconAction label={t('meetings.new')} icon="plus" onClick={() => setCreating(true)} />
-          ) : null}
-        </div>
-      ) : null}
+      <div className="mb-3 flex min-w-0 flex-wrap items-center gap-2">
+        <label className="relative min-w-[8rem] flex-1 text-xs">
+          <span className="sr-only">{t('common.search')}</span>
+          <input
+            type="search"
+            value={search}
+            placeholder={t('common.search')}
+            className="h-9 w-full rounded-lg border border-line bg-surface px-3 text-xs text-ink outline-none transition-[border-color,box-shadow] placeholder:text-muted/70 focus:border-brand/50 focus:shadow-[0_0_0_3px_rgba(36,87,167,0.08)] sm:text-sm"
+            onChange={(event) => setSearch(event.target.value)}
+          />
+        </label>
+        {canRequest ? (
+          <IconAction
+            className="shrink-0"
+            label={t('meetings.request')}
+            icon="plus"
+            onClick={() => setRequesting(true)}
+          />
+        ) : null}
+        {canCreate ? (
+          <IconAction
+            className="shrink-0"
+            label={t('meetings.new')}
+            icon="plus"
+            onClick={() => setCreating(true)}
+          />
+        ) : null}
+      </div>
       {meetings.isLoading ? (
         <div aria-busy="true">
           <Skeleton className="h-24" />

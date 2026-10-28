@@ -45,9 +45,7 @@ export function ObjectivesWorkspace({
   const create = useCreateObjective(thesisId);
   const update = useUpdateListedObjective(thesisId);
   const remove = useDeleteObjective(thesisId);
-  const filtered = tab !== 'all' || search.trim().length > 0;
-
-  const showCreate = canManage && (objectives.data?.objectives.length ?? 0) > 0;
+  const showCreate = canManage;
 
   return (
     <div className="min-w-0">
@@ -104,14 +102,6 @@ export function ObjectivesWorkspace({
               title={t('objectives.emptyTitle')}
               description={t('objectives.emptyDescription')}
             />
-            {canManage && !filtered ? (
-              <IconAction
-                className="mt-4"
-                label={t('objectives.new')}
-                icon="plus"
-                onClick={() => setCreating(true)}
-              />
-            ) : null}
           </div>
         ) : null}
         {objectives.data && objectives.data.objectives.length > 0 ? (
