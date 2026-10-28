@@ -120,7 +120,9 @@ test('a doctoral student records versions that the supervisor can only read', as
   await expect(page.getByText('V2')).toBeVisible();
   await expect(page.getByText('V1')).toBeVisible();
   await expect(
-    page.getByRole('navigation', { name: 'Fil d’Ariane' }).getByRole('link', { name: 'Mes doctorants' }),
+    page
+      .getByRole('navigation', { name: 'Fil d’Ariane' })
+      .getByRole('link', { name: 'Mes doctorants' }),
   ).toBeVisible();
   await expect(page.getByRole('button', { name: 'Ajouter une nouvelle version' })).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Créer la première version' })).toHaveCount(0);
