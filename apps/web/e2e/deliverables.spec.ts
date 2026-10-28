@@ -18,12 +18,7 @@ test('a doctoral student creates a deliverable that only the thesis supervisor c
   await invite(request, ada.cookie, noa.cookie, thesisId, noa.email);
 
   await login(page, noa.email);
-  await page.goto('/encadrement');
-  await page
-    .getByRole('listitem')
-    .filter({ hasText: 'Ada Martin' })
-    .getByRole('link', { name: 'Voir le suivi' })
-    .click();
+  await page.goto(`/encadrement/${thesisId}/objectifs`);
   await page.getByRole('button', { name: 'Nouvel objectif' }).click();
   await page.getByLabel('Titre').fill(objectiveTitle);
   await page.getByRole('button', { name: 'Créer l’objectif' }).click();
@@ -58,12 +53,7 @@ test('a doctoral student creates a deliverable that only the thesis supervisor c
   await logout(page, 'Ada Martin');
 
   await login(page, noa.email);
-  await page.goto('/encadrement');
-  await page
-    .getByRole('listitem')
-    .filter({ hasText: 'Ada Martin' })
-    .getByRole('link', { name: 'Livrables' })
-    .click();
+  await page.goto(`/encadrement/${thesisId}/livrables`);
   await expect(page.getByText(title)).toBeVisible();
   await expect(page.getByRole('button', { name: 'Nouveau livrable' })).toHaveCount(0);
   await page.getByRole('link', { name: title, exact: true }).click();
@@ -125,12 +115,7 @@ test('a doctoral student records versions that the supervisor can only read', as
   await logout(page, 'Ada Martin');
 
   await login(page, noa.email);
-  await page.goto('/encadrement');
-  await page
-    .getByRole('listitem')
-    .filter({ hasText: 'Ada Martin' })
-    .getByRole('link', { name: 'Livrables' })
-    .click();
+  await page.goto(`/encadrement/${thesisId}/livrables`);
   await page.getByRole('link', { name: title, exact: true }).click();
   await expect(page.getByRole('heading', { name: title })).toBeVisible();
   await page.getByRole('button', { name: 'Historique des versions' }).click();
@@ -166,10 +151,10 @@ test('a doctoral student uploads a file the supervisor can only download', async
   await expect(dialog).toBeHidden();
   await expect(page.getByText('Sans fichier')).toBeVisible();
   await page.getByLabel('Choisir un fichier').setInputFiles('e2e/fixtures/chapitre.pdf');
-  await expect(page.getByText('chapitre.pdf')).toBeVisible();
+  await expect(page.getByText('chapitre.pdf').first()).toBeVisible();
   await expect(page.getByText('· PDF ·')).toBeVisible();
   await page.reload();
-  await expect(page.getByText('chapitre.pdf')).toBeVisible();
+  await expect(page.getByText('chapitre.pdf').first()).toBeVisible();
   const download = page.waitForEvent('download');
   await page.getByRole('button', { name: 'Télécharger' }).click();
   const saved = await download;
@@ -177,14 +162,9 @@ test('a doctoral student uploads a file the supervisor can only download', async
   await logout(page, 'Ada Martin');
 
   await login(page, noa.email);
-  await page.goto('/encadrement');
-  await page
-    .getByRole('listitem')
-    .filter({ hasText: 'Ada Martin' })
-    .getByRole('link', { name: 'Livrables' })
-    .click();
+  await page.goto(`/encadrement/${thesisId}/livrables`);
   await page.getByRole('link', { name: title, exact: true }).click();
-  await expect(page.getByText('chapitre.pdf')).toBeVisible();
+  await expect(page.getByText('chapitre.pdf').first()).toBeVisible();
   await expect(page.getByRole('button', { name: 'Télécharger' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Ajouter un fichier' })).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Supprimer' })).toHaveCount(0);

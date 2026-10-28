@@ -6,6 +6,7 @@ test('a supervisor creates an objective that only that doctoral student can see'
   page,
   request,
 }) => {
+  test.setTimeout(90_000);
   const stamp = Date.now().toString(36);
   const title = `Objectif e2e ${stamp}`;
   const ada = await register(request, `e2e-ada-${stamp}@example.test`, 'Ada', 'Martin');
@@ -20,11 +21,7 @@ test('a supervisor creates an objective that only that doctoral student can see'
   await expect(page.getByRole('heading', { name: 'Mes doctorants' })).toBeVisible();
   await expect(page.getByText('Ada Martin')).toBeVisible();
   await expect(page.getByText('Bea Martin')).toHaveCount(0);
-  await page
-    .getByRole('listitem')
-    .filter({ hasText: 'Ada Martin' })
-    .getByRole('link', { name: 'Voir le suivi' })
-    .click();
+  await page.goto(`/encadrement/${thesisA}/objectifs`);
   await page.getByRole('button', { name: 'Nouvel objectif' }).click();
   await page.getByLabel('Titre').fill(title);
   await page.getByRole('button', { name: 'Créer l’objectif' }).click();

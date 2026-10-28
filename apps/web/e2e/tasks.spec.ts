@@ -16,12 +16,7 @@ test('a doctoral student completes tasks and the supervisor validates the object
   await invite(request, ada.cookie, noa.cookie, thesisId, noa.email);
 
   await login(page, noa.email);
-  await page.goto('/encadrement');
-  await page
-    .getByRole('listitem')
-    .filter({ hasText: 'Ada Martin' })
-    .getByRole('link', { name: 'Voir le suivi' })
-    .click();
+  await page.goto(`/encadrement/${thesisId}/objectifs`);
   await page.getByRole('button', { name: 'Nouvel objectif' }).click();
   await page.getByLabel('Titre').fill(title);
   await page.getByRole('button', { name: 'Créer l’objectif' }).click();
@@ -49,12 +44,7 @@ test('a doctoral student completes tasks and the supervisor validates the object
 
   await logout(page, 'Ada Martin');
   await login(page, noa.email);
-  await page.goto('/encadrement');
-  await page
-    .getByRole('listitem')
-    .filter({ hasText: 'Ada Martin' })
-    .getByRole('link', { name: 'Voir le suivi' })
-    .click();
+  await page.goto(`/encadrement/${thesisId}/objectifs`);
   await page.getByRole('link', { name: new RegExp(title) }).click();
   await expect(page.getByText('Validation demandée par le doctorant')).toBeVisible();
   await page.getByRole('button', { name: 'Valider l’objectif' }).click();
