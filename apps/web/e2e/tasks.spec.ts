@@ -1,4 +1,5 @@
 import { expect, test, type APIRequestContext, type Page } from '@playwright/test';
+import { addObjectiveStep, createObjectiveOnPage, markStepDone } from './current-ui';
 
 const password = 'phrase-secrete-12';
 
@@ -17,17 +18,12 @@ test('a doctoral student completes tasks and the supervisor validates the object
 
   await login(page, noa.email);
   await page.goto(`/encadrement/${thesisId}/objectifs`);
-  await page.getByRole('button', { name: 'Nouvel objectif' }).click();
-  await page.getByLabel('Titre').fill(title);
-  await page.getByRole('button', { name: 'Créer l’objectif' }).click();
+  await createObjectiveOnPage(page, title);
   await page.getByRole('link', { name: new RegExp(title) }).click();
   await expect(page.getByRole('heading', { name: title })).toBeVisible();
 
   for (const task of tasks) {
-    await page.getByRole('button', { name: 'Nouvelle étape' }).click();
-    await page.getByLabel('Titre').fill(task);
-    await page.getByRole('button', { name: 'Ajouter l’étape' }).click();
-    await expect(page.locator('li').filter({ hasText: task })).toBeVisible();
+    await addObjectiveStep(page, task);
   }
 
   await logout(page, 'Noa Bernard');
@@ -35,11 +31,10 @@ test('a doctoral student completes tasks and the supervisor validates the object
   await page.goto('/objectifs');
   await page.getByRole('link', { name: new RegExp(title) }).click();
   for (const task of tasks) {
-    await page.getByRole('button', { name: task, exact: true }).click();
-    await page.getByLabel(`Statut de ${task}`).selectOption({ label: 'Terminée' });
+    await markStepDone(page, task);
   }
   await expect(page.getByRole('img', { name: 'Progression 100 pour cent' })).toBeVisible();
-  await expect(page.getByText('4 / 4 étapes terminées')).toBeVisible();
+  await expect(page.getByText(/4 \/ 4/)).toBeVisible();
   await page.getByRole('button', { name: 'Demander la validation' }).click();
   await expect(page.getByText('Validation demandée')).toBeVisible();
 

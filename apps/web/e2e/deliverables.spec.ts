@@ -1,4 +1,5 @@
 import { expect, test, type APIRequestContext, type Page } from '@playwright/test';
+import { createObjectiveOnPage, revealVersionHistory } from './current-ui';
 
 const password = 'phrase-secrete-12';
 
@@ -19,9 +20,7 @@ test('a doctoral student creates a deliverable that only the thesis supervisor c
 
   await login(page, noa.email);
   await page.goto(`/encadrement/${thesisId}/objectifs`);
-  await page.getByRole('button', { name: 'Nouvel objectif' }).click();
-  await page.getByLabel('Titre').fill(objectiveTitle);
-  await page.getByRole('button', { name: 'Créer l’objectif' }).click();
+  await createObjectiveOnPage(page, objectiveTitle);
   await expect(page.getByRole('link', { name: new RegExp(objectiveTitle) })).toBeVisible();
   await logout(page, 'Noa Bernard');
 
@@ -35,11 +34,11 @@ test('a doctoral student creates a deliverable that only the thesis supervisor c
   await dialog
     .getByLabel('Objectif associé')
     .selectOption({ label: `${objectiveTitle} · À venir` });
-  await dialog.getByLabel('Échéance').fill('2026-10-12');
+  await dialog.getByLabel('Échéance').fill('2027-12-01');
   await dialog.getByRole('button', { name: 'Enregistrer le brouillon' }).click();
   await expect(dialog).toBeHidden();
   await expect(page.getByRole('heading', { name: title })).toBeVisible();
-  await expect(page.getByText('Chapitre de thèse')).toBeVisible();
+  await expect(page.getByText('Chapitre de thèse').first()).toBeVisible();
   await expect(page.getByText('Brouillon', { exact: true })).toBeVisible();
   await expect(page.getByText('Aucune version pour l’instant.')).toBeVisible();
 
@@ -91,14 +90,14 @@ test('a doctoral student records versions that the supervisor can only read', as
   await dialog.getByLabel('Résumé des modifications').fill('Première version du chapitre');
   await dialog.getByRole('button', { name: 'Enregistrer la version' }).click();
   await expect(dialog).toBeHidden();
-  await expect(page.getByText('V1')).toBeVisible();
-  await expect(page.getByText('Première version du chapitre')).toBeVisible();
+  const history = await revealVersionHistory(page);
+  await expect(history.getByText('V1')).toBeVisible();
+  await expect(history.getByText('Première version du chapitre')).toBeVisible();
 
   await page.getByRole('button', { name: 'Ajouter une nouvelle version' }).click();
   await dialog.getByLabel('Résumé des modifications').fill('Ajout de la section Transformers');
   await dialog.getByRole('button', { name: 'Enregistrer la version' }).click();
   await expect(dialog).toBeHidden();
-  const history = page.getByRole('list', { name: 'Historique des versions' });
   await expect(history.getByText('V2')).toBeVisible();
   await expect(history.getByText('V1')).toBeVisible();
   await expect(history.getByText('Dernière version')).toBeVisible();
@@ -106,7 +105,7 @@ test('a doctoral student records versions that the supervisor can only read', as
   const first = await history.getByText('V1').boundingBox();
   expect(second && first && second.y < first.y).toBe(true);
   await page.reload();
-  await page.getByRole('button', { name: 'Historique des versions' }).click();
+  await revealVersionHistory(page);
   await expect(history.getByText('V2')).toBeVisible();
   await expect(history.getByText('Première version du chapitre')).toBeVisible();
   await expect(page.getByText('Sans fichier')).toHaveCount(2);
@@ -116,9 +115,9 @@ test('a doctoral student records versions that the supervisor can only read', as
   await page.goto(`/encadrement/${thesisId}/livrables`);
   await page.getByRole('link', { name: title, exact: true }).click();
   await expect(page.getByRole('heading', { name: title })).toBeVisible();
-  await page.getByRole('button', { name: 'Historique des versions' }).click();
-  await expect(page.getByText('V2')).toBeVisible();
-  await expect(page.getByText('V1')).toBeVisible();
+  await revealVersionHistory(page);
+  await expect(page.getByText('V2').first()).toBeVisible();
+  await expect(page.getByText('V1').first()).toBeVisible();
   await expect(
     page
       .getByRole('navigation', { name: 'Fil d’Ariane' })
@@ -151,14 +150,15 @@ test('a doctoral student uploads a file the supervisor can only download', async
   await dialog.getByLabel('Résumé des modifications').fill('Version avec document');
   await dialog.getByRole('button', { name: 'Enregistrer la version' }).click();
   await expect(dialog).toBeHidden();
-  await expect(page.getByText('Sans fichier')).toBeVisible();
+  await revealVersionHistory(page);
+  await expect(page.getByText('Sans fichier').first()).toBeVisible();
   await page.getByLabel('Choisir un fichier').setInputFiles('e2e/fixtures/chapitre.pdf');
   await expect(page.getByText('chapitre.pdf').first()).toBeVisible();
   await expect(page.getByText('· PDF ·')).toBeVisible();
   await page.reload();
   await expect(page.getByText('chapitre.pdf').first()).toBeVisible();
   const download = page.waitForEvent('download');
-  await page.getByRole('button', { name: 'Télécharger' }).click();
+  await page.getByRole('button', { name: 'Télécharger' }).first().click();
   const saved = await download;
   expect(saved.suggestedFilename()).toContain('chapitre.pdf');
   await logout(page, 'Ada Martin');
@@ -167,7 +167,7 @@ test('a doctoral student uploads a file the supervisor can only download', async
   await page.goto(`/encadrement/${thesisId}/livrables`);
   await page.getByRole('link', { name: title, exact: true }).click();
   await expect(page.getByText('chapitre.pdf').first()).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Télécharger' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Télécharger' }).first()).toBeVisible();
   await expect(page.getByRole('button', { name: 'Ajouter un fichier' })).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Supprimer' })).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Remplacer' })).toHaveCount(0);

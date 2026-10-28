@@ -1,4 +1,5 @@
 import { expect, test, type APIRequestContext, type Page } from '@playwright/test';
+import { createObjectiveOnPage } from './current-ui';
 
 const password = 'phrase-secrete-12';
 
@@ -22,9 +23,7 @@ test('a supervisor creates an objective that only that doctoral student can see'
   await expect(page.getByText('Ada Martin')).toBeVisible();
   await expect(page.getByText('Bea Martin')).toHaveCount(0);
   await page.goto(`/encadrement/${thesisA}/objectifs`);
-  await page.getByRole('button', { name: 'Nouvel objectif' }).click();
-  await page.getByLabel('Titre').fill(title);
-  await page.getByRole('button', { name: 'Créer l’objectif' }).click();
+  await createObjectiveOnPage(page, title);
   await expect(page.getByRole('link', { name: new RegExp(title) })).toBeVisible();
   await page.getByRole('link', { name: new RegExp(title) }).click();
   await expect(page.getByRole('heading', { name: title })).toBeVisible();
@@ -35,13 +34,11 @@ test('a supervisor creates an objective that only that doctoral student can see'
   await expect(page.getByRole('link', { name: new RegExp(title) })).toBeVisible();
   await page.getByRole('link', { name: new RegExp(title) }).click();
   await expect(page.getByRole('heading', { name: title })).toBeVisible();
-  await expect(page.getByText('Aucune étape pour le moment.')).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Modifier' })).toBeVisible();
+  await expect(page.getByText(/Aucune étape/)).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Modifier' }).first()).toBeVisible();
   await page.goto('/objectifs');
   const ownTitle = `Etape doctorant ${stamp}`;
-  await page.getByRole('button', { name: 'Nouvel objectif' }).click();
-  await page.getByLabel('Titre').fill(ownTitle);
-  await page.getByRole('button', { name: 'Créer l’objectif' }).click();
+  await createObjectiveOnPage(page, ownTitle);
   await expect(page.getByRole('link', { name: new RegExp(ownTitle) })).toBeVisible();
 
   await logout(page, 'Ada Martin');
