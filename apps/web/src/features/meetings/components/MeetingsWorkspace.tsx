@@ -29,7 +29,9 @@ export function MeetingsWorkspace({
   const needle = search.trim().toLocaleLowerCase();
   const match = (item: { title: string; agenda?: string | null; location?: string | null }) =>
     !needle ||
-    `${item.title} ${item.agenda ?? ''} ${item.location ?? ''}`.toLocaleLowerCase().includes(needle);
+    `${item.title} ${item.agenda ?? ''} ${item.location ?? ''}`
+      .toLocaleLowerCase()
+      .includes(needle);
   const upcoming = (meetings.data?.upcoming ?? []).filter(match);
   const history = (meetings.data?.history ?? []).filter(match);
   const empty = upcoming.length === 0 && history.length === 0 && !needle;

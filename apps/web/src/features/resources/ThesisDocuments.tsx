@@ -119,8 +119,8 @@ export function ThesisDocuments({ canManage }: { canManage: boolean }) {
   return (
     <div className="min-w-0">
       {(canManage && theses.length > 1) || !canManage ? (
-      <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
-        {canManage ? (
+        <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+          {canManage ? (
             <label className="text-sm text-ink">
               {t('resources.proposed.student')}
               <select
@@ -138,8 +138,7 @@ export function ThesisDocuments({ canManage }: { canManage: boolean }) {
                 ))}
               </select>
             </label>
-        ) : (
-          <>
+          ) : (
             <div
               role="tablist"
               aria-label={t('resources.proposed.sourceColumn')}
@@ -188,9 +187,8 @@ export function ThesisDocuments({ canManage }: { canManage: boolean }) {
                 </button>
               ))}
             </div>
-          </>
-        )}
-      </div>
+          )}
+        </div>
       ) : null}
       {!canManage && sourceTab === 'SUPERVISOR' ? (
         <p className="mb-2 text-xs text-muted">{t('resources.proposed.supervisorSynthesisHint')}</p>
@@ -207,9 +205,13 @@ export function ThesisDocuments({ canManage }: { canManage: boolean }) {
         </dl>
       ) : null}
       {desk.isError ? <QueryError error={desk.error} /> : null}
-      <div role="search" aria-label={t('resources.proposed.search')} className="mb-3">
-          <div className="flex min-w-0 flex-wrap items-center gap-2">
-          <div className="grid min-w-[12rem] flex-1 grid-cols-[minmax(0,1fr)_auto] gap-2 sm:grid-cols-[minmax(0,1fr)_10rem_13rem]">
+      <div className="mb-3 flex min-w-0 flex-wrap items-start gap-2">
+        <div
+          role="search"
+          aria-label={t('resources.proposed.search')}
+          className="min-w-[12rem] flex-1"
+        >
+          <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-2 sm:grid-cols-[minmax(0,1fr)_10rem_13rem]">
             <div className="relative min-w-0">
               <label htmlFor="document-search" className="sr-only">
                 {t('resources.proposed.search')}
@@ -221,7 +223,7 @@ export function ThesisDocuments({ canManage }: { canManage: boolean }) {
                 strokeWidth="1.6"
                 strokeLinecap="round"
                 aria-hidden="true"
-                className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted"
+                className="pointer-events-none absolute top-1/2 left-2.5 h-4 w-4 -translate-y-1/2 text-muted"
               >
                 <circle cx="10.5" cy="10.5" r="6.5" />
                 <path d="m16 16 4 4" />
@@ -300,23 +302,6 @@ export function ThesisDocuments({ canManage }: { canManage: boolean }) {
               </div>
             </div>
           </div>
-          {canManage ? (
-            <IconAction
-              className="shrink-0"
-              label={t('resources.proposed.addDocument')}
-              icon="plus"
-              onClick={() => setCreating(true)}
-            />
-          ) : (
-            <IconAction
-              className="shrink-0"
-              label={t('resources.proposed.addOwn')}
-              icon="plus"
-              disabled={!thesisId}
-              onClick={() => setCreating(true)}
-            />
-          )}
-          </div>
           <div className="mt-1.5 flex min-h-4 items-center justify-between gap-2 text-xs">
             <p className="text-muted" role="status">
               {t('resources.proposed.resultCount', { shown, total })}
@@ -332,6 +317,23 @@ export function ThesisDocuments({ canManage }: { canManage: boolean }) {
             ) : null}
           </div>
         </div>
+        {canManage ? (
+          <IconAction
+            className="shrink-0"
+            label={t('resources.proposed.addDocument')}
+            icon="plus"
+            onClick={() => setCreating(true)}
+          />
+        ) : (
+          <IconAction
+            className="shrink-0"
+            label={t('resources.proposed.addOwn')}
+            icon="plus"
+            disabled={!thesisId}
+            onClick={() => setCreating(true)}
+          />
+        )}
+      </div>
       {!canManage && desk.data && sourceDocuments.length === 0 ? (
         <div className="rounded-[12px] border border-dashed border-line bg-surface px-4 py-10 text-center">
           <span className="mx-auto grid h-11 w-11 place-items-center rounded-[10px] bg-brand-soft text-brand">
