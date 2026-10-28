@@ -34,7 +34,7 @@ test('a doctoral student completes tasks and the supervisor validates the object
     await markStepDone(page, task);
   }
   await expect(page.getByRole('img', { name: 'Progression 100 pour cent' })).toBeVisible();
-  await expect(page.getByText(/4 \/ 4/)).toBeVisible();
+  await expect(page.getByText('4 / 4 étapes terminées')).toBeVisible();
   await page.getByRole('button', { name: 'Demander la validation' }).click();
   await expect(page.getByText('Validation demandée')).toBeVisible();
 

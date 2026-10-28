@@ -45,7 +45,7 @@ test('a supervisor creates an objective that only that doctoral student can see'
   await login(page, bea.email);
   await page.goto('/objectifs');
   await expect(page.getByText(title)).toHaveCount(0);
-  await expect(page.getByRole('link', { name: /État de l.art/ })).toBeVisible();
+  await expect(page.getByRole('link', { name: /état de l.art/i })).toBeVisible();
 
   expect(thesisB).toBeTruthy();
 });
