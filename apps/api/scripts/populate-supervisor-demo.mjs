@@ -166,7 +166,7 @@ async function ensureCv(who, name, specialty) {
     pdf(
       `CV fictif de demonstration - ${name}`,
       [
-        'Identite fictive creee pour la demonstration client ThesisPartner.',
+        'Identite fictive creee pour la demonstration client Thesis Flow.',
         `Domaine du scenario : ${specialty}.`,
         'Cadre : recherche doctorale, suivi scientifique, livrables et experimentation reproductible.',
         'Encadrement du scenario : Pr. Karim El Mansouri, Maroc.',

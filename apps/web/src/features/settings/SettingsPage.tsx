@@ -1,7 +1,7 @@
 import { Avatar, Button, Select } from '@thesispartner/ui';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useLogout, useMeQuery } from '../../hooks/use-session';
+import { useLogout, useMeQuery, useRequestEmailVerification } from '../../hooks/use-session';
 import { portraitUrl } from '../supervision/temporary-portraits';
 import { LOCALE_LABEL, LOCALES, type Locale } from '../../i18n/locales';
 import { useLocale } from '../../i18n/LocaleContext';
@@ -10,6 +10,7 @@ export function SettingsPage() {
   const { locale, setLocale, t } = useLocale();
   const me = useMeQuery();
   const logout = useLogout();
+  const resendVerification = useRequestEmailVerification();
   const [languageNotice, setLanguageNotice] = useState(false);
   const user = me.data?.user;
 
@@ -54,6 +55,28 @@ export function SettingsPage() {
                 <p className="mt-1 text-xs text-muted">
                   {user.emailVerified ? t('settings.emailVerified') : t('settings.emailUnverified')}
                 </p>
+                {!user.emailVerified ? (
+                  <div className="mt-3 space-y-2">
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      disabled={resendVerification.isPending}
+                      onClick={() => resendVerification.mutate()}
+                    >
+                      {t('settings.resendVerification')}
+                    </Button>
+                    {resendVerification.isSuccess ? (
+                      <p className="text-xs text-ok" role="status">
+                        {t('settings.resendVerificationSent')}
+                      </p>
+                    ) : null}
+                    {resendVerification.isError ? (
+                      <p className="text-xs text-danger" role="alert">
+                        {t('settings.resendVerificationFailed')}
+                      </p>
+                    ) : null}
+                  </div>
+                ) : null}
               </div>
             </dl>
             <Link

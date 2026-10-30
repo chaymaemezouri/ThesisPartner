@@ -30,7 +30,7 @@ export function renderInvoicePdf(model: InvoicePdfModel): Buffer {
   const lines = [
     banner,
     '',
-    'ThesisPartner',
+    'Thesis Flow',
     model.issuerName,
     model.issuerAddress,
     model.issuerLegalId,

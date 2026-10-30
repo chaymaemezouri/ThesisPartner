@@ -3,7 +3,7 @@ import { nextDay, videoRoomUrl } from './meeting-video';
 describe('meeting video', () => {
   it('builds a stable room from the meeting id', () => {
     expect(videoRoomUrl('a59900d4-1e1d-41eb-989a-db2f3a9192a2')).toBe(
-      'https://meet.jit.si/ThesisPartnera59900d41e1d41eb989adb2f3a9192a2',
+      'https://meet.jit.si/ThesisFlowa59900d41e1d41eb989adb2f3a9192a2',
     );
   });
 

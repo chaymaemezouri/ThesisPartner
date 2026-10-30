@@ -89,7 +89,7 @@ Les opérations sont effectuées au fil de l'exécution : en cas d'interruption,
 
 Le script ajoute aussi un CV fictif à chaque compte s'il est absent. Sur une instance de production utilisant l'analyse de fichiers `stub`, les pièces jointes des livrables restent `PENDING` : leur dépôt fonctionne, mais leur téléchargement répond `FILE_SCAN_PENDING`. Le remplissage des comptes ne change pas ce contrôle. Configurer un véritable traitement d'analyse sur le serveur pour rendre ces téléchargements disponibles ; voir [Stockage et analyse des fichiers](storage.md).
 
-Ouvrir l'adresse **Local** affichée par Vite dans le terminal. Le port habituel est `5173` ; si ce port est occupé, Vite en choisit un autre. Sur le poste de développement actuel, ThesisPartner est accessible à `http://localhost:5174`.
+Ouvrir l'adresse **Local** affichée par Vite dans le terminal. Le port habituel est `5173` ; si ce port est occupé, Vite en choisit un autre. Sur le poste de développement actuel, Thesis Flow est accessible à `http://localhost:5174`.
 
 1. Se connecter avec le compte de Youssef et consulter le tableau de bord, les objectifs, les livrables et les remarques.
 2. Se déconnecter, puis se connecter avec le compte de Karim pour consulter l'espace encadrant et le dossier de Youssef.

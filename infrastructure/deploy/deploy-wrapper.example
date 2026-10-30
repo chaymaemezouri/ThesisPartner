@@ -7,6 +7,6 @@
 # 3. Set THESIS_APP_DIR to the git checkout that contains docker-compose.yml.
 # 4. Install this file as the `deploy` executable on PATH for the SSH user.
 set -eu
-: "${THESIS_APP_DIR:?set THESIS_APP_DIR to the ThesisPartner git checkout}"
+: "${THESIS_APP_DIR:?set THESIS_APP_DIR to the Thesis Flow git checkout}"
 cd "$THESIS_APP_DIR"
 exec bash "$THESIS_APP_DIR/infrastructure/deploy/deploy.sh" "$1"

@@ -450,8 +450,8 @@ export class PaymentService {
           userId: row.userId,
           email: row.user.email,
           eventKey: `notify.subscription.${key}:${row.id}:${row.currentPeriodEnd.toISOString().slice(0, 10)}`,
-          subject: 'Votre abonnement ThesisPartner arrive à échéance',
-          text: `Couverture ${row.plan.name} jusqu’au ${row.currentPeriodEnd.toISOString()}. Renouvelez depuis /abonnement.`,
+          subject: 'Your Thesis Flow subscription is ending soon',
+          text: `Coverage ${row.plan.name} until ${row.currentPeriodEnd.toISOString()}. Renew from /abonnement.`,
           test: false,
         });
       }
@@ -465,8 +465,8 @@ export class PaymentService {
         userId: row.userId,
         email: row.user.email,
         eventKey: `notify.subscription.grace_ended:${row.id}`,
-        subject: 'Période de grâce terminée',
-        text: 'La période de grâce est terminée. Vos données restent consultables en lecture seule.',
+        subject: 'Grace period ended',
+        text: 'The grace period has ended. Your data remains available in read-only mode.',
         test: false,
       });
     }
@@ -717,10 +717,10 @@ export class PaymentService {
         userId,
         email,
         eventKey: `notify.payment.confirmed:${input.paymentId}`,
-        subject: test ? 'Paiement de test confirmé' : 'Paiement confirmé',
+        subject: test ? 'Test payment confirmed' : 'Payment confirmed',
         text: test
-          ? `Votre paiement de simulation a été confirmé. Aucun encaissement réel n'a eu lieu.`
-          : `Votre paiement ThesisPartner Pro a été confirmé. Facture ${input.invoiceNumber ?? ''}.`,
+          ? `Your simulated payment was confirmed. No real charge was made.`
+          : `Your Thesis Flow Pro payment was confirmed. Invoice ${input.invoiceNumber ?? ''}.`,
         test,
         metadata: { paymentId: input.paymentId },
       });
@@ -728,8 +728,8 @@ export class PaymentService {
         userId,
         email,
         eventKey: `notify.subscription.activated:${input.paymentId}`,
-        subject: 'Abonnement ThesisPartner Pro activé',
-        text: 'Votre couverture Pro est active. L’encadrant autorisé conserve l’accès de supervision sans paiement.',
+        subject: 'Thesis Flow Pro subscription activated',
+        text: 'Your Pro coverage is active. The authorised supervisor keeps supervision access at no charge.',
         test,
       });
       if (input.invoiceNumber) {
@@ -737,8 +737,8 @@ export class PaymentService {
           userId,
           email,
           eventKey: `notify.invoice.available:${input.paymentId}`,
-          subject: 'Document de facturation disponible',
-          text: `Le document ${input.invoiceNumber} est disponible dans /abonnement.`,
+          subject: 'Billing document available',
+          text: `Document ${input.invoiceNumber} is available under /abonnement.`,
           test,
         });
       }
@@ -748,8 +748,8 @@ export class PaymentService {
       userId,
       email,
       eventKey: `notify.payment.failed:${input.paymentId}`,
-      subject: 'Paiement non abouti',
-      text: 'Le paiement n’a pas été confirmé. Vous pouvez relancer un checkout depuis /abonnement.',
+      subject: 'Payment not completed',
+      text: 'The payment was not confirmed. You can start checkout again from /abonnement.',
       test,
     });
   }

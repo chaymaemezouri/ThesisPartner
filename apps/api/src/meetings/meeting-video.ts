@@ -1,5 +1,5 @@
 export function videoRoomUrl(meetingId: string): string {
-  return `https://meet.jit.si/ThesisPartner${meetingId.replace(/-/g, '')}`;
+  return `https://meet.jit.si/ThesisFlow${meetingId.replace(/-/g, '')}`;
 }
 
 export function nextDay(iso: string): string {

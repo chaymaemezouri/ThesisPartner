@@ -35,7 +35,7 @@ const schema = z.object({
   ),
   SMTP_FROM: z.preprocess(
     emptyToUndefined,
-    z.string().min(3).max(320).default('ThesisPartner <noreply@thesispartner.local>'),
+    z.string().min(3).max(320).default('Thesis Flow <noreply@thesispartner.local>'),
   ),
   S3_ENDPOINT: z.preprocess(emptyToUndefined, z.string().url().default('http://127.0.0.1:9000')),
   S3_PUBLIC_URL: z.preprocess(emptyToUndefined, z.string().url().optional()),

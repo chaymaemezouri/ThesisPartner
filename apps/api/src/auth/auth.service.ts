@@ -126,7 +126,7 @@ export class AuthService {
 
     await this.deliver({
       to: created.user.email,
-      subject: 'Confirmez votre adresse ThesisPartner',
+      subject: 'Confirm your Thesis Flow email',
       text: this.verificationText(created.token),
     });
     return { user: created.user, issued: created.issued };
@@ -216,11 +216,17 @@ export class AuthService {
     const token = await this.prisma.$transaction((tx) =>
       this.replaceToken(tx, user.id, 'EMAIL_VERIFICATION', DAY_MS),
     );
-    await this.deliver({
-      to: user.email,
-      subject: 'Confirmez votre adresse ThesisPartner',
-      text: this.verificationText(token),
-    });
+    // Surface SMTP failures on explicit resend (register still swallows via deliver).
+    try {
+      await this.mailer.send({
+        to: user.email,
+        subject: 'Confirm your Thesis Flow email',
+        text: this.verificationText(token),
+      });
+    } catch (error) {
+      this.logger.write({ level: 'error', msg: 'auth.mail.failed' });
+      throw error;
+    }
   }
 
   async requestPasswordReset(email: string): Promise<void> {
@@ -232,8 +238,8 @@ export class AuthService {
     const url = `${this.env.APP_URL}/reinitialiser-mot-de-passe?token=${encodeURIComponent(token)}`;
     await this.deliver({
       to: user.email,
-      subject: 'Réinitialisation du mot de passe ThesisPartner',
-      text: `Pour choisir un nouveau mot de passe, ouvrez ce lien :\n${url}\n\nCe lien expire dans une heure. Si vous n’êtes pas à l’origine de cette demande, ignorez ce message.`,
+      subject: 'Reset your Thesis Flow password',
+      text: `To choose a new password, open this link:\n${url}\n\nThis link expires in one hour. If you did not request this, ignore this message.`,
     });
   }
 
@@ -304,7 +310,7 @@ export class AuthService {
 
   private verificationText(token: string): string {
     const url = `${this.env.APP_URL}/verifier-email?token=${encodeURIComponent(token)}`;
-    return `Pour confirmer votre adresse ThesisPartner, ouvrez ce lien :\n${url}\n\nCe lien expire dans 24 heures.`;
+    return `To confirm your Thesis Flow email address, open this link:\n${url}\n\nThis link expires in 24 hours.`;
   }
 
   private async deliver(mail: { to: string; subject: string; text: string }): Promise<void> {

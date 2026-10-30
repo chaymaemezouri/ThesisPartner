@@ -13,7 +13,7 @@ describe('invoice pdf', () => {
       issuerLegalId: '—',
       recipientName: 'Lea Bill',
       recipientEmail: 'lea@example.test',
-      description: 'Abonnement ThesisPartner Pro (mensuel)',
+      description: 'Abonnement Thesis Flow Pro (mensuel)',
       planCode: 'THESISPARTNER_PRO_MONTHLY',
       periodLabel: '2026-10-26 → 2026-11-25',
       amountMad: '199.00',

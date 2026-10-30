@@ -4,7 +4,7 @@ import { AuthMailer } from './auth-mailer';
 describe('AuthMailer', () => {
   const mail = {
     to: 'supervisor@example.test',
-    subject: 'Invitation ThesisPartner — Coastal ecosystems',
+    subject: 'Thesis Flow invitation — Coastal ecosystems',
     text: 'Ouvrez http://localhost:5173/invitation?token=secret-token-value',
   };
 
@@ -18,7 +18,7 @@ describe('AuthMailer', () => {
     await mailer.send(mail);
 
     expect(mailer.sent).toHaveLength(1);
-    expect(mailer.sent[0]?.html).toContain('ThesisPartner');
+    expect(mailer.sent[0]?.html).toContain('Thesis Flow');
     expect(logger.write).not.toHaveBeenCalled();
     expect(JSON.stringify(logger.write.mock.calls)).not.toContain('secret-token-value');
   });

@@ -51,8 +51,8 @@ export function configureApp(app: INestApplication, env: Env): void {
 
   if (env.NODE_ENV !== 'production') {
     const config = new DocumentBuilder()
-      .setTitle('ThesisPartner API')
-      .setDescription('API HTTP versionnée de ThesisPartner.')
+      .setTitle('Thesis Flow API')
+      .setDescription('API HTTP versionnée de Thesis Flow.')
       .setVersion('1.0')
       .addCookieAuth('tp_session')
       .build();

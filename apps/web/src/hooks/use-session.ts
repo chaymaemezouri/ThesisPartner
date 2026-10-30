@@ -27,3 +27,9 @@ export function useLogout() {
     },
   });
 }
+
+export function useRequestEmailVerification() {
+  return useMutation({
+    mutationFn: () => apiSend('/api/v1/auth/email-verification/request', ackSchema, {}),
+  });
+}

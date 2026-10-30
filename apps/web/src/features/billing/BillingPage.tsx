@@ -10,6 +10,7 @@ import {
 import { useMemo, type ReactNode } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useT } from '../../i18n/LocaleContext';
+import { useMeQuery, useRequestEmailVerification } from '../../hooks/use-session';
 import { QueryError } from '../objectives/components/QueryError';
 import {
   downloadInvoice,
@@ -28,6 +29,8 @@ export function BillingPage() {
   const [params] = useSearchParams();
   const paymentId = params.get('payment');
   const status = useBillingStatus();
+  const me = useMeQuery();
+  const resendVerification = useRequestEmailVerification();
   const events = useBillingEvents();
   const payments = useBillingPayments();
   const invoices = useBillingInvoices();
@@ -35,6 +38,7 @@ export function BillingPage() {
   const start = useStartTrial();
   const checkout = useCheckout();
   const cancel = useCancelSubscription();
+  const needsEmailVerify = me.isSuccess && me.data.user.emailVerified === false;
 
   const data = status.data;
   const supervisorOnly = data?.roleHint === 'SUPERVISOR';
@@ -112,10 +116,33 @@ export function BillingPage() {
                   {t('billing.trialTitle')}
                 </p>
                 <p className="mt-2 text-sm text-muted">{t('billing.trialHelp')}</p>
-                {trial.status === 'NOT_STARTED' ? (
+                {trial.status === 'NOT_STARTED' && needsEmailVerify ? (
+                  <div className="mt-5 space-y-3">
+                    <p className="text-sm text-warn">{t('billing.verifyEmailFirst')}</p>
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      disabled={resendVerification.isPending}
+                      onClick={() => resendVerification.mutate()}
+                    >
+                      {t('billing.resendVerification')}
+                    </Button>
+                    {resendVerification.isSuccess ? (
+                      <p className="text-sm text-ok" role="status">
+                        {t('settings.resendVerificationSent')}
+                      </p>
+                    ) : null}
+                    {resendVerification.isError ? (
+                      <p className="text-sm text-danger" role="alert">
+                        {t('settings.resendVerificationFailed')}
+                      </p>
+                    ) : null}
+                  </div>
+                ) : null}
+                {trial.status === 'NOT_STARTED' && !needsEmailVerify ? (
                   <Button
                     className="mt-5"
-                    disabled={!trial.canStart || start.isPending}
+                    disabled={!trial.canStart || start.isPending || me.isLoading}
                     onClick={() => start.mutate()}
                   >
                     {t('billing.startTrial')}

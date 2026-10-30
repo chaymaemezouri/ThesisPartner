@@ -50,8 +50,8 @@ export class InvoiceService {
     const recipientName = payment.user.profile?.displayName ?? payment.user.email;
     const description =
       kind === 'CREDIT_NOTE'
-        ? `Avoir ThesisPartner Pro (${payment.plan.code})`
-        : `Abonnement ThesisPartner Pro (${payment.plan.interval === 'YEAR' ? 'annuel' : 'mensuel'})`;
+        ? `Avoir Thesis Flow Pro (${payment.plan.code})`
+        : `Abonnement Thesis Flow Pro (${payment.plan.interval === 'YEAR' ? 'annuel' : 'mensuel'})`;
 
     const created = await this.prisma.$transaction(async (tx) => {
       const sequence = await tx.invoiceSequence.upsert({

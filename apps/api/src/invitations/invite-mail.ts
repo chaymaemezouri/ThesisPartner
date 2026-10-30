@@ -10,28 +10,27 @@ export function buildInviteMail(input: {
 }): { subject: string; text: string; html: string } {
   const roleLabel =
     input.role === 'SUPERVISOR'
-      ? 'encadrant'
+      ? 'supervisor'
       : input.role === 'DOCTORAL_STUDENT'
-        ? 'doctorant'
-        : 'administrateur';
-  const subject = `Invitation ThesisPartner — ${input.thesisTitle}`;
+        ? 'doctoral student'
+        : 'administrator';
+  const subject = `Thesis Flow invitation — ${input.thesisTitle}`;
   const paragraphs = [
-    `${input.inviterName} vous invite à rejoindre la thèse « ${input.thesisTitle} » en tant que ${roleLabel} sur ThesisPartner.`,
+    `${input.inviterName} invited you to join the thesis “${input.thesisTitle}” as ${roleLabel} on Thesis Flow.`,
     input.replacesSupervisor
-      ? 'Cette invitation remplace l’encadrant actuel uniquement après votre acceptation explicite.'
-      : 'Aucun accès à la thèse n’est créé avant votre acceptation explicite.',
-    'Si vous n’avez pas encore de compte ThesisPartner, créez-en un avec cette même adresse e-mail, connectez-vous, puis ouvrez le lien ci-dessous.',
-    'Le lien expire dans 14 jours. Vous pourrez accepter ou refuser l’invitation depuis la page sécurisée.',
+      ? 'This invitation replaces the current supervisor only after you explicitly accept it.'
+      : 'No thesis access is created until you explicitly accept.',
+    'If you do not have a Thesis Flow account yet, create one with this same email address, sign in, then open the link below.',
+    'The link expires in 14 days. You can accept or decline from the secure page.',
   ];
-  const text = `${paragraphs.join('\n\n')}\n\nPour accepter ou refuser :\n${input.acceptUrl}\n`;
+  const text = `${paragraphs.join('\n\n')}\n\nTo accept or decline:\n${input.acceptUrl}\n`;
   const html = thesisPartnerMailHtml({
-    preheader: `${input.inviterName} vous invite sur ThesisPartner.`,
-    title: 'Invitation à une thèse',
+    preheader: `${input.inviterName} invited you on Thesis Flow.`,
+    title: 'Thesis invitation',
     paragraphs,
     actionUrl: input.acceptUrl,
-    actionLabel: 'Ouvrir l’invitation',
-    footer:
-      'ThesisPartner — ce lien est personnel. Ne le transférez pas. Ne répondez pas à ce message.',
+    actionLabel: 'Open invitation',
+    footer: 'Thesis Flow — this link is personal. Do not forward it. Do not reply to this message.',
   });
   return { subject, text, html };
 }

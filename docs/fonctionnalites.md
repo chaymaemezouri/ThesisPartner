@@ -1,4 +1,4 @@
-# Fonctionnalités ThesisPartner
+# Fonctionnalités Thesis Flow
 
 Deux espaces : le doctorant travaille sa thèse, l’encadrant suit ses doctorants. La langue de l’interface se choisit dans Paramètres (anglais par défaut, français disponible).
 

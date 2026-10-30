@@ -6,7 +6,7 @@ Accepté
 
 ## Contexte
 
-ThesisPartner doit couvrir le suivi d’une thèse pour plusieurs rôles, avec une isolation stricte entre thèses. Le produit est encore en construction et l’équipe qui le fait évoluer est réduite.
+Thesis Flow doit couvrir le suivi d’une thèse pour plusieurs rôles, avec une isolation stricte entre thèses. Le produit est encore en construction et l’équipe qui le fait évoluer est réduite.
 
 ## Décision
 

@@ -1,4 +1,4 @@
-name: Deploy ThesisPartner
+name: Deploy Thesis Flow
 
 on:
   push:
@@ -36,7 +36,7 @@ jobs:
         env:
           APP_URL: https://example.invalid
           SMTP_HOST: smtp.example.invalid
-          SMTP_FROM: ThesisPartner <noreply@example.invalid>
+          SMTP_FROM: Thesis Flow <noreply@example.invalid>
           S3_PUBLIC_URL: https://example.invalid
           S3_ACCESS_KEY: ci
           S3_SECRET_KEY: ci-secret-value

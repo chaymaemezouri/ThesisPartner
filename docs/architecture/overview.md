@@ -1,6 +1,6 @@
 # Architecture
 
-ThesisPartner est un monolithe modulaire. Un seul déploiement sert l’API. Les domaines métier deviendront des modules NestJS quand ils seront construits, sans être des services séparés.
+Thesis Flow est un monolithe modulaire. Un seul déploiement sert l’API. Les domaines métier deviendront des modules NestJS quand ils seront construits, sans être des services séparés.
 
 ```
 apps/web

@@ -91,15 +91,15 @@ export class MeetingNotice {
     kind: NoticeKind,
     role: MembershipRole,
   ): { subject: string; text: string } {
-    const subject = `${SUBJECT[kind]} : ${meeting.title}`;
-    const lines = [subject, '', `Date : ${when(meeting)}`, `Mode : ${modeLabel(meeting)}`];
-    if (meeting.meetingUrl) lines.push(`Visio : ${meeting.meetingUrl}`);
-    if (meeting.location) lines.push(`Lieu : ${meeting.location}`);
-    if (meeting.agenda?.trim()) lines.push('', 'Ordre du jour :', meeting.agenda.trim());
+    const subject = `${SUBJECT[kind]}: ${meeting.title}`;
+    const lines = [subject, '', `Date: ${when(meeting)}`, `Mode: ${modeLabel(meeting)}`];
+    if (meeting.meetingUrl) lines.push(`Video: ${meeting.meetingUrl}`);
+    if (meeting.location) lines.push(`Location: ${meeting.location}`);
+    if (meeting.agenda?.trim()) lines.push('', 'Agenda:', meeting.agenda.trim());
     if (kind === 'cancelled') {
-      lines.push('', `Motif : ${meeting.cancelReason?.trim() || 'Aucun motif indiqué.'}`);
+      lines.push('', `Reason: ${meeting.cancelReason?.trim() || 'No reason provided.'}`);
     }
-    lines.push('', 'Ouvrir la réunion :', this.pageUrl(meeting, role));
+    lines.push('', 'Open the meeting:', this.pageUrl(meeting, role));
     return { subject, text: lines.join('\n') };
   }
 
@@ -114,23 +114,23 @@ export class MeetingNotice {
 }
 
 const SUBJECT: Record<NoticeKind, string> = {
-  requested: 'Demande de réunion',
-  planned: 'Réunion planifiée',
-  updated: 'Réunion modifiée',
-  cancelled: 'Réunion annulée',
-  reminder: 'Rappel : réunion demain',
+  requested: 'Meeting request',
+  planned: 'Meeting scheduled',
+  updated: 'Meeting updated',
+  cancelled: 'Meeting cancelled',
+  reminder: 'Reminder: meeting tomorrow',
 };
 
 function when(meeting: Meeting): string {
   const day = formatDay(meeting.scheduledOn);
-  if (!day) return 'à fixer par l’encadrant';
-  return new Intl.DateTimeFormat('fr-FR', { dateStyle: 'long', timeZone: 'UTC' }).format(
+  if (!day) return 'to be set by the supervisor';
+  return new Intl.DateTimeFormat('en-GB', { dateStyle: 'long', timeZone: 'UTC' }).format(
     parseDay(day),
   );
 }
 
 function modeLabel(meeting: Meeting): string {
-  if (meeting.mode === 'ONLINE') return 'En ligne';
-  if (meeting.mode === 'IN_PERSON') return 'Présentiel';
-  return 'à définir';
+  if (meeting.mode === 'ONLINE') return 'Online';
+  if (meeting.mode === 'IN_PERSON') return 'In person';
+  return 'to be defined';
 }

@@ -160,6 +160,10 @@ export const fr: Messages = {
     displayName: 'Nom',
     emailVerified: 'E-mail vérifié.',
     emailUnverified: 'E-mail non vérifié pour le moment.',
+    resendVerification: 'Renvoyer l’e-mail de confirmation',
+    resendVerificationSent: 'Si le serveur mail est configuré, un nouveau lien a été envoyé.',
+    resendVerificationFailed:
+      'L’envoi a échoué. Le serveur de messagerie n’est probablement pas configuré en production.',
     editProfile: 'Modifier le profil',
     language: 'Langue',
     languageHelp: 'Choisissez la langue de l’interface. L’anglais est la langue par défaut.',
@@ -1575,6 +1579,9 @@ export const fr: Messages = {
     trialTitle: 'Essai gratuit 30 jours',
     trialHelp: 'Toutes les fonctions V1 pour vous et votre encadrant autorisé.',
     startTrial: 'Démarrer mon essai',
+    verifyEmailFirst:
+      'Confirmez votre adresse e-mail avant de démarrer l’essai. Vérifiez aussi les indésirables.',
+    resendVerification: 'Renvoyer l’e-mail de confirmation',
     daysLeft: '{count} jours restants',
     dayUnit: 'jours',
     expiresOn: 'Fin le {date}',

@@ -33,7 +33,7 @@ export class BillingController {
   }
 
   @Get('plans')
-  @ApiOperation({ summary: 'Published ThesisPartner Pro plans (MAD)' })
+  @ApiOperation({ summary: 'Published Thesis Flow Pro plans (MAD)' })
   async plans() {
     return billingPlansSchema.parse(await this.billing.listPlans(true));
   }

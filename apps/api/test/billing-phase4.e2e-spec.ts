@@ -104,7 +104,7 @@ describe('billing phase 4', () => {
       .send({});
     expect(unverified.status).toBe(403);
 
-    const token = tokenFrom(mailer, 'Confirmez votre adresse ThesisPartner');
+    const token = tokenFrom(mailer, 'Confirm your Thesis Flow email');
     expect(
       (await request(app.getHttpServer()).post('/api/v1/auth/email-verification').send({ token }))
         .status,
@@ -246,7 +246,7 @@ describe('billing phase 4', () => {
       .set('x-csrf-token', csrf)
       .send({ email: supervisorEmail, role: 'SUPERVISOR' });
     expect(invite.status).toBe(201);
-    const inviteToken = tokenFrom(mailer, `Invitation ThesisPartner — Couverture essai`);
+    const inviteToken = tokenFrom(mailer, `Thesis Flow invitation — Couverture essai`);
     const accepted = await supervisor
       .post('/api/v1/invitations/accept')
       .set('x-csrf-token', csrfFrom(supReg))

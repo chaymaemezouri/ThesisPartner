@@ -144,7 +144,7 @@ async function main() {
               who === 0
                 ? 'PROJET : comparaison de detecteurs et analyse des faux positifs.'
                 : 'ENCADREMENT : suivi du dossier fictif de Youssef El Amrani.',
-              'Document genere pour tester le depot et le telechargement de CV dans ThesisPartner.',
+              'Document genere pour tester le depot et le telechargement de CV dans Thesis Flow.',
             ],
             name,
           ),
@@ -579,7 +579,7 @@ async function main() {
         title,
         kind,
         summary,
-        source: 'Bibliothèque de démonstration ThesisPartner',
+        source: 'Bibliothèque de démonstration Thesis Flow',
       });
 
   await optional('periodic evaluations', async () => {

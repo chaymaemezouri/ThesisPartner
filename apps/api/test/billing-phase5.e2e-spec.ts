@@ -84,7 +84,7 @@ describe('billing phase 5', () => {
     });
     expect(registered.status).toBe(201);
     const mailer = app.get(AuthMailer);
-    const token = tokenFrom(mailer, 'Confirmez votre adresse ThesisPartner');
+    const token = tokenFrom(mailer, 'Confirm your Thesis Flow email');
     expect(
       (await request(app.getHttpServer()).post('/api/v1/auth/email-verification').send({ token }))
         .status,
@@ -371,7 +371,7 @@ describe('billing phase 5', () => {
       .set('x-csrf-token', student.csrf)
       .send({ email: `pay-sup-${stamp}@example.test`, role: 'SUPERVISOR' });
     expect(inviteA.status).toBe(201);
-    const tokenA = tokenFrom(mailer, 'Invitation ThesisPartner — These A paiement');
+    const tokenA = tokenFrom(mailer, 'Thesis Flow invitation — These A paiement');
     expect(
       (
         await supervisor.agent
@@ -387,7 +387,7 @@ describe('billing phase 5', () => {
       .set('x-csrf-token', second.csrf)
       .send({ email: `pay-sup-${stamp}@example.test`, role: 'SUPERVISOR' });
     expect(inviteB.status).toBe(201);
-    const tokenB = tokenFrom(mailer, 'Invitation ThesisPartner — These B paiement');
+    const tokenB = tokenFrom(mailer, 'Thesis Flow invitation — These B paiement');
     expect(
       (
         await supervisor.agent

@@ -113,7 +113,7 @@ describe('authentication and thesis membership', () => {
     expect(created.status).toBe(201);
     const thesis = thesisSummarySchema.parse(created.body);
 
-    const verification = tokenFrom(mailer, 'Confirmez votre adresse ThesisPartner');
+    const verification = tokenFrom(mailer, 'Confirm your Thesis Flow email');
     const verified = await request(app.getHttpServer())
       .post('/api/v1/auth/email-verification')
       .send({ token: verification });
@@ -149,7 +149,7 @@ describe('authentication and thesis membership', () => {
     expect(invited.body.status).toBe('PENDING');
     expect((await outsider.get(`/api/v1/theses/${thesis.id}`)).status).toBe(404);
 
-    const inviteToken = tokenFrom(mailer, `Invitation ThesisPartner — ${thesis.title}`);
+    const inviteToken = tokenFrom(mailer, `Thesis Flow invitation — ${thesis.title}`);
     const outsiderCsrf = csrfFrom(outsiderAccount);
     const accepted = await outsider
       .post('/api/v1/invitations/accept')
@@ -170,7 +170,7 @@ describe('authentication and thesis membership', () => {
       .post('/api/v1/auth/password-reset/request')
       .send({ email: ownerEmail });
     expect(resetRequest.status).toBe(200);
-    const resetToken = tokenFrom(mailer, 'Réinitialisation du mot de passe ThesisPartner');
+    const resetToken = tokenFrom(mailer, 'Reset your Thesis Flow password');
     const reset = await request(app.getHttpServer())
       .post('/api/v1/auth/password-reset')
       .send({ token: resetToken, password: 'nouvelle-phrase-12' });

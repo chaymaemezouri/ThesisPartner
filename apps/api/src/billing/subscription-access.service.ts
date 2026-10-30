@@ -77,7 +77,7 @@ export class SubscriptionAccessService {
       throw new AppException(
         403,
         'SUBSCRIPTION_REQUIRED',
-        'Scientific edits require an active trial or ThesisPartner Pro coverage',
+        'Scientific edits require an active trial or Thesis Flow Pro coverage',
       );
     }
   }
@@ -94,7 +94,7 @@ export class SubscriptionAccessService {
       throw new AppException(
         403,
         'SUBSCRIPTION_REQUIRED',
-        'Start the 30-day trial or subscribe to ThesisPartner Pro to create a thesis',
+        'Start the 30-day trial or subscribe to Thesis Flow Pro to create a thesis',
       );
     }
   }
