@@ -158,8 +158,7 @@ export const en = {
     emailUnverified: 'Email not verified yet.',
     resendVerification: 'Resend confirmation email',
     resendVerificationSent: 'If mail is configured, a new link was sent.',
-    resendVerificationFailed:
-      'Sending failed. Production mail (SMTP) is probably not configured.',
+    resendVerificationFailed: 'Sending failed. Production mail (SMTP) is probably not configured.',
     editProfile: 'Edit profile',
     language: 'Language',
     languageHelp: 'Choose the interface language. English is the default.',

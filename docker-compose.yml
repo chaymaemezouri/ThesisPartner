@@ -84,7 +84,7 @@ services:
       SMTP_USER: ''
       SMTP_PASS: ''
       SMTP_SECURE: 'false'
-      SMTP_FROM: "Thesis Flow <noreply@thesispartner.local>"
+      SMTP_FROM: 'Thesis Flow <noreply@thesispartner.local>'
       S3_ENDPOINT: http://s3:8333
       S3_PUBLIC_URL: http://localhost:8080
       S3_REGION: us-east-1
