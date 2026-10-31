@@ -1,21 +1,102 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Button, Input, Select } from '@thesispartner/ui';
+import { Link, useNavigate } from 'react-router-dom';
+import { Button, Input, Modal, Select } from '@thesispartner/ui';
+import { ApiClientError } from '../../api/client';
+import { useMeQuery } from '../../hooks/use-session';
 import { useT } from '../../i18n/LocaleContext';
 import { AdminBadge, AdminEmpty, AdminPageHeader, AdminPanel, AdminState } from './AdminUi';
-import { useAdminUsers, type AdminUserListParams } from './hooks/use-admin';
+import {
+  useAdminUsers,
+  useCreateAdminUser,
+  useReactivateUser,
+  useSuspendUser,
+  type AdminUserListParams,
+} from './hooks/use-admin';
+
+const emptyCreate = {
+  email: '',
+  password: '',
+  givenName: '',
+  familyName: '',
+  institution: '',
+  platformRole: 'USER' as 'USER' | 'SUPER_ADMIN',
+  markEmailVerified: true,
+};
 
 export function AdminUsersPage() {
   const t = useT();
+  const navigate = useNavigate();
+  const me = useMeQuery();
   const [searchInput, setSearchInput] = useState('');
   const [params, setParams] = useState<AdminUserListParams>({ page: 1, pageSize: 20 });
   const list = useAdminUsers(params);
+  const create = useCreateAdminUser();
+  const suspend = useSuspendUser();
+  const reactivate = useReactivateUser();
+
+  const [createOpen, setCreateOpen] = useState(false);
+  const [createForm, setCreateForm] = useState(emptyCreate);
+  const [createError, setCreateError] = useState<string | null>(null);
+
+  const [statusUser, setStatusUser] = useState<{
+    id: string;
+    disabled: boolean;
+    name: string;
+  } | null>(null);
+  const [statusReason, setStatusReason] = useState('');
+  const [statusError, setStatusError] = useState<string | null>(null);
 
   const totalPages = list.data ? Math.max(1, Math.ceil(list.data.total / list.data.pageSize)) : 1;
 
+  const submitCreate = async () => {
+    setCreateError(null);
+    try {
+      const created = await create.mutateAsync({
+        email: createForm.email.trim(),
+        password: createForm.password,
+        givenName: createForm.givenName.trim(),
+        familyName: createForm.familyName.trim(),
+        institution: createForm.institution.trim() || undefined,
+        platformRole: createForm.platformRole,
+        markEmailVerified: createForm.markEmailVerified,
+      });
+      setCreateOpen(false);
+      setCreateForm(emptyCreate);
+      await navigate(`/admin/utilisateurs/${created.id}`);
+    } catch (error) {
+      setCreateError(error instanceof ApiClientError ? error.body.message : t('errors.generic'));
+    }
+  };
+
+  const submitStatus = async () => {
+    if (!statusUser) return;
+    setStatusError(null);
+    const reason = statusReason.trim();
+    if (!statusUser.disabled && reason.length < 1) {
+      setStatusError(t('admin.users.reasonRequired'));
+      return;
+    }
+    try {
+      if (statusUser.disabled) {
+        await reactivate.mutateAsync({ userId: statusUser.id, reason: reason || undefined });
+      } else {
+        await suspend.mutateAsync({ userId: statusUser.id, reason });
+      }
+      setStatusUser(null);
+      setStatusReason('');
+    } catch (error) {
+      setStatusError(error instanceof ApiClientError ? error.body.message : t('errors.generic'));
+    }
+  };
+
   return (
     <div className="space-y-6">
-      <AdminPageHeader title={t('admin.users.title')} subtitle={t('admin.users.subtitle')} />
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <AdminPageHeader title={t('admin.users.title')} subtitle={t('admin.users.subtitle')} />
+        <Button type="button" onClick={() => setCreateOpen(true)}>
+          {t('admin.users.create')}
+        </Button>
+      </div>
 
       <form
         className="flex flex-wrap items-end gap-3 rounded-2xl border border-line bg-surface p-4 shadow-card"
@@ -108,64 +189,97 @@ export function AdminUsersPage() {
                       <th className="px-4 py-3 font-medium">{t('admin.users.colRoles')}</th>
                       <th className="px-4 py-3 font-medium">{t('admin.users.colStatus')}</th>
                       <th className="px-4 py-3 font-medium">{t('admin.users.colCreated')}</th>
+                      <th className="px-4 py-3 font-medium">{t('admin.users.colActions')}</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {list.data.users.map((user) => (
-                      <tr
-                        key={user.id}
-                        className="border-b border-line last:border-0 transition-colors hover:bg-brand-soft/40"
-                      >
-                        <td className="px-4 py-3">
-                          <Link
-                            to={`/admin/utilisateurs/${user.id}`}
-                            className="font-medium text-brand hover:underline"
-                          >
-                            {user.displayName}
-                          </Link>
-                          {user.platformRole === 'SUPER_ADMIN' ? (
-                            <span className="ml-2">
-                              <AdminBadge tone="violet">{t('admin.roles.superAdmin')}</AdminBadge>
-                            </span>
-                          ) : null}
-                        </td>
-                        <td className="px-4 py-3 break-all text-muted">{user.email}</td>
-                        <td className="px-4 py-3">
-                          <div className="flex flex-wrap gap-1">
-                            {user.membershipRoles.length === 0
-                              ? t('common.none')
-                              : user.membershipRoles.map((role) => (
-                                  <AdminBadge
-                                    key={role}
-                                    tone={
-                                      role === 'DOCTORAL_STUDENT'
-                                        ? 'teal'
+                    {list.data.users.map((user) => {
+                      const isSelf = me.data?.user.id === user.id;
+                      return (
+                        <tr
+                          key={user.id}
+                          className="border-b border-line last:border-0 transition-colors hover:bg-brand-soft/40"
+                        >
+                          <td className="px-4 py-3">
+                            <Link
+                              to={`/admin/utilisateurs/${user.id}`}
+                              className="font-medium text-brand hover:underline"
+                            >
+                              {user.displayName}
+                            </Link>
+                            {user.platformRole === 'SUPER_ADMIN' ? (
+                              <span className="ml-2">
+                                <AdminBadge tone="violet">{t('admin.roles.superAdmin')}</AdminBadge>
+                              </span>
+                            ) : null}
+                          </td>
+                          <td className="px-4 py-3 break-all text-muted">{user.email}</td>
+                          <td className="px-4 py-3">
+                            <div className="flex flex-wrap gap-1">
+                              {user.membershipRoles.length === 0
+                                ? t('common.none')
+                                : user.membershipRoles.map((role) => (
+                                    <AdminBadge
+                                      key={role}
+                                      tone={
+                                        role === 'DOCTORAL_STUDENT'
+                                          ? 'teal'
+                                          : role === 'SUPERVISOR'
+                                            ? 'brand'
+                                            : 'muted'
+                                      }
+                                    >
+                                      {role === 'DOCTORAL_STUDENT'
+                                        ? t('admin.roles.doctoral')
                                         : role === 'SUPERVISOR'
-                                          ? 'brand'
-                                          : 'muted'
-                                    }
-                                  >
-                                    {role === 'DOCTORAL_STUDENT'
-                                      ? t('admin.roles.doctoral')
-                                      : role === 'SUPERVISOR'
-                                        ? t('admin.roles.supervisor')
-                                        : t('admin.roles.thesisAdmin')}
-                                  </AdminBadge>
-                                ))}
-                          </div>
-                        </td>
-                        <td className="px-4 py-3">
-                          <AdminBadge tone={user.disabledAt ? 'danger' : 'ok'}>
-                            {user.disabledAt
-                              ? t('admin.users.statusDisabled')
-                              : t('admin.users.statusActive')}
-                          </AdminBadge>
-                        </td>
-                        <td className="px-4 py-3 tabular-nums text-muted">
-                          {new Date(user.createdAt).toLocaleDateString()}
-                        </td>
-                      </tr>
-                    ))}
+                                          ? t('admin.roles.supervisor')
+                                          : t('admin.roles.thesisAdmin')}
+                                    </AdminBadge>
+                                  ))}
+                            </div>
+                          </td>
+                          <td className="px-4 py-3">
+                            <AdminBadge tone={user.disabledAt ? 'danger' : 'ok'}>
+                              {user.disabledAt
+                                ? t('admin.users.statusDisabled')
+                                : t('admin.users.statusActive')}
+                            </AdminBadge>
+                          </td>
+                          <td className="px-4 py-3 tabular-nums text-muted">
+                            {new Date(user.createdAt).toLocaleDateString()}
+                          </td>
+                          <td className="px-4 py-3">
+                            <div className="flex flex-wrap gap-2">
+                              <Link
+                                to={`/admin/utilisateurs/${user.id}`}
+                                className="text-sm font-medium text-brand hover:underline"
+                              >
+                                {t('admin.users.open')}
+                              </Link>
+                              {!isSelf ? (
+                                <button
+                                  type="button"
+                                  className="text-sm font-medium text-ink hover:underline"
+                                  onClick={() => {
+                                    setStatusError(null);
+                                    setStatusReason('');
+                                    setStatusUser({
+                                      id: user.id,
+                                      disabled: Boolean(user.disabledAt),
+                                      name: user.displayName,
+                                    });
+                                  }}
+                                >
+                                  {user.disabledAt
+                                    ? t('admin.users.reactivate')
+                                    : t('admin.users.suspend')}
+                                </button>
+                              ) : null}
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
@@ -211,6 +325,145 @@ export function AdminUsersPage() {
           </>
         ) : null}
       </AdminState>
+
+      <Modal
+        open={createOpen}
+        title={t('admin.users.createTitle')}
+        closeLabel={t('common.close')}
+        onClose={() => {
+          if (!create.isPending) setCreateOpen(false);
+        }}
+      >
+        <div className="space-y-3">
+          <p className="text-sm text-muted">{t('admin.users.createHelp')}</p>
+          <Input
+            id="admin-create-given"
+            label={t('auth.givenName')}
+            value={createForm.givenName}
+            onChange={(event) => setCreateForm((c) => ({ ...c, givenName: event.target.value }))}
+          />
+          <Input
+            id="admin-create-family"
+            label={t('auth.familyName')}
+            value={createForm.familyName}
+            onChange={(event) => setCreateForm((c) => ({ ...c, familyName: event.target.value }))}
+          />
+          <Input
+            id="admin-create-email"
+            label={t('auth.email')}
+            type="email"
+            value={createForm.email}
+            onChange={(event) => setCreateForm((c) => ({ ...c, email: event.target.value }))}
+          />
+          <Input
+            id="admin-create-password"
+            label={t('auth.password')}
+            type="password"
+            hint={t('auth.passwordHint')}
+            value={createForm.password}
+            onChange={(event) => setCreateForm((c) => ({ ...c, password: event.target.value }))}
+          />
+          <Input
+            id="admin-create-institution"
+            label={t('auth.institution')}
+            hint={t('auth.optional')}
+            value={createForm.institution}
+            onChange={(event) => setCreateForm((c) => ({ ...c, institution: event.target.value }))}
+          />
+          <Select
+            id="admin-create-platform"
+            label={t('admin.users.filterPlatform')}
+            value={createForm.platformRole}
+            onChange={(event) =>
+              setCreateForm((c) => ({
+                ...c,
+                platformRole: event.target.value as 'USER' | 'SUPER_ADMIN',
+              }))
+            }
+          >
+            <option value="USER">{t('admin.roles.user')}</option>
+            <option value="SUPER_ADMIN">{t('admin.roles.superAdmin')}</option>
+          </Select>
+          <label className="flex items-center gap-2 text-sm text-ink">
+            <input
+              type="checkbox"
+              checked={createForm.markEmailVerified}
+              onChange={(event) =>
+                setCreateForm((c) => ({ ...c, markEmailVerified: event.target.checked }))
+              }
+            />
+            {t('admin.users.markEmailVerified')}
+          </label>
+          {createError ? (
+            <p role="alert" className="text-sm text-danger">
+              {createError}
+            </p>
+          ) : null}
+          <div className="flex justify-end gap-2">
+            <Button
+              type="button"
+              variant="ghost"
+              disabled={create.isPending}
+              onClick={() => setCreateOpen(false)}
+            >
+              {t('common.cancel')}
+            </Button>
+            <Button type="button" disabled={create.isPending} onClick={() => void submitCreate()}>
+              {t('admin.users.createSubmit')}
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      <Modal
+        open={Boolean(statusUser)}
+        title={
+          statusUser?.disabled ? t('admin.users.reactivateTitle') : t('admin.users.suspendTitle')
+        }
+        closeLabel={t('common.close')}
+        onClose={() => {
+          if (!suspend.isPending && !reactivate.isPending) setStatusUser(null);
+        }}
+      >
+        <div className="space-y-4">
+          <p className="text-sm text-muted">
+            {statusUser?.disabled
+              ? t('admin.users.reactivateConfirm')
+              : t('admin.users.suspendConfirm')}
+            {statusUser ? ` (${statusUser.name})` : null}
+          </p>
+          <Input
+            id="admin-list-status-reason"
+            label={
+              statusUser?.disabled ? t('admin.users.reasonOptional') : t('admin.users.reasonRequired')
+            }
+            value={statusReason}
+            onChange={(event) => setStatusReason(event.target.value)}
+          />
+          {statusError ? (
+            <p role="alert" className="text-sm text-danger">
+              {statusError}
+            </p>
+          ) : null}
+          <div className="flex justify-end gap-2">
+            <Button
+              type="button"
+              variant="ghost"
+              disabled={suspend.isPending || reactivate.isPending}
+              onClick={() => setStatusUser(null)}
+            >
+              {t('common.cancel')}
+            </Button>
+            <Button
+              type="button"
+              disabled={suspend.isPending || reactivate.isPending}
+              onClick={() => void submitStatus()}
+            >
+              {statusUser?.disabled ? t('admin.users.reactivate') : t('admin.users.suspend')}
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }

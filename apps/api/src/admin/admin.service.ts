@@ -1,9 +1,15 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { Prisma, type MembershipRole } from '@prisma/client';
-import type { AdminReactivateBody, AdminSuspendBody } from '@thesispartner/validation';
+import type {
+  AdminCreateUserBody,
+  AdminReactivateBody,
+  AdminSuspendBody,
+  AdminUpdateUserBody,
+} from '@thesispartner/validation';
 import { AuditService } from '../audit/audit.service';
 import { SessionService } from '../auth/session.service';
 import { AppException } from '../common/errors/app.exception';
+import { PasswordHasher, PasswordPolicyError } from '../common/security/password-hasher';
 import { ENV, type Env } from '../config/env';
 import { HealthService } from '../health/health.service';
 import { PrismaService } from '../infrastructure/prisma/prisma.service';
@@ -44,6 +50,7 @@ export class AdminService {
     private readonly audit: AuditService,
     private readonly sessions: SessionService,
     private readonly health: HealthService,
+    private readonly passwords: PasswordHasher,
     @Inject(ENV) private readonly env: Env,
   ) {}
 
@@ -368,6 +375,146 @@ export class AdminService {
         role: item.role,
       })),
     };
+  }
+
+  async createUser(actorId: string, body: AdminCreateUserBody, requestId?: string) {
+    let passwordHash: string;
+    try {
+      passwordHash = await this.passwords.hash(body.password);
+    } catch (error) {
+      if (error instanceof PasswordPolicyError) {
+        throw new AppException(400, 'VALIDATION_ERROR', 'Password does not meet policy', [
+          { field: 'password', message: '12 caractères minimum' },
+        ]);
+      }
+      throw error;
+    }
+
+    const displayName = `${body.givenName} ${body.familyName}`.slice(0, 160);
+    try {
+      const created = await this.prisma.$transaction(async (tx) => {
+        const user = await tx.user.create({
+          data: {
+            email: body.email,
+            passwordHash,
+            platformRole: body.platformRole,
+            emailVerifiedAt: body.markEmailVerified ? new Date() : null,
+            profile: {
+              create: {
+                givenName: body.givenName,
+                familyName: body.familyName,
+                displayName,
+                institution: body.institution?.trim() ? body.institution.trim() : null,
+              },
+            },
+            trial: {
+              create: {
+                status: 'NOT_STARTED',
+                startedAt: null,
+                expiresAt: null,
+              },
+            },
+          },
+        });
+        await this.audit.record(tx, {
+          actorId,
+          action: 'admin.user_create',
+          entityType: 'user',
+          entityId: user.id,
+          requestId,
+          metadata: {
+            email: body.email,
+            platformRole: body.platformRole,
+            markEmailVerified: body.markEmailVerified,
+          },
+        });
+        return user;
+      });
+      return this.getUser(created.id);
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+        throw new AppException(409, 'CONFLICT', 'An account with this email already exists');
+      }
+      throw error;
+    }
+  }
+
+  async updateUser(
+    actorId: string,
+    targetUserId: string,
+    body: AdminUpdateUserBody,
+    requestId?: string,
+  ) {
+    const target = await this.prisma.user.findUnique({
+      where: { id: targetUserId },
+      include: { profile: true },
+    });
+    if (!target || !target.profile) {
+      throw new AppException(404, 'NOT_FOUND', 'User not found');
+    }
+
+    if (
+      body.platformRole &&
+      body.platformRole !== 'SUPER_ADMIN' &&
+      target.platformRole === 'SUPER_ADMIN'
+    ) {
+      const activeSuperAdmins = await this.prisma.user.count({
+        where: { platformRole: 'SUPER_ADMIN', disabledAt: null },
+      });
+      if (activeSuperAdmins <= 1 && !target.disabledAt) {
+        throw new AppException(400, 'BAD_REQUEST', 'Cannot demote the last active Super Admin');
+      }
+    }
+
+    const givenName = body.givenName ?? target.profile.givenName;
+    const familyName = body.familyName ?? target.profile.familyName;
+    const displayName = `${givenName} ${familyName}`.slice(0, 160);
+    const institution =
+      body.institution === undefined
+        ? undefined
+        : body.institution.trim()
+          ? body.institution.trim()
+          : null;
+
+    await this.prisma.$transaction(async (tx) => {
+      await tx.profile.update({
+        where: { userId: targetUserId },
+        data: {
+          givenName,
+          familyName,
+          displayName,
+          ...(institution !== undefined ? { institution } : {}),
+        },
+      });
+      await tx.user.update({
+        where: { id: targetUserId },
+        data: {
+          ...(body.platformRole ? { platformRole: body.platformRole } : {}),
+          ...(body.markEmailVerified === true
+            ? { emailVerifiedAt: target.emailVerifiedAt ?? new Date() }
+            : body.markEmailVerified === false
+              ? { emailVerifiedAt: null }
+              : {}),
+        },
+      });
+      await this.audit.record(tx, {
+        actorId,
+        action: 'admin.user_update',
+        entityType: 'user',
+        entityId: targetUserId,
+        requestId,
+        metadata: {
+          targetEmail: target.email,
+          givenName: body.givenName ?? null,
+          familyName: body.familyName ?? null,
+          institution: body.institution ?? null,
+          platformRole: body.platformRole ?? null,
+          markEmailVerified: body.markEmailVerified ?? null,
+        },
+      });
+    });
+
+    return this.getUser(targetUserId);
   }
 
   async suspend(actorId: string, targetUserId: string, body: AdminSuspendBody, requestId?: string) {

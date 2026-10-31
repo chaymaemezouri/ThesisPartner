@@ -1942,8 +1942,41 @@ export const adminReactivateBodySchema = z
   })
   .strict();
 
+export const adminCreateUserBodySchema = z
+  .object({
+    email: emailSchema,
+    password: passwordSchema,
+    givenName: personNameSchema,
+    familyName: personNameSchema,
+    institution: z.string().trim().max(200).optional(),
+    platformRole: platformRoleSchema.default('USER'),
+    markEmailVerified: z.boolean().default(true),
+  })
+  .strict();
+
+export const adminUpdateUserBodySchema = z
+  .object({
+    givenName: personNameSchema.optional(),
+    familyName: personNameSchema.optional(),
+    institution: z.union([z.string().trim().max(200), z.literal('')]).optional(),
+    platformRole: platformRoleSchema.optional(),
+    markEmailVerified: z.boolean().optional(),
+  })
+  .strict()
+  .refine(
+    (body) =>
+      body.givenName !== undefined ||
+      body.familyName !== undefined ||
+      body.institution !== undefined ||
+      body.platformRole !== undefined ||
+      body.markEmailVerified !== undefined,
+    { message: 'At least one field is required' },
+  );
+
 export type AdminSuspendBody = z.infer<typeof adminSuspendBodySchema>;
 export type AdminReactivateBody = z.infer<typeof adminReactivateBodySchema>;
+export type AdminCreateUserBody = z.infer<typeof adminCreateUserBodySchema>;
+export type AdminUpdateUserBody = z.infer<typeof adminUpdateUserBodySchema>;
 
 export const planCodeSchema = z.enum(PLAN_CODES);
 export const trialStatusSchema = z.enum(TRIAL_STATUSES);

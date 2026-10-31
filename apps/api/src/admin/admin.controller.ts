@@ -4,6 +4,7 @@ import {
   Get,
   Param,
   ParseUUIDPipe,
+  Patch,
   Post,
   Query,
   Req,
@@ -14,12 +15,14 @@ import {
   adminAnalyticsSchema,
   adminAuditEntrySchema,
   adminAuditListSchema,
+  adminCreateUserBodySchema,
   adminInvitationListSchema,
   adminReactivateBodySchema,
   adminStatsSchema,
   adminSuspendBodySchema,
   adminSystemSchema,
   adminThesisRelationsSchema,
+  adminUpdateUserBodySchema,
   adminUserDetailSchema,
   adminUserListSchema,
   invitationStatusSchema,
@@ -121,6 +124,37 @@ export class AdminController {
   @ApiOperation({ summary: 'User profile and supervision memberships (no scientific files)' })
   async getUser(@Param('userId', ParseUUIDPipe) userId: string) {
     return adminUserDetailSchema.parse(await this.admin.getUser(userId));
+  }
+
+  @Post('users')
+  @ValidateBody(adminCreateUserBodySchema)
+  @ApiOperation({ summary: 'Create a platform user account (Super Admin)' })
+  async createUser(@Body() body: unknown, @Req() request: Request) {
+    return adminUserDetailSchema.parse(
+      await this.admin.createUser(
+        actorId(request),
+        adminCreateUserBodySchema.parse(body),
+        request.requestId,
+      ),
+    );
+  }
+
+  @Patch('users/:userId')
+  @ValidateBody(adminUpdateUserBodySchema)
+  @ApiOperation({ summary: 'Update user profile or platform role (Super Admin)' })
+  async updateUser(
+    @Param('userId', ParseUUIDPipe) userId: string,
+    @Body() body: unknown,
+    @Req() request: Request,
+  ) {
+    return adminUserDetailSchema.parse(
+      await this.admin.updateUser(
+        actorId(request),
+        userId,
+        adminUpdateUserBodySchema.parse(body),
+        request.requestId,
+      ),
+    );
   }
 
   @Post('users/:userId/suspend')

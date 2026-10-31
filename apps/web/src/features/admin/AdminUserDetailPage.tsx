@@ -1,11 +1,16 @@
 import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { Button, Modal, Textarea } from '@thesispartner/ui';
+import { Button, Input, Modal, Select, Textarea } from '@thesispartner/ui';
 import { ApiClientError } from '../../api/client';
 import { useMeQuery } from '../../hooks/use-session';
 import { useT } from '../../i18n/LocaleContext';
 import { AdminBadge, AdminPanel } from './AdminUi';
-import { useAdminUser, useReactivateUser, useSuspendUser } from './hooks/use-admin';
+import {
+  useAdminUser,
+  useReactivateUser,
+  useSuspendUser,
+  useUpdateAdminUser,
+} from './hooks/use-admin';
 
 export function AdminUserDetailPage() {
   const t = useT();
@@ -14,14 +19,57 @@ export function AdminUserDetailPage() {
   const detail = useAdminUser(userId);
   const suspend = useSuspendUser();
   const reactivate = useReactivateUser();
+  const update = useUpdateAdminUser();
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
   const [reason, setReason] = useState('');
   const [actionError, setActionError] = useState<string | null>(null);
+  const [editError, setEditError] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState({
+    givenName: '',
+    familyName: '',
+    institution: '',
+    platformRole: 'USER' as 'USER' | 'SUPER_ADMIN',
+    markEmailVerified: false,
+  });
 
   const user = detail.data;
   const isSelf = Boolean(user && me.data?.user.id === user.id);
   const isDisabled = Boolean(user?.disabledAt);
   const pending = suspend.isPending || reactivate.isPending;
+
+  const openEdit = () => {
+    if (!user) return;
+    setEditError(null);
+    setEditForm({
+      givenName: user.givenName,
+      familyName: user.familyName,
+      institution: user.institution ?? '',
+      platformRole: user.platformRole,
+      markEmailVerified: user.emailVerified,
+    });
+    setEditOpen(true);
+  };
+
+  const submitEdit = async () => {
+    if (!user) return;
+    setEditError(null);
+    try {
+      await update.mutateAsync({
+        userId: user.id,
+        body: {
+          givenName: editForm.givenName.trim(),
+          familyName: editForm.familyName.trim(),
+          institution: editForm.institution,
+          platformRole: editForm.platformRole,
+          markEmailVerified: editForm.markEmailVerified,
+        },
+      });
+      setEditOpen(false);
+    } catch (error) {
+      setEditError(error instanceof ApiClientError ? error.body.message : t('errors.generic'));
+    }
+  };
 
   const submitAction = async () => {
     if (!user) return;
@@ -151,25 +199,101 @@ export function AdminUserDetailPage() {
           <section className="rounded-md border border-line bg-surface px-4 py-4">
             <h2 className="text-sm font-medium text-ink">{t('admin.users.actions')}</h2>
             <p className="mt-1 text-sm text-muted">{t('admin.users.actionsHelp')}</p>
-            {isSelf ? (
-              <p className="mt-4 text-sm text-muted">{t('admin.users.cannotSelfSuspend')}</p>
-            ) : (
-              <Button
-                type="button"
-                className="mt-4"
-                variant={isDisabled ? 'primary' : 'secondary'}
-                onClick={() => {
-                  setActionError(null);
-                  setReason('');
-                  setConfirmOpen(true);
-                }}
-              >
-                {isDisabled ? t('admin.users.reactivate') : t('admin.users.suspend')}
+            <div className="mt-4 flex flex-wrap gap-2">
+              <Button type="button" variant="secondary" onClick={openEdit}>
+                {t('admin.users.edit')}
               </Button>
-            )}
+              {isSelf ? (
+                <p className="self-center text-sm text-muted">{t('admin.users.cannotSelfSuspend')}</p>
+              ) : (
+                <Button
+                  type="button"
+                  variant={isDisabled ? 'primary' : 'secondary'}
+                  onClick={() => {
+                    setActionError(null);
+                    setReason('');
+                    setConfirmOpen(true);
+                  }}
+                >
+                  {isDisabled ? t('admin.users.reactivate') : t('admin.users.suspend')}
+                </Button>
+              )}
+            </div>
           </section>
         </>
       ) : null}
+
+      <Modal
+        open={editOpen}
+        title={t('admin.users.editTitle')}
+        closeLabel={t('common.close')}
+        onClose={() => {
+          if (!update.isPending) setEditOpen(false);
+        }}
+      >
+        <div className="space-y-3">
+          <Input
+            id="admin-edit-given"
+            label={t('auth.givenName')}
+            value={editForm.givenName}
+            onChange={(event) => setEditForm((c) => ({ ...c, givenName: event.target.value }))}
+          />
+          <Input
+            id="admin-edit-family"
+            label={t('auth.familyName')}
+            value={editForm.familyName}
+            onChange={(event) => setEditForm((c) => ({ ...c, familyName: event.target.value }))}
+          />
+          <Input
+            id="admin-edit-institution"
+            label={t('auth.institution')}
+            value={editForm.institution}
+            onChange={(event) => setEditForm((c) => ({ ...c, institution: event.target.value }))}
+          />
+          <Select
+            id="admin-edit-platform"
+            label={t('admin.users.filterPlatform')}
+            value={editForm.platformRole}
+            onChange={(event) =>
+              setEditForm((c) => ({
+                ...c,
+                platformRole: event.target.value as 'USER' | 'SUPER_ADMIN',
+              }))
+            }
+          >
+            <option value="USER">{t('admin.roles.user')}</option>
+            <option value="SUPER_ADMIN">{t('admin.roles.superAdmin')}</option>
+          </Select>
+          <label className="flex items-center gap-2 text-sm text-ink">
+            <input
+              type="checkbox"
+              checked={editForm.markEmailVerified}
+              onChange={(event) =>
+                setEditForm((c) => ({ ...c, markEmailVerified: event.target.checked }))
+              }
+            />
+            {t('admin.users.markEmailVerified')}
+          </label>
+          {editError ? (
+            <p role="alert" className="text-sm text-danger">
+              {editError}
+            </p>
+          ) : null}
+          <div className="flex justify-end gap-2">
+            <Button
+              type="button"
+              variant="ghost"
+              disabled={update.isPending}
+              onClick={() => setEditOpen(false)}
+            >
+              {t('common.cancel')}
+            </Button>
+            <Button type="button" disabled={update.isPending} onClick={() => void submitEdit()}>
+              {t('admin.users.editSubmit')}
+            </Button>
+          </div>
+        </div>
+      </Modal>
 
       <Modal
         open={confirmOpen}

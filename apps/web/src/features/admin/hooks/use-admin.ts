@@ -2,12 +2,16 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   adminAnalyticsSchema,
   adminAuditListSchema,
+  adminCreateUserBodySchema,
   adminReactivateBodySchema,
   adminStatsSchema,
   adminSuspendBodySchema,
   adminSystemSchema,
+  adminUpdateUserBodySchema,
   adminUserDetailSchema,
   adminUserListSchema,
+  type AdminCreateUserBody,
+  type AdminUpdateUserBody,
 } from '@thesispartner/validation';
 import { apiGet, apiSend } from '../../../api/client';
 
@@ -126,6 +130,38 @@ export function useReactivateUser() {
       ),
     onSuccess: async (data) => {
       await client.invalidateQueries({ queryKey: ['admin'] });
+      client.setQueryData(['admin', 'users', data.id], data);
+    },
+  });
+}
+
+export function useCreateAdminUser() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (body: AdminCreateUserBody) =>
+      apiSend(
+        '/api/v1/admin/users',
+        adminUserDetailSchema,
+        adminCreateUserBodySchema.parse(body),
+      ),
+    onSuccess: async () => {
+      await client.invalidateQueries({ queryKey: ['admin', 'users'] });
+    },
+  });
+}
+
+export function useUpdateAdminUser() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (input: { userId: string; body: AdminUpdateUserBody }) =>
+      apiSend(
+        `/api/v1/admin/users/${input.userId}`,
+        adminUserDetailSchema,
+        adminUpdateUserBodySchema.parse(input.body),
+        'PATCH',
+      ),
+    onSuccess: async (data) => {
+      await client.invalidateQueries({ queryKey: ['admin', 'users'] });
       client.setQueryData(['admin', 'users', data.id], data);
     },
   });

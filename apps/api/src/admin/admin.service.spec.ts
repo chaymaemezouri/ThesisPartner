@@ -79,14 +79,16 @@ describe('AdminService', () => {
     };
     prisma.$transaction = jest.fn(async (fn: (tx: unknown) => Promise<unknown>) => fn(prisma));
 
+    const passwords = { hash: jest.fn(), verify: jest.fn() };
     const service = new AdminService(
       prisma as never,
       audit as never,
       sessions as never,
       health as never,
+      passwords as never,
       env as never,
     );
-    return { service, prisma, audit, sessions, health };
+    return { service, prisma, audit, sessions, health, passwords };
   }
 
   it('computes enriched dashboard stats from real counts', async () => {
@@ -322,6 +324,7 @@ describe('AdminService', () => {
       audit as never,
       sessions as never,
       health as never,
+      { hash: jest.fn(), verify: jest.fn() } as never,
       { NODE_ENV: 'test' } as never,
     );
 

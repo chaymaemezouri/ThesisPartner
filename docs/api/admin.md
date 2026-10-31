@@ -46,6 +46,7 @@ Santé API/DB/Redis, `nodeEnv`, sessions actives, événements d’audit 24 h, �
 ## Utilisateurs et relations (phases 1–2)
 
 - `GET /users`, `GET /users/:userId`
-- `POST /users/:userId/suspend`, `POST /users/:userId/reactivate`
+- `POST /users` (create account), `PATCH /users/:userId` (profile / platform role)
+- `POST /users/:userId/suspend`, `POST /users/:userId/reactivate` (soft delete / restore; no hard delete)
 - `GET /invitations`
 - `GET /theses/:thesisId/relations`
