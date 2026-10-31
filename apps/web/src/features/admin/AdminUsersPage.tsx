@@ -435,7 +435,9 @@ export function AdminUsersPage() {
           <Input
             id="admin-list-status-reason"
             label={
-              statusUser?.disabled ? t('admin.users.reasonOptional') : t('admin.users.reasonRequired')
+              statusUser?.disabled
+                ? t('admin.users.reasonOptional')
+                : t('admin.users.reasonRequired')
             }
             value={statusReason}
             onChange={(event) => setStatusReason(event.target.value)}

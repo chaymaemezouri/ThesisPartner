@@ -204,7 +204,9 @@ export function AdminUserDetailPage() {
                 {t('admin.users.edit')}
               </Button>
               {isSelf ? (
-                <p className="self-center text-sm text-muted">{t('admin.users.cannotSelfSuspend')}</p>
+                <p className="self-center text-sm text-muted">
+                  {t('admin.users.cannotSelfSuspend')}
+                </p>
               ) : (
                 <Button
                   type="button"

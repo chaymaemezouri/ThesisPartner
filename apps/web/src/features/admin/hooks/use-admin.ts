@@ -139,11 +139,7 @@ export function useCreateAdminUser() {
   const client = useQueryClient();
   return useMutation({
     mutationFn: (body: AdminCreateUserBody) =>
-      apiSend(
-        '/api/v1/admin/users',
-        adminUserDetailSchema,
-        adminCreateUserBodySchema.parse(body),
-      ),
+      apiSend('/api/v1/admin/users', adminUserDetailSchema, adminCreateUserBodySchema.parse(body)),
     onSuccess: async () => {
       await client.invalidateQueries({ queryKey: ['admin', 'users'] });
     },
