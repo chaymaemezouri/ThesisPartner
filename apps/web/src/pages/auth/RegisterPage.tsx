@@ -35,9 +35,9 @@ export function RegisterPage() {
           setMessage(null);
           try {
             const body = await apiSend('/api/v1/auth/register', currentUserResponseSchema, values);
-            queryClient.clear();
             queryClient.setQueryData(['me'], body);
-            await navigate(next, { replace: true });
+            queryClient.removeQueries({ queryKey: ['supervision'] });
+            await navigate(next);
           } catch (error) {
             applyFieldErrors(error, form.setError);
             setMessage(formErrorMessage(error, t));

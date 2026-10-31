@@ -78,7 +78,7 @@ describe('InvitationRespondPage', () => {
         expect.objectContaining({ method: 'POST' }),
       ),
     );
-    await waitFor(() => expect(screen.getByText('Home')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText('Supervisor home')).toBeInTheDocument());
   });
 
   it('sends reject when the invitee declines', async () => {
@@ -186,6 +186,7 @@ function renderPage(path: string) {
         <MemoryRouter initialEntries={[path]}>
           <Routes>
             <Route path="/" element={<p>Home</p>} />
+            <Route path="/encadrement" element={<p>Supervisor home</p>} />
             <Route path="/invitations" element={<p>Inbox</p>} />
             <Route path="/invitation" element={<InvitationRespondPage />} />
           </Routes>

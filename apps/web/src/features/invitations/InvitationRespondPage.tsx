@@ -55,7 +55,11 @@ export function InvitationRespondPage() {
 
   const onRespond = async (action: 'accept' | 'reject') => {
     try {
-      await respond.mutateAsync({ token, action });
+      const summary = await respond.mutateAsync({ token, action });
+      if (action === 'accept' && summary.role === 'SUPERVISOR') {
+        await navigate('/encadrement');
+        return;
+      }
       await navigate(action === 'accept' ? '/' : '/invitations');
     } catch {
       /* surfaced below */

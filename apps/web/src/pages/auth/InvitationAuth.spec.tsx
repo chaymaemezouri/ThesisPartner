@@ -88,6 +88,7 @@ function renderFlow(path = invitationPath, requiresAccount = true) {
           <Location />
           <Routes>
             <Route path="/" element={<p>Home</p>} />
+            <Route path="/encadrement" element={<p>Supervisor home</p>} />
             <Route path="/invitation" element={<InvitationRespondPage />} />
             <Route path="/connexion" element={<LoginPage />} />
             <Route path="/inscription" element={<RegisterPage />} />
@@ -128,7 +129,7 @@ describe('invitation authentication flow', () => {
       ).toBe(false);
       expect(screen.queryByText('Home')).not.toBeInTheDocument();
       await user.click(accept);
-      expect(await screen.findByText('Home')).toBeInTheDocument();
+      expect(await screen.findByText('Supervisor home')).toBeInTheDocument();
       expect(fetchMock).toHaveBeenCalledWith(
         '/api/v1/invitations/accept',
         expect.objectContaining({ body: JSON.stringify({ token }) }),
