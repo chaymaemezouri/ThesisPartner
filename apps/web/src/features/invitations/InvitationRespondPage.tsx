@@ -112,7 +112,7 @@ export function InvitationRespondPage() {
           </p>
           <div className="flex flex-wrap gap-2">
             <Link
-              to={`/connexion?next=${encodeURIComponent(`/invitation?token=${token}`)}`}
+              to={`/connexion?email=${encodeURIComponent(data.email)}&next=${encodeURIComponent(`/invitation?token=${token}`)}`}
               className="inline-flex h-10 items-center rounded-lg border border-brand bg-brand px-4 text-sm font-semibold text-white"
             >
               {t('auth.loginTitle')}

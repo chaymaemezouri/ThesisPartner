@@ -1,21 +1,24 @@
 import { currentUserResponseSchema, loginBodySchema } from '@thesispartner/validation';
 import { useQueryClient } from '@tanstack/react-query';
 import { forwardRef, useState, type InputHTMLAttributes, type ReactNode } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { apiSend } from '../../api/client';
 import { BrandLogo } from '../../components/BrandLogo';
 import { applyFieldErrors, formErrorMessage } from '../../forms/api-errors';
 import { useZodForm } from '../../forms/use-zod-form';
 import { useT } from '../../i18n/LocaleContext';
+import { authNavigation } from './auth-navigation';
 
 export function LoginPage() {
   const navigate = useNavigate();
+  const [params] = useSearchParams();
+  const { email, next, registerUrl } = authNavigation(params);
   const queryClient = useQueryClient();
   const t = useT();
   const [message, setMessage] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const form = useZodForm(loginBodySchema, {
-    defaultValues: { email: '', password: '' },
+    defaultValues: { email, password: '' },
   });
 
   return (
@@ -68,8 +71,9 @@ export function LoginPage() {
                     currentUserResponseSchema,
                     values,
                   );
+                  queryClient.clear();
                   queryClient.setQueryData(['me'], body);
-                  await navigate('/');
+                  await navigate(next, { replace: true });
                 } catch (error) {
                   applyFieldErrors(error, form.setError);
                   setMessage(formErrorMessage(error, t));
@@ -124,7 +128,7 @@ export function LoginPage() {
             </p>
             <p className="mt-2 text-sm text-muted">
               {t('auth.noAccount')}{' '}
-              <Link className="font-medium text-brand" to="/inscription">
+              <Link className="font-medium text-brand" to={registerUrl}>
                 {t('auth.registerLink')}
               </Link>
             </p>
