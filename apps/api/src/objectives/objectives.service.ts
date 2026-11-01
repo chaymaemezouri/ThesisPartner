@@ -235,6 +235,17 @@ export class ObjectivesService {
       allowedRoles: ['DOCTORAL_STUDENT'],
       write: true,
     });
+    const supervisor = await this.prisma.thesisMembership.findFirst({
+      where: { thesisId, role: 'SUPERVISOR' },
+      select: { id: true },
+    });
+    if (!supervisor) {
+      throw new AppException(
+        400,
+        'BAD_REQUEST',
+        'Invitez un encadrant avant de demander une validation',
+      );
+    }
     const now = new Date();
     const updated = await this.prisma.$transaction(async (tx) => {
       await lockObjective(tx, objectiveId, thesisId, now);

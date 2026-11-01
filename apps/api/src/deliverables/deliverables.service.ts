@@ -193,6 +193,17 @@ export class DeliverablesService {
 
   async submit(actorId: string, thesisId: string, deliverableId: string, requestId?: string) {
     const role = await this.memberRole(actorId, thesisId);
+    const supervisor = await this.prisma.thesisMembership.findFirst({
+      where: { thesisId, role: 'SUPERVISOR' },
+      select: { id: true },
+    });
+    if (!supervisor) {
+      throw new AppException(
+        400,
+        'BAD_REQUEST',
+        'Invitez un encadrant avant de soumettre un livrable pour validation',
+      );
+    }
     const now = new Date();
     const updated = await this.prisma.$transaction(async (tx) => {
       const locked = await lockDeliverable(tx, thesisId, deliverableId);

@@ -213,11 +213,24 @@ export const inviteResponseSchema = z
   })
   .strict();
 
+export const invitationDoctoralStudentSchema = z
+  .object({
+    displayName: boundedTextSchema(160),
+    givenName: boundedTextSchema(80),
+    familyName: boundedTextSchema(80),
+    avatarUrl: z.string().max(500).nullable(),
+    institution: z.string().max(200).nullable(),
+    doctoralYear: z.number().int().min(1).max(20),
+  })
+  .strict();
+
 export const invitationSummarySchema = z
   .object({
     id: uuidSchema,
     thesisId: uuidSchema,
     thesisTitle: boundedTextSchema(300),
+    thesisInstitution: z.string().max(200).nullable(),
+    thesisDoctoralYear: z.number().int().min(1).max(20).nullable(),
     email: z.string().email(),
     role: membershipRoleSchema,
     status: invitationStatusSchema,
@@ -225,6 +238,7 @@ export const invitationSummarySchema = z
     replacesSupervisor: z.boolean(),
     changeReason: z.string().max(500).nullable(),
     invitedByName: boundedTextSchema(160),
+    doctoralStudent: invitationDoctoralStudentSchema.nullable(),
     expiresAt: z.string().datetime(),
     createdAt: z.string().datetime(),
     respondedAt: z.string().datetime().nullable(),

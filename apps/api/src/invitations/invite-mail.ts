@@ -34,3 +34,38 @@ export function buildInviteMail(input: {
   });
   return { subject, text, html };
 }
+
+export function buildInviteReminderMail(input: {
+  thesisTitle: string;
+  inviterName: string;
+  role: MembershipRole;
+  acceptUrl: string;
+  day: 7 | 12;
+  replacesSupervisor: boolean;
+}): { subject: string; text: string; html: string } {
+  const daysLeft = input.day === 7 ? 7 : 2;
+  const roleLabel =
+    input.role === 'SUPERVISOR'
+      ? 'supervisor'
+      : input.role === 'DOCTORAL_STUDENT'
+        ? 'doctoral student'
+        : 'administrator';
+  const subject = `Reminder: Thesis Flow invitation — ${input.thesisTitle}`;
+  const paragraphs = [
+    `This is a reminder that ${input.inviterName} invited you to join “${input.thesisTitle}” as ${roleLabel} on Thesis Flow.`,
+    input.replacesSupervisor
+      ? 'Accepting will replace the current supervisor. Past supervision stays in history.'
+      : 'No thesis access is created until you explicitly accept.',
+    `About ${daysLeft} days remain before this invitation expires.`,
+  ];
+  const text = `${paragraphs.join('\n\n')}\n\nTo accept or decline:\n${input.acceptUrl}\n`;
+  const html = thesisPartnerMailHtml({
+    preheader: `Reminder: invitation to ${input.thesisTitle}`,
+    title: 'Invitation reminder',
+    paragraphs,
+    actionUrl: input.acceptUrl,
+    actionLabel: 'Open invitation',
+    footer: 'Thesis Flow — this link is personal. Do not forward it. Do not reply to this message.',
+  });
+  return { subject, text, html };
+}

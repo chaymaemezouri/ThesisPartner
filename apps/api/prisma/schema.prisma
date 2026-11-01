@@ -242,6 +242,9 @@ model Invitation {
   changeReason         String?          @map("change_reason") @db.VarChar(500)
   expiresAt            DateTime         @map("expires_at")
   respondedAt          DateTime?        @map("responded_at")
+  /// Reminder emails for pending invitations (day 7 / day 12 of the 14-day window).
+  reminder7SentAt      DateTime?             @map("reminder_7_sent_at")
+  reminder12SentAt     DateTime?             @map("reminder_12_sent_at")
   createdAt            DateTime         @default(now()) @map("created_at")
   updatedAt            DateTime         @updatedAt @map("updated_at")
 

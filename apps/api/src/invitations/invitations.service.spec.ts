@@ -109,6 +109,7 @@ describe('InvitationsService', () => {
       id: inviteeId,
       email: 'supervisor@example.test',
       disabledAt: null,
+      emailVerifiedAt: new Date(),
     });
     prisma.invitation.findUnique = jest.fn().mockResolvedValue({
       id: invitationId,
@@ -135,7 +136,13 @@ describe('InvitationsService', () => {
       expiresAt: new Date(Date.now() + 86_400_000),
       createdAt: new Date(),
       respondedAt: new Date(),
-      thesis: { id: thesisId, title: 'Coastal ecosystems' },
+      thesis: {
+        id: thesisId,
+        title: 'Coastal ecosystems',
+        institution: null,
+        doctoralYear: 1,
+        memberships: [],
+      },
       invitedBy: { profile: { displayName: 'Ada' } },
     });
     prisma.thesisMembership.findUnique = jest.fn().mockResolvedValue(null);
@@ -151,6 +158,35 @@ describe('InvitationsService', () => {
     );
   });
 
+  it('refuses accept when the email is not verified', async () => {
+    const { service, prisma } = build();
+    const { hashOpaqueToken } = await import('../common/security/opaque-token');
+    prisma.user.findUnique = jest.fn().mockResolvedValue({
+      id: inviteeId,
+      email: 'supervisor@example.test',
+      disabledAt: null,
+      emailVerifiedAt: null,
+    });
+    prisma.invitation.findUnique = jest.fn().mockResolvedValue({
+      id: invitationId,
+      thesisId,
+      email: 'supervisor@example.test',
+      role: 'SUPERVISOR',
+      status: 'PENDING',
+      replacesSupervisor: false,
+      changeReason: null,
+      expiresAt: new Date(Date.now() + 86_400_000),
+      tokenHash: hashOpaqueToken(token),
+      thesis: { id: thesisId, title: 'Coastal ecosystems' },
+      invitedBy: { profile: { displayName: 'Ada' } },
+    });
+
+    await expect(service.accept(inviteeId, token)).rejects.toMatchObject({
+      appCode: 'FORBIDDEN',
+    });
+    expect(prisma.thesisMembership.create).not.toHaveBeenCalled();
+  });
+
   it('refuses accept when authenticated email does not match', async () => {
     const { service, prisma } = build();
     const { hashOpaqueToken } = await import('../common/security/opaque-token');
@@ -158,6 +194,7 @@ describe('InvitationsService', () => {
       id: inviteeId,
       email: 'other@example.test',
       disabledAt: null,
+      emailVerifiedAt: new Date(),
     });
     prisma.invitation.findUnique = jest.fn().mockResolvedValue({
       id: invitationId,
@@ -186,6 +223,7 @@ describe('InvitationsService', () => {
       id: inviteeId,
       email: 'supervisor@example.test',
       disabledAt: null,
+      emailVerifiedAt: new Date(),
     });
     prisma.invitation.findUnique = jest.fn().mockResolvedValue({
       id: invitationId,
@@ -214,6 +252,7 @@ describe('InvitationsService', () => {
       id: inviteeId,
       email: 'supervisor@example.test',
       disabledAt: null,
+      emailVerifiedAt: new Date(),
     });
     prisma.invitation.findUnique = jest.fn().mockResolvedValue({
       id: invitationId,
@@ -243,6 +282,7 @@ describe('InvitationsService', () => {
       id: inviteeId,
       email: 'new-supervisor@example.test',
       disabledAt: null,
+      emailVerifiedAt: new Date(),
     });
     prisma.invitation.findUnique = jest.fn().mockResolvedValue({
       id: invitationId,
@@ -269,7 +309,13 @@ describe('InvitationsService', () => {
       expiresAt: new Date(Date.now() + 86_400_000),
       createdAt: new Date(),
       respondedAt: new Date(),
-      thesis: { id: thesisId, title: 'Coastal ecosystems' },
+      thesis: {
+        id: thesisId,
+        title: 'Coastal ecosystems',
+        institution: null,
+        doctoralYear: 1,
+        memberships: [],
+      },
       invitedBy: { profile: { displayName: 'Ada' } },
     });
     prisma.thesisMembership.findUnique = jest.fn().mockResolvedValue(null);

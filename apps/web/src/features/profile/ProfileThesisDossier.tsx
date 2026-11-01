@@ -168,7 +168,22 @@ function Dossier({ thesisId, canDelete }: { thesisId: string; canDelete: boolean
           thesisId={thesis.id}
           hasSupervisor={Boolean(supervisor)}
           canManage={thesis.role === 'DOCTORAL_STUDENT'}
-          supervisor={supervisor}
+          supervisor={
+            supervisor
+              ? {
+                  givenName: supervisor.givenName,
+                  familyName: supervisor.familyName,
+                  displayName: supervisor.displayName,
+                  email: supervisor.email,
+                  phone: supervisor.phone,
+                  institution: supervisor.institution,
+                  specialty: supervisor.specialty,
+                  academicTitle: supervisor.academicTitle,
+                  avatarUrl: supervisor.avatarUrl,
+                  laboratory: supervisor.laboratory,
+                }
+              : null
+          }
         />
       ) : null}
       <Modal

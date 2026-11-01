@@ -1,5 +1,6 @@
+import { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { Button } from '@thesispartner/ui';
+import { Button, Modal } from '@thesispartner/ui';
 import { ApiClientError } from '../../api/client';
 import { useMeQuery } from '../../hooks/use-session';
 import { useT } from '../../i18n/LocaleContext';
@@ -13,6 +14,7 @@ export function InvitationRespondPage() {
   const me = useMeQuery();
   const preview = useInvitationPreview(token);
   const respond = useRespondInvitation();
+  const [confirm, setConfirm] = useState<'accept' | 'reject' | null>(null);
 
   if (!token) {
     return (
@@ -51,18 +53,20 @@ export function InvitationRespondPage() {
   const data = preview.data;
   const loggedIn = Boolean(me.data?.user);
   const emailMatch = me.data?.user.email === data.email;
+  const emailVerified = Boolean(me.data?.user.emailVerified);
   const pending = data.status === 'PENDING';
 
   const onRespond = async (action: 'accept' | 'reject') => {
     try {
       const summary = await respond.mutateAsync({ token, action });
+      setConfirm(null);
       if (action === 'accept' && summary.role === 'SUPERVISOR') {
         await navigate('/encadrement');
         return;
       }
       await navigate(action === 'accept' ? '/' : '/invitations');
     } catch {
-      /* surfaced below */
+      setConfirm(null);
     }
   };
 
@@ -105,7 +109,7 @@ export function InvitationRespondPage() {
 
       {!pending ? (
         <p className="mt-4 text-sm text-muted">
-          {t('invitations.statusLine', { status: data.status })}
+          {t('invitations.statusLine', { status: t(`invitations.status.${data.status}`) })}
         </p>
       ) : !loggedIn ? (
         <div className="mt-6 space-y-3">
@@ -138,20 +142,20 @@ export function InvitationRespondPage() {
             actual: me.data?.user.email ?? '',
           })}
         </p>
+      ) : !emailVerified ? (
+        <p className="mt-6 text-sm text-danger" role="alert">
+          {t('invitations.needVerify')}
+        </p>
       ) : (
         <div className="mt-6 flex flex-wrap gap-2">
-          <Button
-            type="button"
-            disabled={respond.isPending}
-            onClick={() => void onRespond('accept')}
-          >
+          <Button type="button" disabled={respond.isPending} onClick={() => setConfirm('accept')}>
             {t('invitations.accept')}
           </Button>
           <Button
             type="button"
             variant="secondary"
             disabled={respond.isPending}
-            onClick={() => void onRespond('reject')}
+            onClick={() => setConfirm('reject')}
           >
             {t('invitations.reject')}
           </Button>
@@ -165,6 +169,38 @@ export function InvitationRespondPage() {
             : t('errors.generic')}
         </p>
       ) : null}
+
+      <Modal
+        open={confirm !== null}
+        title={
+          confirm === 'accept'
+            ? t('invitations.confirmAcceptTitle')
+            : t('invitations.confirmRejectTitle')
+        }
+        closeLabel={t('common.close')}
+        onClose={() => setConfirm(null)}
+      >
+        <p className="text-sm text-ink">
+          {confirm === 'accept'
+            ? t('invitations.confirmAcceptBody')
+            : t('invitations.confirmRejectBody')}
+        </p>
+        <div className="mt-4 flex flex-wrap gap-2">
+          <Button
+            type="button"
+            disabled={respond.isPending || !confirm}
+            onClick={() => {
+              if (!confirm) return;
+              void onRespond(confirm);
+            }}
+          >
+            {t('common.confirm')}
+          </Button>
+          <Button type="button" variant="secondary" onClick={() => setConfirm(null)}>
+            {t('common.cancel')}
+          </Button>
+        </div>
+      </Modal>
     </main>
   );
 }

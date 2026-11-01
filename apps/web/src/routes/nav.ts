@@ -114,6 +114,12 @@ export const SUPERVISOR_NAV: NavItem[] = [
     icon: 'supervision',
   },
   {
+    to: '/invitations',
+    labelKey: 'nav.invitations',
+    descriptionKey: 'nav.invitationsDesc',
+    icon: 'notice',
+  },
+  {
     to: '/reunions',
     labelKey: 'nav.meetings',
     descriptionKey: 'nav.meetingsDesc',
@@ -169,7 +175,7 @@ export function navigationGroups(items: NavItem[]): { labelKey?: MessageKey; ite
     {
       labelKey: supervisor ? 'nav.groupSupervision' : 'nav.groupThesis',
       paths: supervisor
-        ? ['/encadrement', '/livrables', '/suivi']
+        ? ['/encadrement', '/invitations', '/livrables', '/suivi']
         : ['/objectifs', '/livrables', '/remarques'],
     },
     { labelKey: 'nav.groupExchanges', paths: ['/reunions', '/messagerie'] },

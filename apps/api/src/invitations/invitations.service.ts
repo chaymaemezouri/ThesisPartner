@@ -17,13 +17,58 @@ import { ENV, type Env } from '../config/env';
 import { StructuredLogger } from '../infrastructure/logger/logger';
 import { PrismaService } from '../infrastructure/prisma/prisma.service';
 import { assertCanInvite } from '../theses/invite.policy';
-import { buildInviteMail } from './invite-mail';
+import { resolveAvatarUrl } from '../profile/profile.service';
+import { buildInviteMail, buildInviteReminderMail } from './invite-mail';
 
 const INVITATION_TTL_MS = 14 * 24 * 60 * 60 * 1000;
 const RESEND_COOLDOWN_MS = 60 * 1000;
+const REMINDER_7_MS = 7 * 24 * 60 * 60 * 1000;
+const REMINDER_12_MS = 12 * 24 * 60 * 60 * 1000;
+
+const invitationThesisSelect = {
+  id: true,
+  title: true,
+  institution: true,
+  doctoralYear: true,
+  memberships: {
+    where: { role: 'DOCTORAL_STUDENT' as const },
+    take: 1,
+    include: {
+      user: {
+        select: {
+          id: true,
+          profile: {
+            select: {
+              displayName: true,
+              givenName: true,
+              familyName: true,
+              institution: true,
+              doctoralYear: true,
+              avatarUrl: true,
+            },
+          },
+        },
+      },
+    },
+  },
+} satisfies Prisma.ThesisSelect;
+
+const invitationListInclude = {
+  thesis: { select: invitationThesisSelect },
+  invitedBy: { include: { profile: { select: { displayName: true } } } },
+} satisfies Prisma.InvitationInclude;
 
 type InviteBody = z.infer<typeof inviteMemberSchema>;
 type ChangeBody = z.infer<typeof supervisorChangeBodySchema>;
+
+type InvitationDoctoralProfile = {
+  displayName: string;
+  givenName: string;
+  familyName: string;
+  institution: string | null;
+  doctoralYear: number;
+  avatarUrl: string | null;
+};
 
 type InvitationRow = {
   id: string;
@@ -37,7 +82,15 @@ type InvitationRow = {
   expiresAt: Date;
   createdAt: Date;
   respondedAt: Date | null;
-  thesis: { id: string; title: string };
+  thesis: {
+    id: string;
+    title: string;
+    institution?: string | null;
+    doctoralYear?: number | null;
+    memberships?: Array<{
+      user: { id: string; profile: InvitationDoctoralProfile | null };
+    }>;
+  };
   invitedBy: { profile: { displayName: string } | null };
 };
 
@@ -105,10 +158,7 @@ export class InvitationsService {
     await this.expirePending();
     const rows = await this.prisma.invitation.findMany({
       where: { thesisId },
-      include: {
-        thesis: { select: { id: true, title: true } },
-        invitedBy: { include: { profile: { select: { displayName: true } } } },
-      },
+      include: invitationListInclude,
       orderBy: { createdAt: 'desc' },
       take: 100,
     });
@@ -123,11 +173,11 @@ export class InvitationsService {
     if (!user) throw new AppException(401, 'UNAUTHORIZED', 'Authentication required');
     await this.expirePending();
     const rows = await this.prisma.invitation.findMany({
-      where: { email: user.email, status: { in: ['PENDING', 'ACCEPTED', 'REJECTED'] } },
-      include: {
-        thesis: { select: { id: true, title: true } },
-        invitedBy: { include: { profile: { select: { displayName: true } } } },
+      where: {
+        email: user.email,
+        status: { in: ['PENDING', 'ACCEPTED', 'REJECTED', 'EXPIRED', 'CANCELLED'] },
       },
+      include: invitationListInclude,
       orderBy: { createdAt: 'desc' },
       take: 100,
     });
@@ -192,6 +242,13 @@ export class InvitationsService {
     }
     if (actor.disabledAt) {
       throw new AppException(403, 'FORBIDDEN', 'This account is suspended');
+    }
+    if (!actor.emailVerifiedAt) {
+      throw new AppException(
+        403,
+        'FORBIDDEN',
+        'Verify your email address before accepting this invitation',
+      );
     }
 
     await this.prisma.$transaction(async (tx) => {
@@ -438,10 +495,7 @@ export class InvitationsService {
       this.prisma.invitation.count({ where }),
       this.prisma.invitation.findMany({
         where,
-        include: {
-          thesis: { select: { id: true, title: true } },
-          invitedBy: { include: { profile: { select: { displayName: true } } } },
-        },
+        include: invitationListInclude,
         orderBy: { createdAt: 'desc' },
         skip: (query.page - 1) * query.pageSize,
         take: query.pageSize,
@@ -455,6 +509,74 @@ export class InvitationsService {
     };
   }
 
+  async sendDueReminders(now = new Date()): Promise<void> {
+    await this.expirePending();
+    const pending = await this.prisma.invitation.findMany({
+      where: {
+        status: 'PENDING',
+        expiresAt: { gt: now },
+        OR: [{ reminder7SentAt: null }, { reminder12SentAt: null }],
+      },
+      include: {
+        thesis: { select: { title: true } },
+        invitedBy: { include: { profile: { select: { displayName: true } } } },
+      },
+      take: 100,
+      orderBy: { createdAt: 'asc' },
+    });
+
+    for (const invitation of pending) {
+      const ageMs = now.getTime() - invitation.createdAt.getTime();
+      const stage: 7 | 12 | null =
+        ageMs >= REMINDER_12_MS && invitation.reminder12SentAt == null
+          ? 12
+          : ageMs >= REMINDER_7_MS && invitation.reminder7SentAt == null
+            ? 7
+            : null;
+      if (!stage) continue;
+
+      const claimed = await this.prisma.invitation.updateMany({
+        where: {
+          id: invitation.id,
+          status: 'PENDING',
+          ...(stage === 7 ? { reminder7SentAt: null } : { reminder12SentAt: null }),
+        },
+        data: stage === 7 ? { reminder7SentAt: now } : { reminder12SentAt: now },
+      });
+      if (claimed.count === 0) continue;
+
+      const token = createOpaqueToken();
+      await this.prisma.invitation.update({
+        where: { id: invitation.id },
+        data: { tokenHash: hashOpaqueToken(token) },
+      });
+
+      const acceptUrl = `${this.env.APP_URL.replace(/\/$/, '')}/invitation?token=${encodeURIComponent(token)}`;
+      const mail = buildInviteReminderMail({
+        thesisTitle: invitation.thesis.title,
+        inviterName: invitation.invitedBy.profile?.displayName ?? 'Thesis Flow',
+        role: invitation.role,
+        acceptUrl,
+        day: stage,
+        replacesSupervisor: invitation.replacesSupervisor,
+      });
+      try {
+        await this.mailer.send({
+          to: invitation.email,
+          subject: mail.subject,
+          text: mail.text,
+          html: mail.html,
+        });
+      } catch {
+        await this.prisma.invitation.update({
+          where: { id: invitation.id },
+          data: stage === 7 ? { reminder7SentAt: null } : { reminder12SentAt: null },
+        });
+        this.logger.write({ level: 'error', msg: 'invitation.reminder.mail.failed' });
+      }
+    }
+  }
+
   async adminThesisRelations(thesisId: string) {
     await this.expirePending();
     const thesis = await this.prisma.thesis.findUnique({
@@ -465,10 +587,7 @@ export class InvitationsService {
           orderBy: { createdAt: 'asc' },
         },
         invitations: {
-          include: {
-            thesis: { select: { id: true, title: true } },
-            invitedBy: { include: { profile: { select: { displayName: true } } } },
-          },
+          include: invitationListInclude,
           orderBy: { createdAt: 'desc' },
           take: 100,
         },
@@ -689,19 +808,20 @@ export class InvitationsService {
   private async getSummaryById(id: string) {
     const row = await this.prisma.invitation.findUniqueOrThrow({
       where: { id },
-      include: {
-        thesis: { select: { id: true, title: true } },
-        invitedBy: { include: { profile: { select: { displayName: true } } } },
-      },
+      include: invitationListInclude,
     });
     return this.toSummary(row);
   }
 
   private toSummary(row: InvitationRow) {
+    const doctoral = row.thesis.memberships?.[0]?.user;
+    const doctoralProfile = doctoral?.profile ?? null;
     return {
       id: row.id,
       thesisId: row.thesisId,
       thesisTitle: row.thesis.title,
+      thesisInstitution: row.thesis.institution ?? null,
+      thesisDoctoralYear: row.thesis.doctoralYear ?? null,
       email: row.email,
       role: row.role,
       status: row.status,
@@ -709,6 +829,16 @@ export class InvitationsService {
       replacesSupervisor: row.replacesSupervisor,
       changeReason: row.changeReason,
       invitedByName: row.invitedBy.profile?.displayName ?? 'Thesis Flow',
+      doctoralStudent: doctoralProfile
+        ? {
+            displayName: doctoralProfile.displayName,
+            givenName: doctoralProfile.givenName,
+            familyName: doctoralProfile.familyName,
+            avatarUrl: resolveAvatarUrl(doctoral!.id, doctoralProfile.avatarUrl),
+            institution: doctoralProfile.institution,
+            doctoralYear: doctoralProfile.doctoralYear,
+          }
+        : null,
       expiresAt: row.expiresAt.toISOString(),
       createdAt: row.createdAt.toISOString(),
       respondedAt: row.respondedAt?.toISOString() ?? null,

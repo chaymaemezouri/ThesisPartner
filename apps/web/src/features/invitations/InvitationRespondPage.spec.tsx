@@ -72,6 +72,7 @@ describe('InvitationRespondPage', () => {
     await waitFor(() => expect(screen.getByRole('button', { name: 'Accept' })).toBeInTheDocument());
 
     fireEvent.click(screen.getByRole('button', { name: 'Accept' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Confirm' }));
     await waitFor(() =>
       expect(fetchMock).toHaveBeenCalledWith(
         expect.stringContaining('/api/v1/invitations/accept'),
@@ -92,6 +93,7 @@ describe('InvitationRespondPage', () => {
     );
 
     fireEvent.click(screen.getByRole('button', { name: 'Decline' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Confirm' }));
     await waitFor(() =>
       expect(fetchMock).toHaveBeenCalledWith(
         expect.stringContaining('/api/v1/invitations/reject'),
@@ -159,6 +161,8 @@ function stubFetch(options: {
         id: '44444444-4444-4444-8444-444444444444',
         thesisId: '22222222-2222-4222-8222-222222222222',
         thesisTitle: 'Coastal ecosystems',
+        thesisInstitution: null,
+        thesisDoctoralYear: 1,
         email: 'supervisor@example.test',
         role: 'SUPERVISOR',
         status: url.includes('accept') ? 'ACCEPTED' : 'REJECTED',
@@ -166,6 +170,7 @@ function stubFetch(options: {
         replacesSupervisor: false,
         changeReason: null,
         invitedByName: 'Ada Student',
+        doctoralStudent: null,
         expiresAt: previewPending.expiresAt,
         createdAt: new Date().toISOString(),
         respondedAt: new Date().toISOString(),

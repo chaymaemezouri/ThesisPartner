@@ -15,7 +15,7 @@ const account = {
   user: {
     id: '33333333-3333-4333-8333-333333333333',
     email,
-    emailVerified: false,
+    emailVerified: true,
     platformRole: 'USER',
     givenName: 'Noa',
     familyName: 'Bernard',
@@ -68,6 +68,9 @@ function renderFlow(path = invitationPath, requiresAccount = true) {
         ...preview,
         id: '44444444-4444-4444-8444-444444444444',
         thesisId: '22222222-2222-4222-8222-222222222222',
+        thesisInstitution: null,
+        thesisDoctoralYear: 1,
+        doctoralStudent: null,
         status: 'ACCEPTED',
         emailStatus: 'SENT',
         changeReason: null,
@@ -129,6 +132,7 @@ describe('invitation authentication flow', () => {
       ).toBe(false);
       expect(screen.queryByText('Home')).not.toBeInTheDocument();
       await user.click(accept);
+      await user.click(await screen.findByRole('button', { name: 'Confirm' }));
       expect(await screen.findByText('Supervisor home')).toBeInTheDocument();
       expect(fetchMock).toHaveBeenCalledWith(
         '/api/v1/invitations/accept',
