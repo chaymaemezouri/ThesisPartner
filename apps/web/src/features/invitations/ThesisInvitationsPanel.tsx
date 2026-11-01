@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { Avatar, Badge, Button, Input, Modal, Textarea } from '@thesispartner/ui';
 import { ApiClientError } from '../../api/client';
 import { useT } from '../../i18n/LocaleContext';
@@ -21,6 +21,10 @@ type SupervisorCard = {
   academicTitle?: string | null;
   avatarUrl?: string | null;
   laboratory?: string | null;
+  doctoralSchool?: string | null;
+  orcid?: string | null;
+  googleScholarUrl?: string | null;
+  linkedinUrl?: string | null;
 };
 
 export function ThesisInvitationsPanel({
@@ -28,11 +32,13 @@ export function ThesisInvitationsPanel({
   hasSupervisor,
   canManage,
   supervisor,
+  standalone = false,
 }: {
   thesisId: string;
   hasSupervisor: boolean;
   canManage: boolean;
   supervisor?: SupervisorCard | null;
+  standalone?: boolean;
 }) {
   const t = useT();
   const list = useThesisInvitations(thesisId);
@@ -121,7 +127,10 @@ export function ThesisInvitationsPanel({
   };
 
   return (
-    <section className="mt-4 border-t border-line pt-4" aria-labelledby="thesis-invites">
+    <section
+      className={standalone ? 'mt-4' : 'mt-4 border-t border-line pt-4'}
+      aria-labelledby="thesis-invites"
+    >
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div>
           <h3 id="thesis-invites" className="text-sm font-medium text-ink">
@@ -143,112 +152,39 @@ export function ThesisInvitationsPanel({
       </div>
 
       {supervisor && (state === 'active' || state === 'replacement') ? (
-        <div className="mt-3 flex gap-3 rounded-xl border border-line bg-surface/80 p-3">
-          <Avatar label={supervisorName} imageUrl={supervisor.avatarUrl} size="md" />
-          <dl className="grid min-w-0 flex-1 gap-2 sm:grid-cols-2">
-            <div>
-              <dt className="text-xs font-medium text-muted">{t('profile.displayName')}</dt>
-              <dd className="mt-0.5 text-sm font-medium text-ink">
-                {supervisor.academicTitle
-                  ? `${supervisor.academicTitle} ${supervisorName}`
-                  : supervisorName}
-              </dd>
-            </div>
-            <div>
-              <dt className="text-xs font-medium text-muted">{t('profile.specialty')}</dt>
-              <dd className="mt-0.5 text-sm text-ink">
-                {supervisor.specialty?.trim() || t('common.notProvided')}
-              </dd>
-            </div>
-            <div>
-              <dt className="text-xs font-medium text-muted">{t('profile.institution')}</dt>
-              <dd className="mt-0.5 text-sm text-ink">
-                {supervisor.institution?.trim() ||
-                  supervisor.laboratory?.trim() ||
-                  t('common.notProvided')}
-              </dd>
-            </div>
-            <div>
-              <dt className="text-xs font-medium text-muted">{t('auth.email')}</dt>
-              <dd className="mt-0.5 text-sm text-ink">
-                <a
-                  className="font-medium text-brand hover:underline"
-                  href={`mailto:${supervisor.email}`}
-                >
-                  {supervisor.email}
-                </a>
-              </dd>
-            </div>
-            <div>
-              <dt className="text-xs font-medium text-muted">{t('profile.phone')}</dt>
-              <dd className="mt-0.5 text-sm text-ink">
-                {supervisor.phone?.trim() ? (
-                  <a
-                    className="font-medium text-brand hover:underline"
-                    href={`tel:${supervisor.phone}`}
-                  >
-                    {supervisor.phone}
-                  </a>
-                ) : (
-                  t('common.notProvided')
-                )}
-              </dd>
-            </div>
-          </dl>
-        </div>
+        <SupervisorProfileCard supervisor={supervisor} name={supervisorName} />
       ) : null}
 
       {pending.length > 0 ? (
-        <ul className="mt-3 space-y-2">
+        <ul className="mt-3 space-y-3">
           {pending.map((item) => (
-            <li
-              key={item.id}
-              className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-line bg-canvas px-3 py-2 text-sm"
-            >
-              <div>
-                <p className="font-medium text-ink">{item.email}</p>
-                <p className="text-xs text-muted">
-                  {t(`invitations.status.${item.status}`)}
-                  {' · '}
-                  {item.emailStatus === 'SENT'
+            <li key={item.id}>
+              <PendingSupervisorCard
+                email={item.email}
+                invitee={item.invitee}
+                statusLabel={t(`invitations.status.${item.status}`)}
+                emailStatusLabel={
+                  item.emailStatus === 'SENT'
                     ? t('invitations.emailSent')
                     : item.emailStatus === 'FAILED'
                       ? t('invitations.emailFailed')
-                      : t('invitations.emailQueued')}
-                  {item.replacesSupervisor ? ` · ${t('invitations.replacesBadge')}` : ''}
-                  {' · '}
-                  {t('invitations.expires', {
-                    date: new Date(item.expiresAt).toLocaleDateString(),
-                  })}
-                </p>
-                <p className="mt-1 text-xs text-muted">{t('invitations.contactsHidden')}</p>
-              </div>
-              <div className="flex gap-2">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  className="h-8 px-2 text-xs"
-                  disabled={resend.isPending}
-                  onClick={() => {
-                    setTargetId(item.id);
-                    setConfirm('resend');
-                  }}
-                >
-                  {t('invitations.resend')}
-                </Button>
-                <Button
-                  type="button"
-                  variant="secondary"
-                  className="h-8 px-2 text-xs"
-                  disabled={cancel.isPending}
-                  onClick={() => {
-                    setTargetId(item.id);
-                    setConfirm('cancel');
-                  }}
-                >
-                  {t('invitations.cancel')}
-                </Button>
-              </div>
+                      : t('invitations.emailQueued')
+                }
+                expiresLabel={t('invitations.expires', {
+                  date: new Date(item.expiresAt).toLocaleDateString(),
+                })}
+                replaces={item.replacesSupervisor}
+                onResend={() => {
+                  setTargetId(item.id);
+                  setConfirm('resend');
+                }}
+                onCancel={() => {
+                  setTargetId(item.id);
+                  setConfirm('cancel');
+                }}
+                resendDisabled={resend.isPending}
+                cancelDisabled={cancel.isPending}
+              />
             </li>
           ))}
         </ul>
@@ -360,5 +296,280 @@ export function ThesisInvitationsPanel({
         </div>
       </Modal>
     </section>
+  );
+}
+
+type InviteePublic = {
+  displayName: string;
+  givenName: string;
+  familyName: string;
+  academicTitle?: string | null;
+  institution?: string | null;
+  laboratory?: string | null;
+  doctoralSchool?: string | null;
+  specialty?: string | null;
+  avatarUrl?: string | null;
+};
+
+function PendingSupervisorCard({
+  email,
+  invitee,
+  statusLabel,
+  emailStatusLabel,
+  expiresLabel,
+  replaces,
+  onResend,
+  onCancel,
+  resendDisabled,
+  cancelDisabled,
+}: {
+  email: string;
+  invitee: InviteePublic | null;
+  statusLabel: string;
+  emailStatusLabel: string;
+  expiresLabel: string;
+  replaces: boolean;
+  onResend: () => void;
+  onCancel: () => void;
+  resendDisabled: boolean;
+  cancelDisabled: boolean;
+}) {
+  const t = useT();
+  const givenName = invitee?.givenName?.trim() || '';
+  const familyName = invitee?.familyName?.trim() || '';
+  const avatarLabel =
+    [givenName, familyName].filter(Boolean).join(' ').trim() ||
+    invitee?.displayName?.trim() ||
+    email;
+
+  return (
+    <div className="rounded-xl border border-line bg-surface/90 p-4 shadow-[0_1px_8px_rgba(15,23,42,0.04)]">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
+        <Avatar label={avatarLabel} imageUrl={invitee?.avatarUrl} size="xl" />
+        <div className="min-w-0 flex-1">
+          <p className="text-[11px] font-medium tracking-wide text-muted uppercase">
+            {t('invitations.supervisorProfile')}
+          </p>
+          <dl className="mt-2 grid gap-3 sm:grid-cols-2">
+            <ProfileField label={t('profile.givenName')} strong>
+              {givenName || t('common.notProvided')}
+            </ProfileField>
+            <ProfileField label={t('profile.familyName')} strong>
+              {familyName || t('common.notProvided')}
+            </ProfileField>
+            <ProfileField label={t('profile.academicTitle')}>
+              {invitee?.academicTitle?.trim() || t('common.notProvided')}
+            </ProfileField>
+            <ProfileField label={t('profile.specialty')}>
+              {invitee?.specialty?.trim() || t('common.notProvided')}
+            </ProfileField>
+            <ProfileField label={t('profile.institution')}>
+              {invitee?.institution?.trim() || t('common.notProvided')}
+            </ProfileField>
+            <ProfileField label={t('profile.laboratory')}>
+              {invitee?.laboratory?.trim() || t('common.notProvided')}
+            </ProfileField>
+            <ProfileField label={t('profile.doctoralSchool')}>
+              {invitee?.doctoralSchool?.trim() || t('common.notProvided')}
+            </ProfileField>
+            <ProfileField label={t('auth.email')}>
+              <span className="font-semibold text-ink">{email}</span>
+            </ProfileField>
+          </dl>
+          <p className="mt-3 text-xs text-muted">
+            {statusLabel}
+            {' · '}
+            {emailStatusLabel}
+            {replaces ? ` · ${t('invitations.replacesBadge')}` : ''}
+            {' · '}
+            {expiresLabel}
+          </p>
+          <p className="mt-1 text-xs text-muted">{t('invitations.contactsHidden')}</p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <Button
+              type="button"
+              variant="ghost"
+              className="h-8 px-2 text-xs"
+              disabled={resendDisabled}
+              onClick={onResend}
+            >
+              {t('invitations.resend')}
+            </Button>
+            <Button
+              type="button"
+              variant="secondary"
+              className="h-8 px-2 text-xs"
+              disabled={cancelDisabled}
+              onClick={onCancel}
+            >
+              {t('invitations.cancel')}
+            </Button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SupervisorProfileCard({
+  supervisor,
+  name,
+}: {
+  supervisor: SupervisorCard;
+  name: string;
+}) {
+  const t = useT();
+  const givenName = supervisor.givenName?.trim() || '';
+  const familyName = supervisor.familyName?.trim() || '';
+  const links = [
+    supervisor.orcid
+      ? { label: t('profile.orcid'), href: `https://orcid.org/${supervisor.orcid}`, value: supervisor.orcid }
+      : null,
+    supervisor.googleScholarUrl
+      ? {
+          label: t('profile.googleScholar'),
+          href: supervisor.googleScholarUrl,
+          value: t('invitations.openProfileLink'),
+        }
+      : null,
+    supervisor.linkedinUrl
+      ? {
+          label: t('profile.linkedin'),
+          href: supervisor.linkedinUrl,
+          value: t('invitations.openProfileLink'),
+        }
+      : null,
+  ].filter((item): item is { label: string; href: string; value: string } => item !== null);
+
+  return (
+    <div className="mt-4 rounded-xl border border-line bg-surface/90 p-4 shadow-[0_1px_8px_rgba(15,23,42,0.04)]">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
+        <Avatar label={name} imageUrl={supervisor.avatarUrl} size="xl" />
+        <div className="min-w-0 flex-1">
+          <p className="text-[11px] font-medium tracking-wide text-muted uppercase">
+            {t('invitations.supervisorProfile')}
+          </p>
+          <dl className="mt-2 grid gap-3 sm:grid-cols-2">
+            <ProfileField label={t('profile.givenName')} strong>
+              {givenName || t('common.notProvided')}
+            </ProfileField>
+            <ProfileField label={t('profile.familyName')} strong>
+              {familyName || t('common.notProvided')}
+            </ProfileField>
+            <ProfileField label={t('profile.academicTitle')}>
+              {supervisor.academicTitle?.trim() || t('common.notProvided')}
+            </ProfileField>
+            <ProfileField label={t('profile.specialty')}>
+              {supervisor.specialty?.trim() || t('common.notProvided')}
+            </ProfileField>
+          </dl>
+          {links.length > 0 ? (
+            <div className="mt-3 flex flex-wrap gap-x-3 gap-y-1 text-sm">
+              {links.map((link) => (
+                <a
+                  key={link.label}
+                  href={link.href}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="font-semibold text-brand hover:underline"
+                >
+                  {link.label}
+                </a>
+              ))}
+            </div>
+          ) : null}
+        </div>
+      </div>
+
+      <dl className="mt-4 grid gap-3 border-t border-line pt-4 sm:grid-cols-2">
+        <ProfileField label={t('profile.institution')}>
+          {supervisor.institution?.trim() || t('common.notProvided')}
+        </ProfileField>
+        <ProfileField label={t('profile.laboratory')}>
+          {supervisor.laboratory?.trim() || t('common.notProvided')}
+        </ProfileField>
+        <ProfileField label={t('profile.doctoralSchool')}>
+          {supervisor.doctoralSchool?.trim() || t('common.notProvided')}
+        </ProfileField>
+        <ProfileField label={t('auth.email')}>
+          <a className="font-semibold text-brand hover:underline" href={`mailto:${supervisor.email}`}>
+            {supervisor.email}
+          </a>
+        </ProfileField>
+        <ProfileField label={t('profile.phone')}>
+          {supervisor.phone?.trim() ? (
+            <a
+              className="font-semibold text-brand hover:underline"
+              href={`tel:${supervisor.phone}`}
+            >
+              {supervisor.phone}
+            </a>
+          ) : (
+            t('common.notProvided')
+          )}
+        </ProfileField>
+        <ProfileField label={t('profile.orcid')}>
+          {supervisor.orcid?.trim() ? (
+            <a
+              className="font-semibold text-brand hover:underline"
+              href={`https://orcid.org/${supervisor.orcid}`}
+              target="_blank"
+              rel="noreferrer"
+            >
+              {supervisor.orcid}
+            </a>
+          ) : (
+            t('common.notProvided')
+          )}
+        </ProfileField>
+        <ProfileField label={t('profile.linkedin')}>
+          {supervisor.linkedinUrl?.trim() ? (
+            <a
+              className="font-semibold text-brand hover:underline"
+              href={supervisor.linkedinUrl}
+              target="_blank"
+              rel="noreferrer"
+            >
+              {t('invitations.openProfileLink')}
+            </a>
+          ) : (
+            t('common.notProvided')
+          )}
+        </ProfileField>
+        <ProfileField label={t('profile.googleScholar')}>
+          {supervisor.googleScholarUrl?.trim() ? (
+            <a
+              className="font-semibold text-brand hover:underline"
+              href={supervisor.googleScholarUrl}
+              target="_blank"
+              rel="noreferrer"
+            >
+              {t('invitations.openProfileLink')}
+            </a>
+          ) : (
+            t('common.notProvided')
+          )}
+        </ProfileField>
+      </dl>
+    </div>
+  );
+}
+
+function ProfileField({
+  label,
+  children,
+  strong = false,
+}: {
+  label: string;
+  children: ReactNode;
+  strong?: boolean;
+}) {
+  return (
+    <div className="min-w-0">
+      <dt className="text-[11px] font-medium tracking-wide text-muted uppercase">{label}</dt>
+      <dd className={`mt-0.5 text-sm text-ink ${strong ? 'font-bold tracking-tight' : ''}`}>
+        {children}
+      </dd>
+    </div>
   );
 }

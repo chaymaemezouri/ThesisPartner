@@ -30,7 +30,7 @@ export function StudentProfilePage() {
     <div className="min-w-0">
       <StudentSpaceNav thesisId={thesisId} />
       <h1 className="sr-only">{t('supervision.section.profile')}</h1>
-      <AcademicProfileHeader profile={profile} readOnly />
+      <AcademicProfileHeader profile={profile} thesis={thesis} readOnly />
 
       <section className="mt-4 rounded-[14px] border border-line bg-surface p-4 shadow-[0_3px_18px_rgba(15,23,42,0.03)]">
         <h2 className="text-sm font-semibold text-ink">{t('supervision.section.profile')}</h2>
@@ -47,7 +47,16 @@ export function StudentProfilePage() {
       <section className="mt-4 rounded-[14px] border border-line bg-surface p-4 shadow-[0_3px_18px_rgba(15,23,42,0.03)]">
         <h2 className="text-sm font-semibold text-ink">{t('profile.thesis')}</h2>
         <p className="mt-1 text-base font-semibold tracking-tight text-ink">{thesis.title}</p>
+        {thesis.description?.trim() ? (
+          <p className="mt-2 text-sm leading-6 text-muted">{thesis.description}</p>
+        ) : null}
         <dl className="mt-3 grid gap-3 text-sm sm:grid-cols-2">
+          <Fact
+            label={t('thesis.doctoralYear')}
+            value={t(thesis.doctoralYear === 1 ? 'dashboard.yearOne' : 'dashboard.yearMany', {
+              count: thesis.doctoralYear,
+            })}
+          />
           <Fact label={t('supervision.university')} value={thesis.institution} />
           <Fact label={t('profile.specialty')} value={thesis.discipline} />
           <Fact

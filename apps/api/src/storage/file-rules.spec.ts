@@ -10,7 +10,7 @@ import {
   sumStoredBytes,
 } from './file-rules';
 import { commitAfterUpload } from './commit-upload';
-import { policyAllowsPublicRead } from './s3-object-storage';
+import { browserFacingS3Endpoint, policyAllowsPublicRead } from './s3-object-storage';
 
 const pdf = Buffer.from('%PDF-1.4\n1 0 obj<<>>endobj\ntrailer<<>>\n%%EOF\n');
 const exe = Buffer.from([0x4d, 0x5a, 0x90, 0x00, 0x03, 0x00]);
@@ -129,6 +129,16 @@ describe('file inspection', () => {
       'http://localhost:9000/thesispartner/theses/a/file.pdf?X-Amz-Signature=abc',
     );
     expect(rewriteSignedUrl(signed, undefined)).toBe(signed);
+  });
+
+  it('picks a browser-reachable S3 endpoint for signed downloads', () => {
+    expect(browserFacingS3Endpoint('http://s3:8333', 'http://localhost:8080')).toBe(
+      'http://localhost:8080',
+    );
+    expect(browserFacingS3Endpoint('http://s3:8333', undefined)).toBe('http://127.0.0.1:9000');
+    expect(browserFacingS3Endpoint('http://127.0.0.1:9000', undefined)).toBe(
+      'http://127.0.0.1:9000',
+    );
   });
 });
 

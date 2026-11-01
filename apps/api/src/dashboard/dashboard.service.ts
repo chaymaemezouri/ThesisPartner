@@ -192,11 +192,13 @@ export class DashboardService {
         ? {
             id: thesis.id,
             title: thesis.title,
+            description: thesis.description,
             status: thesis.status,
             discipline: thesis.discipline,
             institution: thesis.institution,
             startedOn: formatDay(thesis.startedOn),
             expectedDefenseOn: formatDay(thesis.expectedDefenseOn),
+            doctoralYear: thesis.doctoralYear,
             supervisors: supervisors.flatMap((item) =>
               item.user.profile ? [{ displayName: item.user.profile.displayName }] : [],
             ),

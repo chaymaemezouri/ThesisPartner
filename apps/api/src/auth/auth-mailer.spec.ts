@@ -11,7 +11,7 @@ describe('AuthMailer', () => {
   it('stores mail in test without logging the body or token', async () => {
     const logger = { write: jest.fn() };
     const mailer = new AuthMailer(
-      { NODE_ENV: 'test', SMTP_HOST: undefined } as never,
+      { NODE_ENV: 'test', SMTP_HOST: undefined, APP_URL: 'http://localhost:5173' } as never,
       logger as never,
     );
 
@@ -19,6 +19,7 @@ describe('AuthMailer', () => {
 
     expect(mailer.sent).toHaveLength(1);
     expect(mailer.sent[0]?.html).toContain('Thesis Flow');
+    expect(mailer.sent[0]?.html).toContain('http://localhost:5173/brand/thesispartner.png');
     expect(logger.write).not.toHaveBeenCalled();
     expect(JSON.stringify(logger.write.mock.calls)).not.toContain('secret-token-value');
   });
@@ -26,7 +27,12 @@ describe('AuthMailer', () => {
   it('throws when production has no SMTP host and does not log the token', async () => {
     const logger = { write: jest.fn() };
     const mailer = new AuthMailer(
-      { NODE_ENV: 'production', SMTP_HOST: undefined, SMTP_FROM: 'noreply@example.test' } as never,
+      {
+        NODE_ENV: 'production',
+        SMTP_HOST: undefined,
+        SMTP_FROM: 'noreply@example.test',
+        APP_URL: 'http://localhost:5173',
+      } as never,
       logger as never,
     );
 

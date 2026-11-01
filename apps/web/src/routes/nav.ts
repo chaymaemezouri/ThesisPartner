@@ -12,6 +12,7 @@ export type IconName =
   | 'radar'
   | 'portfolio'
   | 'library'
+  | 'billing'
   | 'settings'
   | 'profile'
   | 'supervision'
@@ -147,10 +148,16 @@ export const SUPERVISOR_NAV: NavItem[] = [
 
 export const SECONDARY_NAV: NavItem[] = [
   {
+    to: '/encadrant',
+    labelKey: 'nav.mySupervisor',
+    descriptionKey: 'nav.mySupervisorDesc',
+    icon: 'supervision',
+  },
+  {
     to: '/abonnement',
     labelKey: 'nav.billing',
     descriptionKey: 'nav.billingDesc',
-    icon: 'settings',
+    icon: 'billing',
   },
   {
     to: '/parametres',

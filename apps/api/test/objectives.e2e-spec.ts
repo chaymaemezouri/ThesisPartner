@@ -244,7 +244,7 @@ describe('objectives and supervision', () => {
     );
     expect(listed.objectives).toHaveLength(8);
     const first = listed.objectives.find(
-      (item) => item.title === 'Définir la problématique de recherche',
+      (item) => item.title === 'Define the research problem',
     );
     expect(first?.status).toBe('IN_PROGRESS');
     expect(first?.origin).toBe('STANDARD_TEMPLATE');

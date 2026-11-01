@@ -61,7 +61,7 @@ function inclusiveMonths(start: string, end: string): number {
 }
 
 function yearLabel(year: number, t: Translate): string {
-  return year === 1 ? t('dashboard.yearOne') : t('dashboard.yearMany', { count: year });
+  return t('dashboard.yearMany', { count: year });
 }
 
 export function thesisCalendar(

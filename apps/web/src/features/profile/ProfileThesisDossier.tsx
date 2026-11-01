@@ -6,6 +6,7 @@ import {
   thesisSummarySchema,
 } from '@thesispartner/validation';
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { z } from 'zod';
 import { Button, Input, Modal } from '@thesispartner/ui';
 import { IconAction } from '../../components/IconAction';
@@ -13,7 +14,6 @@ import { apiGet, apiSend } from '../../api/client';
 import { applyFieldErrors, formErrorMessage } from '../../forms/api-errors';
 import { useZodForm } from '../../forms/use-zod-form';
 import { useT } from '../../i18n/LocaleContext';
-import { ThesisInvitationsPanel } from '../invitations/ThesisInvitationsPanel';
 import { ThesisEditForm } from '../theses/ThesisForms';
 import { primaryThesis } from '../theses/primary-thesis';
 
@@ -131,7 +131,21 @@ function Dossier({ thesisId, canDelete }: { thesisId: string; canDelete: boolean
     <article className="mt-4 rounded-2xl border border-line bg-gradient-to-r from-teal-soft/80 via-surface to-brand-soft p-3 shadow-[0_2px_12px_rgba(15,23,42,0.04)]">
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div className="min-w-0 flex-1">
-          <h3 className="text-sm font-semibold text-ink">{thesis.title}</h3>
+          <p className="text-[11px] font-medium tracking-wide text-muted uppercase">
+            {t('thesis.title')}
+          </p>
+          <h3 className="mt-0.5 text-sm font-semibold text-ink">{thesis.title}</h3>
+          {thesis.description?.trim() ? (
+            <p className="mt-2 text-sm leading-6 text-ink">{thesis.description}</p>
+          ) : null}
+          <p className="mt-2 text-sm text-muted">
+            {t('thesis.doctoralYear')} ·{' '}
+            <span className="font-medium text-ink">
+              {t(thesis.doctoralYear === 1 ? 'dashboard.yearOne' : 'dashboard.yearMany', {
+                count: thesis.doctoralYear,
+              })}
+            </span>
+          </p>
           <p className="mt-1 truncate text-sm text-muted">
             {t('profile.supervisorLabel')} ·{' '}
             {supervisor ? (
@@ -143,6 +157,13 @@ function Dossier({ thesisId, canDelete }: { thesisId: string; canDelete: boolean
               <span className="text-ink">{t('profile.noSupervisor')}</span>
             )}
           </p>
+          {thesis.role === 'DOCTORAL_STUDENT' ? (
+            <p className="mt-2">
+              <Link to="/encadrant" className="text-sm font-medium text-brand hover:underline">
+                {t('profile.openSupervisorTab')}
+              </Link>
+            </p>
+          ) : null}
         </div>
         {canEdit ? (
           <div className="flex shrink-0 gap-2">
@@ -163,29 +184,6 @@ function Dossier({ thesisId, canDelete }: { thesisId: string; canDelete: boolean
           </div>
         ) : null}
       </div>
-      {canEdit ? (
-        <ThesisInvitationsPanel
-          thesisId={thesis.id}
-          hasSupervisor={Boolean(supervisor)}
-          canManage={thesis.role === 'DOCTORAL_STUDENT'}
-          supervisor={
-            supervisor
-              ? {
-                  givenName: supervisor.givenName,
-                  familyName: supervisor.familyName,
-                  displayName: supervisor.displayName,
-                  email: supervisor.email,
-                  phone: supervisor.phone,
-                  institution: supervisor.institution,
-                  specialty: supervisor.specialty,
-                  academicTitle: supervisor.academicTitle,
-                  avatarUrl: supervisor.avatarUrl,
-                  laboratory: supervisor.laboratory,
-                }
-              : null
-          }
-        />
-      ) : null}
       <Modal
         open={editing}
         title={t('profile.editThesis')}

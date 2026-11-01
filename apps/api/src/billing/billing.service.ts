@@ -31,7 +31,7 @@ export class BillingService {
 
   async status(userId: string) {
     const now = new Date();
-    const [trial, sub, plans, memberships] = await Promise.all([
+    const [trial, sub, plans, memberships, settings] = await Promise.all([
       this.ensureTrialRow(userId),
       this.currentSubscription(userId, now),
       this.listPlans(false),
@@ -39,6 +39,7 @@ export class BillingService {
         where: { userId },
         select: { role: true },
       }),
+      this.settings(),
     ]);
     const roles = new Set(memberships.map((item) => item.role));
     const roleHint =
@@ -52,11 +53,23 @@ export class BillingService {
     const trialView = this.toTrialDto(trial, now, roleHint !== 'SUPERVISOR');
     return {
       roleHint,
+      trialDays: settings.trialDays,
       trial: trialView,
       subscription: this.toSubscriptionDto(sub),
       coverage: await this.access.userWriteSnapshot(userId, now),
       plans: plans.plans,
     };
+  }
+
+  /** Starts the trial when eligible; ignores expected auth/role conflicts. */
+  async autoStartTrialIfEligible(userId: string, requestId?: string): Promise<boolean> {
+    try {
+      await this.startTrial(userId, requestId);
+      return true;
+    } catch (error) {
+      if (error instanceof AppException) return false;
+      throw error;
+    }
   }
 
   async startTrial(userId: string, requestId?: string) {

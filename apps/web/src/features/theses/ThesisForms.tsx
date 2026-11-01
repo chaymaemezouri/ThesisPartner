@@ -9,7 +9,7 @@ import {
 
 import { useState } from 'react';
 
-import { Button, Input, Select } from '@thesispartner/ui';
+import { Button, Input, Select, Textarea } from '@thesispartner/ui';
 
 import { apiSend } from '../../api/client';
 
@@ -38,14 +38,12 @@ export function ThesisEditForm({
 
   initial: {
     title: string;
-
+    description?: string | null;
     discipline: string | null;
-
     institution: string | null;
-
     startedOn: string | null;
-
     expectedDefenseOn: string | null;
+    doctoralYear?: number;
   };
 
   onSaved: () => void;
@@ -59,37 +57,29 @@ export function ThesisEditForm({
   const form = useZodForm(updateThesisSchema, {
     defaultValues: {
       title: initial.title,
-
+      description: initial.description ?? '',
       discipline: initial.discipline ?? '',
-
       institution: initial.institution ?? '',
-
       startedOn: initial.startedOn ?? '',
-
       expectedDefenseOn: initial.expectedDefenseOn ?? '',
+      doctoralYear: initial.doctoralYear ?? 1,
     },
   });
 
   return (
     <form
       className="grid gap-3 sm:grid-cols-2"
-
       onSubmit={form.handleSubmit(async (values) => {
         setMessage(null);
-
         try {
           await apiSend(`/api/v1/theses/${thesisId}`, thesisDetailSchema, values, 'PATCH');
-
           await queryClient.invalidateQueries({ queryKey: ['theses'] });
-
           await queryClient.invalidateQueries({ queryKey: ['thesis'] });
-
           await queryClient.invalidateQueries({ queryKey: ['dashboard'] });
-
+          await queryClient.invalidateQueries({ queryKey: ['supervision'] });
           onSaved();
         } catch (error) {
           applyFieldErrors(error, form.setError);
-
           setMessage(formErrorMessage(error, t));
         }
       })}
@@ -97,55 +87,59 @@ export function ThesisEditForm({
       <div className="sm:col-span-2">
         <Input
           id={`edit-title-${thesisId}`}
-
           label={t('thesis.title')}
-
           error={form.formState.errors.title?.message}
-
           {...form.register('title')}
         />
       </div>
-
+      <div className="sm:col-span-2">
+        <Textarea
+          id={`edit-description-${thesisId}`}
+          label={t('thesis.description')}
+          rows={4}
+          error={form.formState.errors.description?.message}
+          {...form.register('description')}
+        />
+      </div>
+      <Select
+        id={`edit-year-${thesisId}`}
+        label={t('thesis.doctoralYear')}
+        error={form.formState.errors.doctoralYear?.message}
+        {...form.register('doctoralYear', { valueAsNumber: true })}
+      >
+        {[1, 2, 3, 4, 5, 6, 7].map((year) => (
+          <option key={year} value={year}>
+            {t('dashboard.yearMany', { count: year })}
+          </option>
+        ))}
+      </Select>
       <Input
         id={`edit-discipline-${thesisId}`}
         label={t('thesis.discipline')}
         {...form.register('discipline')}
       />
-
       <Input
         id={`edit-institution-${thesisId}`}
-
         label={t('thesis.institution')}
-
         {...form.register('institution')}
       />
-
       <Input
         id={`edit-started-${thesisId}`}
-
         label={t('thesis.startDate')}
-
         type="date"
-
         {...form.register('startedOn')}
       />
-
       <Input
         id={`edit-defense-${thesisId}`}
-
         label={t('thesis.expectedDefense')}
-
         type="date"
-
         {...form.register('expectedDefenseOn')}
       />
-
       {message ? (
         <p className="text-sm text-danger sm:col-span-2" role="alert">
           {message}
         </p>
       ) : null}
-
       <div className="sm:col-span-2">
         <Button type="submit">{t('common.save')}</Button>
       </div>

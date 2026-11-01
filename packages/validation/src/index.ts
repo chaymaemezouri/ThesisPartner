@@ -69,7 +69,7 @@ export const passwordSchema = z
 
 export const personNameSchema = z.string().trim().min(1, 'Champ requis').max(80);
 
-export const doctoralYearSchema = z.number().int().min(1).max(4);
+export const doctoralYearSchema = z.number().int().min(1).max(7);
 
 export const registerBodySchema = z
   .object({
@@ -78,7 +78,7 @@ export const registerBodySchema = z
     givenName: personNameSchema,
     familyName: personNameSchema,
     institution: z.string().trim().max(200).optional(),
-    doctoralYear: z.coerce.number().int().min(1).max(4).default(1),
+    doctoralYear: z.coerce.number().int().min(1).max(7).default(1),
   })
   .strict();
 
@@ -168,11 +168,15 @@ export const thesisMemberSchema = z
     doctoralSchool: nullableText(200),
     specialty: nullableText(160),
     avatarUrl: nullableText(500),
+    orcid: nullableText(19).optional(),
+    googleScholarUrl: nullableText(500).optional(),
+    linkedinUrl: nullableText(500).optional(),
   })
   .strict();
 
 export const thesisDetailSchema = thesisSummarySchema
   .extend({
+    description: z.string().max(4000).nullable().optional(),
     discipline: z.string().max(160).nullable(),
     institution: z.string().max(200).nullable(),
     startedOn: z
@@ -224,6 +228,21 @@ export const invitationDoctoralStudentSchema = z
   })
   .strict();
 
+/** Public academic profile of an invitee who already has an account. Phone stays hidden until accept. */
+export const invitationInviteeSchema = z
+  .object({
+    displayName: boundedTextSchema(160),
+    givenName: boundedTextSchema(80),
+    familyName: boundedTextSchema(80),
+    academicTitle: z.string().max(80).nullable(),
+    institution: z.string().max(200).nullable(),
+    laboratory: z.string().max(200).nullable(),
+    doctoralSchool: z.string().max(200).nullable(),
+    specialty: z.string().max(160).nullable(),
+    avatarUrl: z.string().max(500).nullable(),
+  })
+  .strict();
+
 export const invitationSummarySchema = z
   .object({
     id: uuidSchema,
@@ -239,6 +258,7 @@ export const invitationSummarySchema = z
     changeReason: z.string().max(500).nullable(),
     invitedByName: boundedTextSchema(160),
     doctoralStudent: invitationDoctoralStudentSchema.nullable(),
+    invitee: invitationInviteeSchema.nullable(),
     expiresAt: z.string().datetime(),
     createdAt: z.string().datetime(),
     respondedAt: z.string().datetime().nullable(),
@@ -391,6 +411,7 @@ export const progressStatusSchema = z.enum(['NOT_STARTED', 'ON_TRACK', 'ATTENTIO
 export const updateThesisSchema = z
   .object({
     title: z.string().trim().min(3, '3 caractères minimum').max(300).optional(),
+    description: clearable(4000).optional(),
     discipline: clearable(160).optional(),
     institution: clearable(200).optional(),
     startedOn: z.union([daySchema, z.literal('')]).optional(),
@@ -403,6 +424,7 @@ export const dashboardThesisSchema = z
   .object({
     id: uuidSchema,
     title: boundedTextSchema(300),
+    description: nullableText(4000).optional(),
     status: thesisStatusSchema,
     discipline: nullableText(160),
     institution: nullableText(200),
@@ -580,7 +602,7 @@ export const objectiveListQuerySchema = z
     priority: objectivePrioritySchema.optional(),
     search: z.string().trim().max(200).optional(),
     overdue: z.enum(['true', 'false']).optional(),
-    year: z.coerce.number().int().min(1).max(4).optional(),
+    year: z.coerce.number().int().min(1).max(7).optional(),
   })
   .strict();
 
@@ -845,11 +867,13 @@ export const supervisedThesisSchema = z
   .object({
     thesisId: uuidSchema,
     title: boundedTextSchema(300),
+    description: nullableText(4000).optional(),
     status: thesisStatusSchema,
     discipline: z.string().max(160).nullable(),
     institution: z.string().max(200).nullable(),
     startedOn: daySchema.nullable(),
     expectedDefenseOn: daySchema.nullable(),
+    doctoralYear: doctoralYearSchema.default(1),
     durationYears: z.number().int().min(0).max(20).nullable(),
     progressPercentage: z.number().int().min(0).max(100),
     deliverableCount: z.number().int().min(0),
@@ -2057,6 +2081,7 @@ export const billingSubscriptionSchema = z
 export const billingStatusSchema = z
   .object({
     roleHint: z.enum(['DOCTORAL_STUDENT', 'SUPERVISOR', 'MIXED', 'NONE']),
+    trialDays: z.number().int().min(1).max(365),
     trial: billingTrialSchema,
     subscription: billingSubscriptionSchema,
     coverage: thesisCoverageSchema,

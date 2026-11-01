@@ -70,6 +70,18 @@ type InvitationDoctoralProfile = {
   avatarUrl: string | null;
 };
 
+type InviteePublicProfile = {
+  displayName: string;
+  givenName: string;
+  familyName: string;
+  academicTitle: string | null;
+  institution: string | null;
+  laboratory: string | null;
+  doctoralSchool: string | null;
+  specialty: string | null;
+  avatarUrl: string | null;
+};
+
 type InvitationRow = {
   id: string;
   thesisId: string;
@@ -162,7 +174,7 @@ export class InvitationsService {
       orderBy: { createdAt: 'desc' },
       take: 100,
     });
-    return { invitations: rows.map((row) => this.toSummary(row)) };
+    return { invitations: await this.summarizeRows(rows) };
   }
 
   async inbox(actorId: string) {
@@ -181,7 +193,7 @@ export class InvitationsService {
       orderBy: { createdAt: 'desc' },
       take: 100,
     });
-    return { invitations: rows.map((row) => this.toSummary(row)) };
+    return { invitations: await this.summarizeRows(rows) };
   }
 
   async previewByToken(token: string) {
@@ -502,7 +514,7 @@ export class InvitationsService {
       }),
     ]);
     return {
-      invitations: rows.map((row) => this.toSummary(row)),
+      invitations: await this.summarizeRows(rows),
       page: query.page,
       pageSize: query.pageSize,
       total,
@@ -551,8 +563,10 @@ export class InvitationsService {
         data: { tokenHash: hashOpaqueToken(token) },
       });
 
-      const acceptUrl = `${this.env.APP_URL.replace(/\/$/, '')}/invitation?token=${encodeURIComponent(token)}`;
+      const appUrl = this.env.APP_URL.replace(/\/$/, '');
+      const acceptUrl = `${appUrl}/invitation?token=${encodeURIComponent(token)}`;
       const mail = buildInviteReminderMail({
+        appUrl,
         thesisTitle: invitation.thesis.title,
         inviterName: invitation.invitedBy.profile?.displayName ?? 'Thesis Flow',
         role: invitation.role,
@@ -616,7 +630,7 @@ export class InvitationsService {
           },
         ];
       }),
-      invitations: thesis.invitations.map((row) => this.toSummary(row)),
+      invitations: await this.summarizeRows(thesis.invitations),
       supervisionHistory: thesis.supervisionHistory.flatMap((row) => {
         if (!row.supervisor.profile) return [];
         return [
@@ -811,10 +825,63 @@ export class InvitationsService {
       where: { id },
       include: invitationListInclude,
     });
-    return this.toSummary(row);
+    const [summary] = await this.summarizeRows([row]);
+    return summary;
   }
 
-  private toSummary(row: InvitationRow) {
+  private async summarizeRows(rows: InvitationRow[]) {
+    const invitees = await this.loadInviteeProfiles(rows.map((row) => row.email));
+    return rows.map((row) =>
+      this.toSummary(row, invitees.get(row.email.trim().toLowerCase()) ?? null),
+    );
+  }
+
+  private async loadInviteeProfiles(emails: string[]) {
+    const unique = [
+      ...new Set(emails.map((email) => email.trim().toLowerCase()).filter(Boolean)),
+    ];
+    if (unique.length === 0) return new Map<string, InviteePublicProfile>();
+
+    const users = await this.prisma.user.findMany({
+      where: { email: { in: unique }, deletedAt: null },
+      select: {
+        id: true,
+        email: true,
+        profile: {
+          select: {
+            displayName: true,
+            givenName: true,
+            familyName: true,
+            academicTitle: true,
+            institution: true,
+            laboratory: true,
+            doctoralSchool: true,
+            specialty: true,
+            avatarUrl: true,
+          },
+        },
+      },
+    });
+
+    const map = new Map<string, InviteePublicProfile>();
+    for (const user of users) {
+      if (!user.profile) continue;
+      map.set(user.email.trim().toLowerCase(), {
+        displayName: user.profile.displayName,
+        givenName: user.profile.givenName,
+        familyName: user.profile.familyName,
+        academicTitle: user.profile.academicTitle,
+        institution: user.profile.institution,
+        laboratory: user.profile.laboratory,
+        doctoralSchool: user.profile.doctoralSchool,
+        specialty: user.profile.specialty,
+        avatarUrl: resolveAvatarUrl(user.id, user.profile.avatarUrl),
+      });
+    }
+    return map;
+  }
+
+  private toSummary(row: InvitationRow, invitee: InviteePublicProfile | null) {
     const doctoral = row.thesis.memberships?.[0]?.user;
     const doctoralProfile = doctoral?.profile ?? null;
     return {
@@ -840,6 +907,7 @@ export class InvitationsService {
             doctoralYear: doctoralProfile.doctoralYear,
           }
         : null,
+      invitee,
       expiresAt: row.expiresAt.toISOString(),
       createdAt: row.createdAt.toISOString(),
       respondedAt: row.respondedAt?.toISOString() ?? null,
@@ -855,8 +923,10 @@ export class InvitationsService {
     token: string;
     replacesSupervisor: boolean;
   }): Promise<InvitationEmailStatus> {
-    const acceptUrl = `${this.env.APP_URL.replace(/\/$/, '')}/invitation?token=${encodeURIComponent(input.token)}`;
+    const appUrl = this.env.APP_URL.replace(/\/$/, '');
+    const acceptUrl = `${appUrl}/invitation?token=${encodeURIComponent(input.token)}`;
     const mail = buildInviteMail({
+      appUrl,
       thesisTitle: input.thesisTitle,
       inviterName: input.inviterName,
       role: input.role,

@@ -31,7 +31,7 @@ export function ProfilePage() {
   }
 
   return (
-    <div className="max-w-4xl">
+    <div className="w-full max-w-none">
       <h1 className="sr-only">{t('profile.title')}</h1>
       <ProfileForm
         initial={profile.data}
@@ -149,10 +149,10 @@ function ProfileForm({
         }
       })}
     >
-      <div className="mb-4 flex flex-col gap-3 rounded-xl border border-line bg-surface/80 p-3 sm:flex-row sm:items-start">
-        <Avatar label={displayName || t('common.profile')} imageUrl={avatarSrc} size="lg" />
-        <div className="min-w-0 flex-1 space-y-3">
-          <div>
+      <div className="mb-4 grid gap-3 sm:grid-cols-2">
+        <div className="flex items-start gap-3 rounded-xl border border-line bg-surface/80 p-3">
+          <Avatar label={displayName || t('common.profile')} imageUrl={avatarSrc} size="lg" />
+          <div className="min-w-0 flex-1">
             <p className="text-sm font-medium text-ink">{t('profile.photo')}</p>
             <p className="mt-0.5 text-xs text-muted">{t('profile.photoHelp')}</p>
             <input
@@ -175,43 +175,43 @@ function ProfileForm({
               {avatarBusy ? t('profile.uploading') : t('profile.uploadPhoto')}
             </Button>
           </div>
-          <div>
-            <p className="text-sm font-medium text-ink">{t('profile.cv')}</p>
-            <p className="mt-0.5 text-xs text-muted">{t('profile.cvHelp')}</p>
-            <input
-              ref={cvInput}
-              type="file"
-              accept="application/pdf,.pdf"
-              className="sr-only"
-              onChange={(event) => {
-                void uploadAsset('cv', event.target.files?.[0]);
-                event.target.value = '';
-              }}
-            />
-            <div className="mt-2 flex flex-wrap gap-2">
-              <Button
-                type="button"
-                variant="secondary"
-                disabled={cvBusy}
-                onClick={() => cvInput.current?.click()}
-              >
-                {cvBusy ? t('profile.uploading') : t('profile.uploadCv')}
+        </div>
+        <div className="rounded-xl border border-line bg-surface/80 p-3">
+          <p className="text-sm font-medium text-ink">{t('profile.cv')}</p>
+          <p className="mt-0.5 text-xs text-muted">{t('profile.cvHelp')}</p>
+          <input
+            ref={cvInput}
+            type="file"
+            accept="application/pdf,.pdf"
+            className="sr-only"
+            onChange={(event) => {
+              void uploadAsset('cv', event.target.files?.[0]);
+              event.target.value = '';
+            }}
+          />
+          <div className="mt-2 flex flex-wrap gap-2">
+            <Button
+              type="button"
+              variant="secondary"
+              disabled={cvBusy}
+              onClick={() => cvInput.current?.click()}
+            >
+              {cvBusy ? t('profile.uploading') : t('profile.uploadCv')}
+            </Button>
+            {hasUploadedCv ? (
+              <Button type="button" variant="secondary" onClick={() => void openCv()}>
+                {t('profile.viewCv')}
               </Button>
-              {hasUploadedCv ? (
-                <Button type="button" variant="secondary" onClick={() => void openCv()}>
-                  {t('profile.viewCv')}
-                </Button>
-              ) : null}
-            </div>
+            ) : null}
           </div>
-          {assetMessage ? (
-            <p className={`text-sm ${assetSuccess ? 'text-ink' : 'text-danger'}`} role="alert">
-              {assetMessage}
-            </p>
-          ) : null}
         </div>
       </div>
-      <div className="grid gap-3 sm:grid-cols-2">
+      {assetMessage ? (
+        <p className={`mb-4 text-sm ${assetSuccess ? 'text-ink' : 'text-danger'}`} role="alert">
+          {assetMessage}
+        </p>
+      ) : null}
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
         <Input
           id="givenName"
           label={t('profile.givenName')}

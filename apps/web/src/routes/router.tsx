@@ -68,6 +68,7 @@ import { AdminUsersPage } from '../features/admin/AdminUsersPage';
 import { RequireSuperAdmin } from '../features/admin/RequireSuperAdmin';
 import { InvitationRespondPage } from '../features/invitations/InvitationRespondPage';
 import { InvitationsInboxPage } from '../features/invitations/InvitationsInboxPage';
+import { MySupervisorPage } from '../features/invitations/MySupervisorPage';
 import { useT } from '../i18n/LocaleContext';
 import { NAV_ITEMS } from './nav';
 
@@ -181,6 +182,7 @@ export function AppRoutes() {
             <Route path="abonnement" element={<BillingPage />} />
             <Route path="paiement/simulation/:sessionId" element={<MockCheckoutPage />} />
             <Route path="invitations" element={<InvitationsInboxPage />} />
+            <Route path="encadrant" element={<MySupervisorPage />} />
             <Route path="objectifs" element={<DoctoralObjectivesPage />} />
             <Route path="objectifs/:objectiveId" element={<DoctoralObjectiveDetailPage />} />
             <Route path="livrables" element={<DeliverablesEntry />} />

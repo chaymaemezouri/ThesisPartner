@@ -17,8 +17,8 @@ export function SettingsPage() {
   return (
     <div className="min-w-0 space-y-4">
       <header className="min-w-0">
-        <h1 className="text-lg font-semibold tracking-tight text-ink">{t('settings.title')}</h1>
-        <p className="mt-1 text-sm text-muted">{t('settings.subtitle')}</p>
+        <h1 className="sr-only">{t('settings.title')}</h1>
+        <p className="text-sm text-muted">{t('settings.subtitle')}</p>
       </header>
 
       <section

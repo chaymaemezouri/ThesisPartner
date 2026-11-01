@@ -2,6 +2,7 @@ import type { MembershipRole } from '@prisma/client';
 import { thesisPartnerMailHtml } from '../auth/mail-layout';
 
 export function buildInviteMail(input: {
+  appUrl: string;
   thesisTitle: string;
   inviterName: string;
   role: MembershipRole;
@@ -25,6 +26,7 @@ export function buildInviteMail(input: {
   ];
   const text = `${paragraphs.join('\n\n')}\n\nTo accept or decline:\n${input.acceptUrl}\n`;
   const html = thesisPartnerMailHtml({
+    appUrl: input.appUrl,
     preheader: `${input.inviterName} invited you on Thesis Flow.`,
     title: 'Thesis invitation',
     paragraphs,
@@ -36,6 +38,7 @@ export function buildInviteMail(input: {
 }
 
 export function buildInviteReminderMail(input: {
+  appUrl: string;
   thesisTitle: string;
   inviterName: string;
   role: MembershipRole;
@@ -60,6 +63,7 @@ export function buildInviteReminderMail(input: {
   ];
   const text = `${paragraphs.join('\n\n')}\n\nTo accept or decline:\n${input.acceptUrl}\n`;
   const html = thesisPartnerMailHtml({
+    appUrl: input.appUrl,
     preheader: `Reminder: invitation to ${input.thesisTitle}`,
     title: 'Invitation reminder',
     paragraphs,

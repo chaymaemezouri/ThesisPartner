@@ -95,6 +95,8 @@ export const fr: Messages = {
     followUpDesc: 'Alertes, dates, bilans et décisions.',
     invitations: 'Invitations',
     invitationsDesc: 'Invitations reçues et historique.',
+    mySupervisor: 'Mon encadrant',
+    mySupervisorDesc: 'Inviter, consulter et changer votre encadrant de thèse.',
   },
   auth: {
     openingSession: 'Ouverture de la session…',
@@ -249,8 +251,8 @@ export const fr: Messages = {
     relativeLateOne: 'en retard de 1 jour',
     relativeLateMany: 'en retard de {count} jours',
     lateShort: 'en retard de {count} j',
-    yearOne: '1re année',
-    yearMany: '{count}e année',
+    yearOne: 'Année 1',
+    yearMany: 'Année {count}',
     calendarMonths: '{year} · mois {month}',
     calendarMonthsTotal: '{year} · mois {month}/{total}',
     modificationsToday: '{count} modifications aujourd’hui',
@@ -1003,6 +1005,7 @@ export const fr: Messages = {
     loadingDossier: 'Chargement du dossier…',
     supervisorLabel: 'Encadrant',
     noSupervisor: 'Aucun encadrant',
+    openSupervisorTab: 'Ouvrir Mon encadrant',
     editThesis: 'Modifier la thèse',
     deleteThesis: 'Supprimer la thèse',
     deleteThesisConfirm:
@@ -1013,7 +1016,9 @@ export const fr: Messages = {
     cvFormats: 'Seul un fichier PDF est accepté.',
   },
   thesis: {
-    title: 'Titre',
+    title: 'Titre de la thèse',
+    description: 'Description',
+    doctoralYear: 'Année de doctorat',
     discipline: 'Discipline',
     institution: 'Établissement',
     startDate: 'Date de début',
@@ -1335,6 +1340,11 @@ export const fr: Messages = {
   invitations: {
     manageTitle: 'Invitation d’encadrant',
     supervisorTitle: 'Mon encadrant',
+    supervisorProfile: 'Profil de l’encadrant',
+    openProfileLink: 'Ouvrir le lien',
+    emptyThesisTitle: 'Aucune thèse associée',
+    emptyThesisDescription:
+      'Créez votre thèse depuis le profil avant d’inviter un encadrant.',
     manageSubtitle:
       'L’encadrant ne rejoint la thèse qu’après avoir accepté l’invitation par e-mail. Aucun membership n’est créé avant.',
     pendingSubtitle:
@@ -1629,9 +1639,10 @@ export const fr: Messages = {
     },
     plans: {
       title: 'Offres et durées',
-      subtitle: 'Tarifs MAD, durée d’essai et période de grâce.',
+      subtitle:
+        'Tarifs MAD, durée d’essai et période de grâce. La durée d’essai s’applique aux nouvelles activations.',
       windows: 'Essai et grâce',
-      trialDays: 'Jours d’essai',
+      trialDays: 'Durée d’essai (jours)',
       graceDays: 'Jours de grâce',
       catalog: 'Catalogue',
       priceMad: 'Prix (MAD)',
@@ -1656,8 +1667,8 @@ export const fr: Messages = {
   },
   billing: {
     title: 'Abonnement',
-    subtitle: 'Essai de 30 jours puis Thesis Flow Pro. Aucune carte pour l’essai.',
-    trialTitle: 'Essai gratuit 30 jours',
+    subtitle: 'Essai de {days} jours puis Thesis Flow Pro. Aucune carte pour l’essai.',
+    trialTitle: 'Essai gratuit {days} jours',
     trialHelp: 'Toutes les fonctions V1 pour vous et votre encadrant autorisé.',
     startTrial: 'Démarrer mon essai',
     verifyEmailFirst:
@@ -1687,10 +1698,16 @@ export const fr: Messages = {
     renew: 'Renouveler',
     currentPlan: 'Offre actuelle',
     included: 'Inclus',
-    featureWorkspace: 'Espace doctoral complet',
-    featureSupervisor: 'Encadrant inclus, sans frais',
-    featureInvoice: 'Factures en MAD',
-    featureThesis: 'Une thèse couverte en V1',
+    billingInterval: 'Période de facturation',
+    intervalMonth: 'Mensuel',
+    intervalYear: 'Annuel',
+    featureObjectives: 'Objectifs et tâches avec validation de l’encadrant',
+    featureDeliverables: 'Livrables, versions et circuit de revue',
+    featureRemarks: 'Remarques et boucles de correction',
+    featureMeetings: 'Réunions planifiées et historique',
+    featureMessages: 'Messagerie avec votre encadrant',
+    featureLibrary: 'Bibliothèque partagée et Research AI',
+    featureSupervisor: 'Accès encadrant inclus, sans frais',
     subscriptionState: 'Abonnement : {status}',
     cancelsAtEnd: 'résiliation à l’échéance',
     nextRenewal: 'Couverture jusqu’au {date}',

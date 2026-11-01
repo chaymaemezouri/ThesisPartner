@@ -186,6 +186,7 @@ enum ThesisStatus {
 model Thesis {
   id                String       @id @default(uuid()) @db.Uuid
   title             String       @db.VarChar(300)
+  description       String?      @db.VarChar(4000)
   status            ThesisStatus @default(ACTIVE)
   discipline        String?      @db.VarChar(160)
   institution       String?      @db.VarChar(200)

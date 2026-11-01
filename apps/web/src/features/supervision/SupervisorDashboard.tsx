@@ -88,18 +88,17 @@ export function SupervisorDashboard({ layout = 'cards' }: { layout?: 'cards' | '
       <section className="flex min-h-0 flex-1 flex-col gap-3.5">
         <div className="flex shrink-0 items-center justify-between gap-3">
           <div className="min-w-0">
-            <h2 className="text-[15px] font-semibold tracking-tight text-ink">
-              {t('supervision.title')}
-              {stats ? (
-                <span className="ml-1.5 text-sm font-normal text-muted">({stats.students})</span>
-              ) : (
-                <span className="ml-2 rounded-md bg-brand-soft px-2 py-0.5 text-xs font-medium tabular-nums text-brand">
-                  {theses.length}
-                </span>
-              )}
-            </h2>
             {layout === 'list' ? (
-              <p className="mt-1 text-sm text-muted">{t('supervision.subtitle')}</p>
+              <p className="text-sm text-muted">
+                {t('supervision.subtitle')}
+                {stats ? (
+                  <span className="ml-1.5 tabular-nums text-ink">({stats.students})</span>
+                ) : (
+                  <span className="ml-2 rounded-md bg-brand-soft px-2 py-0.5 text-xs font-medium tabular-nums text-brand">
+                    {theses.length}
+                  </span>
+                )}
+              </p>
             ) : null}
           </div>
           {layout === 'cards' ? (
@@ -242,7 +241,15 @@ function ListCard({ thesis, name }: { thesis: SupervisedThesis; name: string }) 
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0 flex-1">
               <p className="truncate font-medium text-ink">{name}</p>
-              <p className="line-clamp-2 text-sm text-muted">{thesis.title}</p>
+              <p className="line-clamp-2 text-sm font-medium text-ink">{thesis.title}</p>
+              {thesis.description?.trim() ? (
+                <p className="mt-0.5 line-clamp-2 text-sm text-muted">{thesis.description}</p>
+              ) : null}
+              <p className="mt-0.5 text-xs text-muted">
+                {t(thesis.doctoralYear === 1 ? 'dashboard.yearOne' : 'dashboard.yearMany', {
+                  count: thesis.doctoralYear,
+                })}
+              </p>
             </div>
             <p className="shrink-0 rounded-md bg-brand-soft px-2 py-1 text-sm font-semibold tabular-nums text-brand">
               {thesis.progressPercentage} %

@@ -22,7 +22,7 @@ export class AuthMailer {
   ) {}
 
   async send(mail: AuthMail): Promise<void> {
-    const html = mail.html ?? fallbackHtml(mail);
+    const html = mail.html ?? fallbackHtml(mail, this.env.APP_URL);
     if (this.env.NODE_ENV === 'test') {
       this.sent.push({ ...mail, html });
       return;
@@ -81,8 +81,9 @@ function domainOf(email: string): string {
   return at >= 0 ? email.slice(at + 1).toLowerCase() : 'unknown';
 }
 
-function fallbackHtml(mail: AuthMail): string {
+function fallbackHtml(mail: AuthMail, appUrl: string): string {
   return thesisPartnerMailHtml({
+    appUrl,
     preheader: mail.subject,
     title: mail.subject,
     paragraphs: mail.text.split(/\n{2,}/).map((part) => part.replaceAll('\n', ' ').trim()),

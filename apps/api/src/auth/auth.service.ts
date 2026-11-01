@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, forwardRef } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import type {
   loginBodySchema,
@@ -6,11 +6,12 @@ import type {
   registerBodySchema,
 } from '@thesispartner/validation';
 import type { z } from 'zod';
+import { AuditService } from '../audit/audit.service';
+import { BillingService } from '../billing/billing.service';
 import { AppException } from '../common/errors/app.exception';
 import { createOpaqueToken, hashOpaqueToken } from '../common/security/opaque-token';
 import { PasswordHasher, PasswordPolicyError } from '../common/security/password-hasher';
 import { ENV, type Env } from '../config/env';
-import { AuditService } from '../audit/audit.service';
 import { StructuredLogger } from '../infrastructure/logger/logger';
 import { PrismaService } from '../infrastructure/prisma/prisma.service';
 import { resolveAvatarUrl } from '../profile/profile.service';
@@ -68,6 +69,7 @@ export class AuthService {
     private readonly attempts: LoginAttemptTracker,
     private readonly audit: AuditService,
     private readonly logger: StructuredLogger,
+    @Inject(forwardRef(() => BillingService)) private readonly billing: BillingService,
     @Inject(ENV) private readonly env: Env,
   ) {}
 
@@ -98,14 +100,12 @@ export class AuthService {
         });
         const token = await this.replaceToken(tx, user.id, 'EMAIL_VERIFICATION', DAY_MS);
         const issued = await this.sessions.issue(tx, user.id, meta);
-        const trialStarted = this.env.NODE_ENV === 'test';
-        const startedAt = trialStarted ? new Date() : null;
         await tx.trial.create({
           data: {
             userId: user.id,
-            status: trialStarted ? 'ACTIVE' : 'NOT_STARTED',
-            startedAt,
-            expiresAt: trialStarted ? new Date(Date.now() + 30 * DAY_MS) : null,
+            status: 'NOT_STARTED',
+            startedAt: null,
+            expiresAt: null,
           },
         });
         await this.audit.record(tx, {
@@ -129,6 +129,13 @@ export class AuthService {
       subject: 'Confirm your Thesis Flow email',
       text: this.verificationText(created.token),
     });
+    if (this.env.NODE_ENV === 'test') {
+      await this.prisma.user.update({
+        where: { id: created.user.id },
+        data: { emailVerifiedAt: new Date() },
+      });
+      await this.billing.autoStartTrialIfEligible(created.user.id, meta.requestId);
+    }
     return { user: created.user, issued: created.issued };
   }
 
@@ -164,6 +171,9 @@ export class AuthService {
       });
       return created;
     });
+    if (user.emailVerifiedAt) {
+      await this.billing.autoStartTrialIfEligible(user.id, meta.requestId);
+    }
     return { user: toPublicUser(user), issued };
   }
 
@@ -195,19 +205,21 @@ export class AuthService {
   }
 
   async verifyEmail(token: string): Promise<void> {
-    await this.prisma.$transaction(async (tx) => {
-      const userId = await this.consume(tx, 'EMAIL_VERIFICATION', token);
+    const userId = await this.prisma.$transaction(async (tx) => {
+      const verifiedUserId = await this.consume(tx, 'EMAIL_VERIFICATION', token);
       await tx.user.update({
-        where: { id: userId },
+        where: { id: verifiedUserId },
         data: { emailVerifiedAt: new Date() },
       });
       await this.audit.record(tx, {
-        actorId: userId,
+        actorId: verifiedUserId,
         action: 'auth.email_verified',
         entityType: 'user',
-        entityId: userId,
+        entityId: verifiedUserId,
       });
+      return verifiedUserId;
     });
+    await this.billing.autoStartTrialIfEligible(userId);
   }
 
   async requestVerification(auth: AuthContext): Promise<void> {

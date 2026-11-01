@@ -39,10 +39,20 @@ export class S3ObjectStorage implements ObjectStorage, OnModuleInit {
       responseChecksumValidation: 'WHEN_REQUIRED' as const,
       credentials,
     };
+    const browserEndpoint = browserFacingS3Endpoint(env.S3_ENDPOINT, env.S3_PUBLIC_URL);
     this.client = new S3Client({ ...shared, endpoint: env.S3_ENDPOINT });
-    this.signer = env.S3_PUBLIC_URL
-      ? new S3Client({ ...shared, endpoint: env.S3_PUBLIC_URL })
-      : this.client;
+    this.signer =
+      browserEndpoint === env.S3_ENDPOINT
+        ? this.client
+        : new S3Client({ ...shared, endpoint: browserEndpoint });
+    if (browserEndpoint !== (env.S3_PUBLIC_URL ?? env.S3_ENDPOINT)) {
+      this.logger.write({
+        level: 'warn',
+        msg: 'storage.s3_public_url_fallback',
+        endpointHost: safeHost(env.S3_ENDPOINT),
+        publicHost: safeHost(browserEndpoint),
+      });
+    }
   }
 
   async onModuleInit(): Promise<void> {
@@ -198,4 +208,30 @@ function isMissing(error: unknown): boolean {
     name === 'NoSuchKey' ||
     name === 'NoSuchBucketPolicy'
   );
+}
+
+/** Endpoint used in signed URLs opened by browsers (never a Docker-only hostname). */
+export function browserFacingS3Endpoint(endpoint: string, publicUrl: string | undefined): string {
+  if (publicUrl) return publicUrl.replace(/\/$/, '');
+  const host = safeHost(endpoint);
+  if (isBrowserReachableHost(host)) return endpoint.replace(/\/$/, '');
+  // Local Compose maps container s3:8333 → host 127.0.0.1:9000.
+  return 'http://127.0.0.1:9000';
+}
+
+function isBrowserReachableHost(hostname: string): boolean {
+  return (
+    hostname === 'localhost' ||
+    hostname === '127.0.0.1' ||
+    hostname === '::1' ||
+    hostname === '[::1]'
+  );
+}
+
+function safeHost(url: string): string {
+  try {
+    return new URL(url).hostname;
+  } catch {
+    return 'invalid';
+  }
 }

@@ -32,10 +32,8 @@ export function InvitationsInboxPage() {
   return (
     <div className="space-y-6">
       <header>
-        <h1 className="text-lg font-semibold tracking-tight text-ink">
-          {t('invitations.inboxTitle')}
-        </h1>
-        <p className="mt-1 text-sm text-muted">{t('invitations.inboxSubtitle')}</p>
+        <h1 className="sr-only">{t('invitations.inboxTitle')}</h1>
+        <p className="text-sm text-muted">{t('invitations.inboxSubtitle')}</p>
       </header>
 
       {inbox.isLoading ? (

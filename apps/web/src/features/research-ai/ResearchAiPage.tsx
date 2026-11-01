@@ -42,8 +42,8 @@ export function ResearchAiPage() {
     <div className="min-w-0">
       <header className="mb-4 flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
-          <h1 className="text-xl font-semibold tracking-tight text-ink">{t('researchAi.title')}</h1>
-          <p className="mt-1 max-w-xl text-sm text-muted">{t('researchAi.subtitle')}</p>
+          <h1 className="sr-only">{t('researchAi.title')}</h1>
+          <p className="max-w-xl text-sm text-muted">{t('researchAi.subtitle')}</p>
         </div>
         <Button
           className="h-9 px-3 text-sm"

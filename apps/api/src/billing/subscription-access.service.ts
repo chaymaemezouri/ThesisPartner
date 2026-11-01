@@ -106,7 +106,7 @@ export class SubscriptionAccessService {
       throw new AppException(
         403,
         'SUBSCRIPTION_REQUIRED',
-        'Start the 30-day trial or subscribe to Thesis Flow Pro to create a thesis',
+        'Start the trial or subscribe to Thesis Flow Pro to create a thesis',
       );
     }
   }

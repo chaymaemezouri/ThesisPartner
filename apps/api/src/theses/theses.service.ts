@@ -68,12 +68,14 @@ export class ThesesService {
     return {
       id: thesis.id,
       title: thesis.title,
+      description: thesis.description,
       status: thesis.status,
       role: actor.role,
       discipline: thesis.discipline,
       institution: thesis.institution,
       startedOn: formatDay(thesis.startedOn),
       expectedDefenseOn: formatDay(thesis.expectedDefenseOn),
+      doctoralYear: thesis.doctoralYear,
       members: thesis.memberships.flatMap((membership) => {
         if (!membership.user.profile) return [];
         return [
@@ -92,6 +94,9 @@ export class ThesesService {
             doctoralSchool: membership.user.profile.doctoralSchool,
             specialty: membership.user.profile.specialty,
             avatarUrl: resolveAvatarUrl(membership.userId, membership.user.profile.avatarUrl),
+            orcid: membership.user.profile.orcid,
+            googleScholarUrl: membership.user.profile.googleScholarUrl,
+            linkedinUrl: membership.user.profile.linkedinUrl,
           },
         ];
       }),
@@ -137,8 +142,10 @@ export class ThesesService {
     });
     const data = {
       title: body.title,
+      description: cleared(body.description),
       discipline: cleared(body.discipline),
       institution: cleared(body.institution),
+      doctoralYear: body.doctoralYear,
       startedOn:
         body.startedOn === undefined
           ? undefined

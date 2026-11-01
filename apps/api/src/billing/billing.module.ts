@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { SuperAdminGuard } from '../admin/super-admin.guard';
 import { AuthModule } from '../auth/auth.module';
 import { ENV, type Env } from '../config/env';
@@ -21,7 +21,7 @@ import { UnavailablePaymentProvider } from './unavailable-payment.provider';
 const mockControllers = process.env.NODE_ENV === 'production' ? [] : [MockBillingController];
 
 @Module({
-  imports: [AuthModule],
+  imports: [forwardRef(() => AuthModule)],
   controllers: [
     BillingController,
     AdminBillingController,

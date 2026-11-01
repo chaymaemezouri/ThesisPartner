@@ -57,7 +57,7 @@ export function DashboardView() {
           </Link>
         </p>
       ) : null}
-      <AcademicProfileHeader profile={data.profile} />
+      <AcademicProfileHeader profile={data.profile} thesis={data.thesis} />
       <div className="grid min-h-0 flex-1 gap-4 lg:grid-cols-2 lg:items-stretch lg:gap-5">
         <div className="min-h-0 lg:h-full">
           <ThesisProgressSummary

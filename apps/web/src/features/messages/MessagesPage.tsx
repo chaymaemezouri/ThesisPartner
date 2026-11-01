@@ -153,7 +153,7 @@ function ConversationList({
         </label>
         <div className="flex items-center justify-between gap-2">
           <h2 className="flex items-center gap-1.5 text-sm font-semibold text-ink">
-            {t('messages.title')}
+            {t('messages.inbox')}
             <span aria-hidden="true" className="text-[11px] font-normal tabular-nums text-muted">
               {conversations.length}
             </span>

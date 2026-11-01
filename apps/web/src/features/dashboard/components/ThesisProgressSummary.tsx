@@ -82,7 +82,15 @@ export function ThesisProgressSummary({
           <ProgressRing percentage={percentage} size="sm" />
           <div className="min-w-0 flex-1">
             <p className="text-sm font-semibold text-ink">{t('dashboard.thesisProgress')}</p>
-            <p className="mt-0.5 line-clamp-2 text-sm text-muted">{thesis.title}</p>
+            <p className="mt-0.5 line-clamp-2 text-sm font-medium text-ink">{thesis.title}</p>
+            {thesis.description?.trim() ? (
+              <p className="mt-1 line-clamp-2 text-sm text-muted">{thesis.description}</p>
+            ) : null}
+            <p className="mt-1 text-xs text-muted">
+              {t(thesis.doctoralYear === 1 ? 'dashboard.yearOne' : 'dashboard.yearMany', {
+                count: thesis.doctoralYear,
+              })}
+            </p>
             <p
               className={`mt-2 inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_TONE[progress.status]}`}
             >
@@ -105,7 +113,17 @@ export function ThesisProgressSummary({
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <h2 className="text-sm font-semibold tracking-tight text-ink">{t('profile.thesis')}</h2>
-            <p className="mt-0.5 line-clamp-2 text-sm leading-snug text-muted">{thesis.title}</p>
+            <p className="mt-0.5 line-clamp-2 text-sm font-medium leading-snug text-ink">
+              {thesis.title}
+            </p>
+            {thesis.description?.trim() ? (
+              <p className="mt-1 line-clamp-3 text-sm leading-snug text-muted">{thesis.description}</p>
+            ) : null}
+            <p className="mt-1 text-xs text-muted">
+              {t(thesis.doctoralYear === 1 ? 'dashboard.yearOne' : 'dashboard.yearMany', {
+                count: thesis.doctoralYear,
+              })}
+            </p>
           </div>
           {showThesisLink && paths.thesis ? (
             <Link to={paths.thesis} className="shrink-0 text-sm font-medium text-brand">

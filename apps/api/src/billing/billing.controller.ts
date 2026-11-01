@@ -40,7 +40,7 @@ export class BillingController {
 
   @Post('trial/start')
   @HttpCode(200)
-  @ApiOperation({ summary: 'Start the unique 30-day trial after email verification' })
+  @ApiOperation({ summary: 'Start the unique trial after email verification' })
   async startTrial(@Req() request: Request) {
     return billingTrialSchema.parse(
       await this.billing.startTrial(actorId(request), request.requestId),

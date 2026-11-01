@@ -5,13 +5,20 @@ import type { DashboardData } from '../labels';
 
 export function AcademicProfileHeader({
   profile,
+  thesis = null,
   readOnly = false,
 }: {
   profile: DashboardData['profile'];
+  thesis?: DashboardData['thesis'];
   readOnly?: boolean;
 }) {
   const t = useT();
   const specialty = profile.specialty ?? profile.academicTitle;
+  const doctoralYearLabel = thesis
+    ? t(thesis.doctoralYear === 1 ? 'dashboard.yearOne' : 'dashboard.yearMany', {
+        count: thesis.doctoralYear,
+      })
+    : null;
   const links = [
     profile.orcid ? { label: 'ORCID', href: `https://orcid.org/${profile.orcid}` } : null,
     profile.googleScholarUrl ? { label: 'Google Scholar', href: profile.googleScholarUrl } : null,
@@ -45,7 +52,17 @@ export function AcademicProfileHeader({
                   </h2>
                 </Link>
               )}
-              {specialty ? <p className="mt-0.5 truncate text-sm text-muted">{specialty}</p> : null}
+              {specialty || doctoralYearLabel ? (
+                <p className="mt-0.5 truncate text-sm text-muted">
+                  {[specialty, doctoralYearLabel].filter(Boolean).join(' · ')}
+                </p>
+              ) : null}
+              {thesis?.title ? (
+                <p className="mt-1 line-clamp-2 text-sm font-medium text-ink">{thesis.title}</p>
+              ) : null}
+              {thesis?.description?.trim() ? (
+                <p className="mt-0.5 line-clamp-2 text-sm text-muted">{thesis.description}</p>
+              ) : null}
             </div>
             {readOnly ? null : (
               <Link

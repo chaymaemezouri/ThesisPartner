@@ -9,7 +9,7 @@ describe('composeRulesSynthesis', () => {
         objectives: [
           {
             id: 'o1',
-            title: 'Définir la problématique de recherche',
+            title: 'Define the research problem',
             status: 'COMPLETED',
             progress: 100,
             description: 'Poser le sujet, la question de recherche et les hypothèses.',

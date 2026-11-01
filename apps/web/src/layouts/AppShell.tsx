@@ -305,7 +305,11 @@ function Sidebar({
         : undefined;
   const supervised = useSupervisedTheses();
   const t = useT();
-  const primary = isSupervisorWorkspace(supervised.data) ? SUPERVISOR_NAV : PRIMARY_NAV;
+  const isSupervisor = isSupervisorWorkspace(supervised.data);
+  const primary = isSupervisor ? SUPERVISOR_NAV : PRIMARY_NAV;
+  const secondary = isSupervisor
+    ? SECONDARY_NAV.filter((item) => item.to !== '/encadrant')
+    : SECONDARY_NAV;
 
   return (
     <div className="flex h-full min-h-0 flex-col">
@@ -340,7 +344,7 @@ function Sidebar({
           </div>
         ))}
         <div className="mt-auto flex flex-col gap-1 border-t border-line pt-2">
-          {SECONDARY_NAV.map((item) => (
+          {secondary.map((item) => (
             <SidebarLink
               key={item.to}
               item={item}

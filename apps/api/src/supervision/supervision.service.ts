@@ -149,11 +149,13 @@ export class SupervisionService {
         return {
           thesisId: membership.thesis.id,
           title: membership.thesis.title,
+          description: membership.thesis.description,
           status: membership.thesis.status,
           discipline: membership.thesis.discipline,
           institution: membership.thesis.institution,
           startedOn: formatDay(membership.thesis.startedOn),
           expectedDefenseOn: formatDay(membership.thesis.expectedDefenseOn),
+          doctoralYear: membership.thesis.doctoralYear,
           durationYears: durationYears(
             membership.thesis.startedOn,
             membership.thesis.expectedDefenseOn,
@@ -322,11 +324,13 @@ export class SupervisionService {
       thesis: {
         id: thesis.id,
         title: thesis.title,
+        description: thesis.description,
         status: thesis.status,
         discipline: thesis.discipline,
         institution: thesis.institution,
         startedOn: formatDay(thesis.startedOn),
         expectedDefenseOn: defenseOn,
+        doctoralYear: thesis.doctoralYear,
         supervisors: supervisors.flatMap((item) =>
           item.user.profile ? [{ displayName: item.user.profile.displayName }] : [],
         ),

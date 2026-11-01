@@ -1,4 +1,5 @@
 export function thesisPartnerMailHtml(input: {
+  appUrl: string;
   preheader: string;
   title: string;
   paragraphs: string[];
@@ -6,6 +7,8 @@ export function thesisPartnerMailHtml(input: {
   actionLabel?: string;
   footer: string;
 }): string {
+  const appUrl = input.appUrl.replace(/\/$/, '');
+  const logoUrl = `${appUrl}/brand/thesispartner.png`;
   const paragraphs = input.paragraphs
     .map(
       (text) =>
@@ -26,7 +29,9 @@ export function thesisPartnerMailHtml(input: {
           <table role="presentation" width="560" cellspacing="0" cellpadding="0" style="max-width:560px;width:100%;background:#ffffff;border:1px solid #e2e8f0;border-radius:16px;padding:32px 28px;">
             <tr>
               <td>
-                <p style="margin:0 0 20px;font-size:13px;letter-spacing:0.08em;text-transform:uppercase;color:#1d4ed8;font-weight:700;">Thesis Flow</p>
+                <a href="${escapeHtml(appUrl)}" style="display:inline-block;text-decoration:none;margin:0 0 24px;">
+                  <img src="${escapeHtml(logoUrl)}" alt="Thesis Flow" width="180" height="90" style="display:block;border:0;outline:none;text-decoration:none;height:auto;max-width:180px;" />
+                </a>
                 <h1 style="margin:0 0 16px;font-size:22px;line-height:1.3;color:#0f172a;">${escapeHtml(input.title)}</h1>
                 ${paragraphs}
                 ${action}

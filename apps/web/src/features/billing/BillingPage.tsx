@@ -4,11 +4,11 @@ import {
   CreditCard,
   DownloadSimple,
   Receipt,
-  Sparkle,
   ClockCountdown,
 } from '@phosphor-icons/react';
 import { useMemo, type ReactNode } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { BrandLogo } from '../../components/BrandLogo';
 import { useT } from '../../i18n/LocaleContext';
 import { useMeQuery, useRequestEmailVerification } from '../../hooks/use-session';
 import { QueryError } from '../objectives/components/QueryError';
@@ -48,16 +48,10 @@ export function BillingPage() {
   const checkoutReady = Boolean(sub?.paymentProviderReady);
   const plans = data?.plans.filter((plan) => plan.active) ?? [];
   const monthly = plans.find((plan) => plan.interval === 'MONTH');
+  const yearly = plans.find((plan) => plan.interval === 'YEAR');
   const yearlySave =
-    monthly && plans.find((plan) => plan.interval === 'YEAR')
-      ? Math.max(
-          0,
-          Math.round(
-            (1 -
-              plans.find((plan) => plan.interval === 'YEAR')!.priceMad / (monthly.priceMad * 12)) *
-              100,
-          ),
-        )
+    monthly && yearly
+      ? Math.max(0, Math.round((1 - yearly.priceMad / (monthly.priceMad * 12)) * 100))
       : 0;
 
   const confirmation = useMemo(() => {
@@ -83,37 +77,39 @@ export function BillingPage() {
   if (!data || !trial || !sub) return null;
 
   const features = [
-    t('billing.featureWorkspace'),
+    t('billing.featureObjectives'),
+    t('billing.featureDeliverables'),
+    t('billing.featureRemarks'),
+    t('billing.featureMeetings'),
+    t('billing.featureMessages'),
+    t('billing.featureLibrary'),
     t('billing.featureSupervisor'),
-    t('billing.featureInvoice'),
-    t('billing.featureThesis'),
   ];
 
   return (
     <div className="space-y-8 pb-8">
-      <header className="relative overflow-hidden rounded-2xl border border-brand/15 bg-gradient-to-br from-brand-soft via-surface to-violet-soft px-6 py-7">
-        <div className="pointer-events-none absolute -right-10 -top-16 h-48 w-48 rounded-full bg-brand/10 blur-2xl" />
-        <p className="inline-flex items-center gap-1.5 rounded-full border border-brand/20 bg-surface/80 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-brand">
-          <Sparkle size={12} weight="fill" />
-          Thesis Flow Pro
-        </p>
-        <h1 className="mt-3 text-2xl font-semibold tracking-tight text-ink sm:text-3xl">
-          {t('billing.title')}
-        </h1>
-        <p className="mt-2 max-w-xl text-sm leading-6 text-muted">{t('billing.subtitle')}</p>
-      </header>
-
       {supervisorOnly ? (
         <section className="rounded-2xl border border-line bg-surface px-5 py-5 shadow-card">
           <p className="text-sm leading-6 text-muted">{t('billing.supervisorNote')}</p>
         </section>
       ) : (
         <>
-          <section className="rounded-2xl border border-line bg-surface p-5 shadow-card sm:p-6">
-            <div className="flex flex-wrap items-start justify-between gap-6">
+          <section className="relative overflow-hidden rounded-2xl border border-brand/15 bg-gradient-to-br from-brand-soft via-surface to-violet-soft p-5 shadow-card sm:p-6">
+            <div className="pointer-events-none absolute -right-10 -top-16 h-48 w-48 rounded-full bg-brand/10 blur-2xl" />
+            <div className="relative flex flex-wrap items-start justify-between gap-6">
               <div className="min-w-0 flex-1">
-                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-faint">
-                  {t('billing.trialTitle')}
+                <div className="flex flex-wrap items-center gap-3">
+                  <BrandLogo className="h-9 w-auto max-w-[10rem]" />
+                  <p className="text-xs font-semibold uppercase tracking-[0.14em] text-brand">
+                    Thesis Flow Pro
+                  </p>
+                </div>
+                <h1 className="sr-only">{t('billing.title')}</h1>
+                <p className="mt-3 max-w-xl text-sm leading-6 text-muted">
+                  {t('billing.subtitle', { days: String(data.trialDays) })}
+                </p>
+                <p className="mt-4 text-xs font-semibold uppercase tracking-[0.14em] text-faint">
+                  {t('billing.trialTitle', { days: String(data.trialDays) })}
                 </p>
                 <p className="mt-2 text-sm text-muted">{t('billing.trialHelp')}</p>
                 {trial.status === 'NOT_STARTED' && needsEmailVerify ? (
@@ -178,87 +174,96 @@ export function BillingPage() {
           </section>
 
           <section>
-            <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
-              <div>
-                <h2 className="text-lg font-semibold tracking-tight text-ink">
-                  {t('billing.plansTitle')}
-                </h2>
-                <p className="mt-1 max-w-xl text-sm text-muted">{t('billing.plansIntro')}</p>
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:gap-6">
+              <div className="min-w-0 shrink-0 lg:w-52">
+                <div className="flex flex-wrap items-center gap-2">
+                  <h2 className="text-lg font-semibold tracking-tight text-ink">
+                    {t('billing.plansTitle')}
+                  </h2>
+                  {!checkoutReady ? (
+                    <p className="rounded-full bg-warn-soft px-3 py-1 text-xs font-medium text-warn">
+                      {t('billing.noProvider')}
+                    </p>
+                  ) : null}
+                </div>
+                <p className="mt-1 text-sm text-muted">{t('billing.plansIntro')}</p>
               </div>
-              {!checkoutReady ? (
-                <p className="rounded-full bg-warn-soft px-3 py-1 text-xs font-medium text-warn">
-                  {t('billing.noProvider')}
-                </p>
-              ) : null}
-            </div>
-            <ul className="grid gap-4 lg:grid-cols-2">
-              {plans.map((plan) => {
-                const yearly = plan.interval === 'YEAR';
-                const current = sub.planCode === plan.code;
-                const monthlyEquiv = yearly ? Math.round(plan.priceMad / 12) : null;
-                return (
-                  <li
-                    key={plan.id}
-                    className={
-                      yearly
-                        ? 'relative flex flex-col rounded-2xl border-2 border-brand bg-surface p-6 shadow-[0_12px_40px_rgb(36_99_197_/_0.12)]'
-                        : 'relative flex flex-col rounded-2xl border border-line bg-surface p-6 shadow-card'
-                    }
-                  >
-                    {yearly ? (
-                      <span className="absolute -top-3 right-5 rounded-full bg-brand px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-white">
-                        {t('billing.popular')}
-                      </span>
-                    ) : null}
-                    <div className="flex items-center justify-between gap-3">
-                      <p className="text-sm font-semibold text-ink">{plan.name}</p>
-                      {current ? (
-                        <span className="rounded-full bg-ok-soft px-2 py-0.5 text-[11px] font-semibold text-ok">
-                          {t('billing.currentPlan')}
+              <ul className="grid min-w-0 flex-1 gap-4 sm:grid-cols-2">
+                {plans.map((plan) => {
+                  const isYearly = plan.interval === 'YEAR';
+                  const current = sub.planCode === plan.code;
+                  const monthlyEquiv = isYearly ? Math.round(plan.priceMad / 12) : null;
+                  return (
+                    <li
+                      key={plan.id}
+                      className={
+                        isYearly
+                          ? 'relative flex flex-col rounded-2xl border-2 border-brand bg-surface p-6 shadow-[0_12px_40px_rgb(36_99_197_/_0.12)]'
+                          : 'relative flex flex-col rounded-2xl border border-line bg-surface p-6 shadow-card'
+                      }
+                    >
+                      {isYearly ? (
+                        <span className="absolute -top-3 left-5 rounded-full bg-brand px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-white">
+                          {t('billing.popular')}
                         </span>
                       ) : null}
-                    </div>
-                    <p className="mt-4 flex items-end gap-1.5">
-                      <span className="text-4xl font-semibold tabular-nums tracking-tight text-ink">
-                        {plan.priceMad}
-                      </span>
-                      <span className="mb-1 text-sm font-medium text-muted">MAD</span>
-                    </p>
-                    <p className="text-sm text-muted">
-                      {yearly ? t('billing.billedYearly') : t('billing.perMonth')}
-                      {monthlyEquiv
-                        ? ` · ${t('billing.equivMonth', { amount: String(monthlyEquiv) })}`
-                        : ''}
-                    </p>
-                    {yearly && yearlySave > 0 ? (
-                      <p className="mt-2 inline-flex w-fit rounded-full bg-ok-soft px-2.5 py-1 text-xs font-semibold text-ok">
-                        {t('billing.saveYear', { percent: String(yearlySave) })}
-                      </p>
-                    ) : null}
-                    <ul className="mt-5 space-y-2.5 text-sm text-ink">
-                      {features.map((item) => (
-                        <li key={item} className="flex items-start gap-2">
-                          <Check className="mt-0.5 shrink-0 text-brand" size={16} weight="bold" />
-                          {item}
-                        </li>
-                      ))}
-                    </ul>
-                    <Button
-                      className="mt-6 w-full"
-                      variant={yearly ? 'primary' : 'secondary'}
-                      disabled={checkout.isPending || !checkoutReady || sub.status === 'PENDING'}
-                      onClick={async () => {
-                        const result = await checkout.mutateAsync(plan.code);
-                        if (result.checkoutUrl) window.location.assign(result.checkoutUrl);
-                      }}
-                    >
-                      <CreditCard size={16} weight="bold" />
-                      {sub.status === 'ACTIVE' ? t('billing.renew') : t('billing.payCard')}
-                    </Button>
-                  </li>
-                );
-              })}
-            </ul>
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="text-sm font-semibold text-ink">
+                            {isYearly ? t('billing.intervalYear') : t('billing.intervalMonth')}
+                          </p>
+                          <p className="mt-4 flex items-end gap-1.5">
+                            <span className="text-4xl font-semibold tabular-nums tracking-tight text-ink">
+                              {plan.priceMad}
+                            </span>
+                            <span className="mb-1 text-sm font-medium text-muted">MAD</span>
+                          </p>
+                          <p className="text-sm text-muted">
+                            {isYearly ? t('billing.billedYearly') : t('billing.perMonth')}
+                            {monthlyEquiv
+                              ? ` · ${t('billing.equivMonth', { amount: String(monthlyEquiv) })}`
+                              : ''}
+                          </p>
+                        </div>
+                        <div className="flex shrink-0 flex-col items-end gap-2">
+                          <BrandLogo className="h-8 w-auto max-w-[7.5rem]" />
+                          {current ? (
+                            <span className="rounded-full bg-ok-soft px-2 py-0.5 text-[11px] font-semibold text-ok">
+                              {t('billing.currentPlan')}
+                            </span>
+                          ) : null}
+                        </div>
+                      </div>
+                      {isYearly && yearlySave > 0 ? (
+                        <p className="mt-2 inline-flex w-fit rounded-full bg-ok-soft px-2.5 py-1 text-xs font-semibold text-ok">
+                          {t('billing.saveYear', { percent: String(yearlySave) })}
+                        </p>
+                      ) : null}
+                      <ul className="mt-5 space-y-2.5 text-sm text-ink">
+                        {features.map((item) => (
+                          <li key={item} className="flex items-start gap-2">
+                            <Check className="mt-0.5 shrink-0 text-brand" size={16} weight="bold" />
+                            {item}
+                          </li>
+                        ))}
+                      </ul>
+                      <Button
+                        className="mt-6 w-full"
+                        variant={isYearly ? 'primary' : 'secondary'}
+                        disabled={checkout.isPending || !checkoutReady || sub.status === 'PENDING'}
+                        onClick={async () => {
+                          const result = await checkout.mutateAsync(plan.code);
+                          if (result.checkoutUrl) window.location.assign(result.checkoutUrl);
+                        }}
+                      >
+                        <CreditCard size={16} weight="bold" />
+                        {sub.status === 'ACTIVE' ? t('billing.renew') : t('billing.payCard')}
+                      </Button>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
 
             {(sub.status || confirmation) && (
               <div className="mt-4 flex flex-wrap items-center gap-3 rounded-2xl border border-line bg-surface px-5 py-4 text-sm shadow-card">
