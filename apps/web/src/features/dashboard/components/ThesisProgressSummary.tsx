@@ -117,7 +117,9 @@ export function ThesisProgressSummary({
               {thesis.title}
             </p>
             {thesis.description?.trim() ? (
-              <p className="mt-1 line-clamp-3 text-sm leading-snug text-muted">{thesis.description}</p>
+              <p className="mt-1 line-clamp-3 text-sm leading-snug text-muted">
+                {thesis.description}
+              </p>
             ) : null}
             <p className="mt-1 text-xs text-muted">
               {t(thesis.doctoralYear === 1 ? 'dashboard.yearOne' : 'dashboard.yearMany', {

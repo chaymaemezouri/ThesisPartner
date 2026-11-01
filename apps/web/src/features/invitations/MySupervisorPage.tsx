@@ -103,26 +103,26 @@ function SupervisorDossier({ thesisId }: { thesisId: string }) {
         hasSupervisor={Boolean(supervisor)}
         canManage={thesis.role === 'DOCTORAL_STUDENT'}
         standalone
-          supervisor={
-            supervisor
-              ? {
-                  givenName: supervisor.givenName,
-                  familyName: supervisor.familyName,
-                  displayName: supervisor.displayName,
-                  email: supervisor.email,
-                  phone: supervisor.phone,
-                  institution: supervisor.institution,
-                  specialty: supervisor.specialty,
-                  academicTitle: supervisor.academicTitle,
-                  avatarUrl: supervisor.avatarUrl,
-                  laboratory: supervisor.laboratory,
-                  doctoralSchool: supervisor.doctoralSchool,
-                  orcid: supervisor.orcid,
-                  googleScholarUrl: supervisor.googleScholarUrl,
-                  linkedinUrl: supervisor.linkedinUrl,
-                }
-              : null
-          }
+        supervisor={
+          supervisor
+            ? {
+                givenName: supervisor.givenName,
+                familyName: supervisor.familyName,
+                displayName: supervisor.displayName,
+                email: supervisor.email,
+                phone: supervisor.phone,
+                institution: supervisor.institution,
+                specialty: supervisor.specialty,
+                academicTitle: supervisor.academicTitle,
+                avatarUrl: supervisor.avatarUrl,
+                laboratory: supervisor.laboratory,
+                doctoralSchool: supervisor.doctoralSchool,
+                orcid: supervisor.orcid,
+                googleScholarUrl: supervisor.googleScholarUrl,
+                linkedinUrl: supervisor.linkedinUrl,
+              }
+            : null
+        }
       />
     </article>
   );

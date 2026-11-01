@@ -1,11 +1,5 @@
 import { Button } from '@thesispartner/ui';
-import {
-  Check,
-  CreditCard,
-  DownloadSimple,
-  Receipt,
-  ClockCountdown,
-} from '@phosphor-icons/react';
+import { Check, CreditCard, DownloadSimple, Receipt, ClockCountdown } from '@phosphor-icons/react';
 import { useMemo, type ReactNode } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { BrandLogo } from '../../components/BrandLogo';

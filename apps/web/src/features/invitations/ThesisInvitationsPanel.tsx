@@ -411,19 +411,17 @@ function PendingSupervisorCard({
   );
 }
 
-function SupervisorProfileCard({
-  supervisor,
-  name,
-}: {
-  supervisor: SupervisorCard;
-  name: string;
-}) {
+function SupervisorProfileCard({ supervisor, name }: { supervisor: SupervisorCard; name: string }) {
   const t = useT();
   const givenName = supervisor.givenName?.trim() || '';
   const familyName = supervisor.familyName?.trim() || '';
   const links = [
     supervisor.orcid
-      ? { label: t('profile.orcid'), href: `https://orcid.org/${supervisor.orcid}`, value: supervisor.orcid }
+      ? {
+          label: t('profile.orcid'),
+          href: `https://orcid.org/${supervisor.orcid}`,
+          value: supervisor.orcid,
+        }
       : null,
     supervisor.googleScholarUrl
       ? {
@@ -492,7 +490,10 @@ function SupervisorProfileCard({
           {supervisor.doctoralSchool?.trim() || t('common.notProvided')}
         </ProfileField>
         <ProfileField label={t('auth.email')}>
-          <a className="font-semibold text-brand hover:underline" href={`mailto:${supervisor.email}`}>
+          <a
+            className="font-semibold text-brand hover:underline"
+            href={`mailto:${supervisor.email}`}
+          >
             {supervisor.email}
           </a>
         </ProfileField>

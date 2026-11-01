@@ -1343,8 +1343,7 @@ export const fr: Messages = {
     supervisorProfile: 'Profil de l’encadrant',
     openProfileLink: 'Ouvrir le lien',
     emptyThesisTitle: 'Aucune thèse associée',
-    emptyThesisDescription:
-      'Créez votre thèse depuis le profil avant d’inviter un encadrant.',
+    emptyThesisDescription: 'Créez votre thèse depuis le profil avant d’inviter un encadrant.',
     manageSubtitle:
       'L’encadrant ne rejoint la thèse qu’après avoir accepté l’invitation par e-mail. Aucun membership n’est créé avant.',
     pendingSubtitle:

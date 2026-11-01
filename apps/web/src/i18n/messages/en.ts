@@ -1331,8 +1331,7 @@ export const en = {
     supervisorProfile: 'Supervisor profile',
     openProfileLink: 'Open link',
     emptyThesisTitle: 'No associated thesis',
-    emptyThesisDescription:
-      'Create your thesis from your profile before inviting a supervisor.',
+    emptyThesisDescription: 'Create your thesis from your profile before inviting a supervisor.',
     manageSubtitle:
       'The supervisor joins only after accepting the email invitation. No membership is created before that.',
     pendingSubtitle:

@@ -243,9 +243,7 @@ describe('objectives and supervision', () => {
       (await student.agent.get(`/api/v1/theses/${thesisId}/objectives`)).body,
     );
     expect(listed.objectives).toHaveLength(8);
-    const first = listed.objectives.find(
-      (item) => item.title === 'Define the research problem',
-    );
+    const first = listed.objectives.find((item) => item.title === 'Define the research problem');
     expect(first?.status).toBe('IN_PROGRESS');
     expect(first?.origin).toBe('STANDARD_TEMPLATE');
     expect(first?.dueDate).toBeNull();

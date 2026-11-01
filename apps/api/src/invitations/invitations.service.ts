@@ -837,9 +837,7 @@ export class InvitationsService {
   }
 
   private async loadInviteeProfiles(emails: string[]) {
-    const unique = [
-      ...new Set(emails.map((email) => email.trim().toLowerCase()).filter(Boolean)),
-    ];
+    const unique = [...new Set(emails.map((email) => email.trim().toLowerCase()).filter(Boolean))];
     if (unique.length === 0) return new Map<string, InviteePublicProfile>();
 
     const users = await this.prisma.user.findMany({
