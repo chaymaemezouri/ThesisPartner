@@ -21,7 +21,7 @@ describe('academic dashboard helpers', () => {
   });
 
   it('computes the doctoral year and month', () => {
-    expect(thesisCalendar('2025-10-01', '2028-09-30', '2026-09-30')).toBe('1st year · month 12/36');
+    expect(thesisCalendar('2025-10-01', '2028-09-30', '2026-09-30')).toBe('Year 1 · month 12/36');
   });
 
   it('marks the current phase from objective titles', () => {

@@ -71,6 +71,7 @@ function renderFlow(path = invitationPath, requiresAccount = true) {
         thesisInstitution: null,
         thesisDoctoralYear: 1,
         doctoralStudent: null,
+        invitee: null,
         status: 'ACCEPTED',
         emailStatus: 'SENT',
         changeReason: null,

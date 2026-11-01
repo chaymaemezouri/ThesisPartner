@@ -171,6 +171,7 @@ function stubFetch(options: {
         changeReason: null,
         invitedByName: 'Ada Student',
         doctoralStudent: null,
+        invitee: null,
         expiresAt: previewPending.expiresAt,
         createdAt: new Date().toISOString(),
         respondedAt: new Date().toISOString(),

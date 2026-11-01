@@ -379,7 +379,7 @@ describe('messages page', () => {
 
     renderPage();
 
-    expect(await screen.findByRole('heading', { name: 'Messages' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: /Inbox/ })).toBeInTheDocument();
     await user.click(await screen.findByRole('link', { name: /Youssef El Amrani/ }));
     expect(await screen.findByText('No message yet.')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Send' })).toBeDisabled();

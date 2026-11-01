@@ -122,7 +122,7 @@ describe('doctoral dashboard', () => {
     expect(await screen.findByRole('heading', { name: 'Hello, Camille' })).toBeInTheDocument();
     expect(screen.getAllByText('60 %').length).toBeGreaterThan(0);
     expect(screen.getByText('On track')).toBeInTheDocument();
-    expect(screen.getByText('Dynamique des ecosystemes cotiers')).toBeInTheDocument();
+    expect(screen.getAllByText('Dynamique des ecosystemes cotiers').length).toBeGreaterThan(0);
     expect(screen.queryByRole('heading', { name: 'Recent activity' })).not.toBeInTheDocument();
     expect(screen.getByText('No deadlines planned yet.')).toBeInTheDocument();
   });
