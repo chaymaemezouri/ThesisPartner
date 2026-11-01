@@ -28,9 +28,7 @@ export function AcademicProfileHeader({
     profile.googleScholarUrl?.trim()
       ? { label: 'Google Scholar', href: profile.googleScholarUrl.trim() }
       : null,
-    profile.linkedinUrl?.trim()
-      ? { label: 'LinkedIn', href: profile.linkedinUrl.trim() }
-      : null,
+    profile.linkedinUrl?.trim() ? { label: 'LinkedIn', href: profile.linkedinUrl.trim() } : null,
   ].filter((item): item is { label: string; href: string } => item !== null);
 
   return (
