@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { formErrorMessage } from '../../forms/api-errors';
 import { useT } from '../../i18n/LocaleContext';
 import { useBillingStatus } from '../billing/hooks/use-billing';
+import { OnboardingPanel } from '../onboarding/OnboardingPanel';
 import { AcademicProfileHeader } from './components/AcademicProfileHeader';
 import { ThesisProgressSummary } from './components/ThesisProgressSummary';
 import { UpcomingDeadlines } from './components/UpcomingDeadlines';
@@ -38,6 +39,7 @@ export function DashboardView() {
           {t('dashboard.greeting', { name: data.profile.givenName })}
         </h1>
       </header>
+      <OnboardingPanel />
       {billing.data?.trial.status === 'EXPIRED' && !billing.data.coverage.writable ? (
         <p className="rounded-md border border-warn/30 bg-warn-soft px-3 py-2 text-sm">
           {t('billing.trialEnded')}{' '}

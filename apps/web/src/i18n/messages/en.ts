@@ -147,7 +147,104 @@ export const en = {
     verifyPending: 'Verification in progress.',
     verifyIncomplete: 'This link is incomplete.',
     verifySuccess: 'Your email is confirmed.',
+    verifyRedirecting: 'Opening your workspace…',
+    verifyExpiredHelp: 'This link is invalid, expired, or already used. Request a new confirmation email.',
     backToWorkspace: 'Back to workspace',
+    pendingVerifyTitle: 'Verify your email address',
+    pendingVerifySubtitle: 'Confirm your address before accessing Thesis Flow.',
+    pendingVerifyBody:
+      'We sent a secure link to your inbox. Open it within 24 hours to activate your account.',
+    pendingVerifyHelp: 'Check spam if nothing arrives. You can resend a new link below.',
+    pendingVerifyWrongEmail: 'Wrong address?',
+    resendVerification: 'Resend email',
+    resendVerificationSent: 'A new confirmation email was sent.',
+    resendVerificationFailed: 'Could not send the email. Try again in a minute.',
+    refreshVerification: 'I already confirmed',
+  },
+  onboarding: {
+    checklistTitle: 'Getting started',
+    checklistSubtitle: 'Complete these steps to set up your workspace. Progress follows real actions.',
+    openGuide: 'Open guide',
+    reviewGuide: 'Review startup guide',
+    guidePageTitle: 'Startup guide',
+    guidePageSubtitle: 'Interactive checklist based on your account and role.',
+    go: 'Go',
+    finish: 'Finish',
+    skip: 'Skip for now',
+    next: 'Next',
+    previous: 'Previous',
+    inviteBannerTodo: 'Invite your supervisor by email to start co-supervision.',
+    inviteBannerPending: 'Invitation pending — waiting for your supervisor to accept.',
+    inviteBannerDone: 'Supervisor linked to your thesis.',
+    inviteCta: 'Invite supervisor',
+    emptySupervisorTitle: 'No doctoral students yet',
+    emptySupervisorBody:
+      'Accept an invitation from a doctoral student to access their thesis workspace.',
+    welcomeDoctoralTitle: 'Welcome to Thesis Flow',
+    welcomeDoctoralBody:
+      'Organize your thesis: trial, objectives, deliverables, meetings, and progress with your supervisor.',
+    welcomeSupervisorTitle: 'Welcome, supervisor',
+    welcomeSupervisorBody:
+      'Follow your doctoral students: invitations, objectives, deliverables, meetings, and remarks.',
+    welcomeBothTitle: 'Welcome to Thesis Flow',
+    welcomeBothBody:
+      'You have both doctoral and supervisor roles. Use the checklist to finish setup for each.',
+    status: {
+      done: 'Done',
+      todo: 'To do',
+      blocked: 'Locked',
+      pending: 'Pending',
+    },
+    steps: {
+      email: {
+        title: 'Email verified',
+        help: 'Required before accessing protected features.',
+      },
+      trial: {
+        title: 'Activate the 30-day free trial',
+        help: 'Required before creating your thesis.',
+      },
+      thesis: {
+        title: 'Create your thesis',
+        help: 'Describe your research project in your profile.',
+      },
+      invite: {
+        title: 'Invite your supervisor',
+        help: 'Optional but recommended — you can work alone under your plan.',
+      },
+      objectives: {
+        title: 'Set first objectives',
+        help: 'Break the research into clear goals.',
+      },
+      explore: {
+        title: 'Discover deliverables, meetings and documents',
+        help: 'Explore the tools that track your progress.',
+      },
+      supervisor_email: {
+        title: 'Email verified',
+        help: 'Required before accepting invitations.',
+      },
+      supervisor_invitation: {
+        title: 'Review or accept an invitation',
+        help: 'Open your invitations inbox.',
+      },
+      supervisor_students: {
+        title: 'Discover My doctoral students',
+        help: 'Open the supervision desk once a student is linked.',
+      },
+      supervisor_objectives: {
+        title: 'Review objectives',
+        help: 'Follow the student’s research goals.',
+      },
+      supervisor_deliverables: {
+        title: 'Evaluate deliverables',
+        help: 'Review submissions and request changes when needed.',
+      },
+      supervisor_meetings: {
+        title: 'Manage meetings and remarks',
+        help: 'Plan exchanges and leave structured feedback.',
+      },
+    },
   },
   settings: {
     title: 'Settings',
@@ -961,6 +1058,7 @@ export const en = {
     photoSaved: 'Photo saved.',
     cvSaved: 'CV saved.',
     profileSaved: 'Profile saved.',
+    displayName: 'Display name',
     givenName: 'First name',
     familyName: 'Last name',
     academicTitle: 'Title or mention',
@@ -1420,6 +1518,9 @@ export const en = {
     dashboard: {
       title: 'Platform overview',
       subtitle: 'Live counts from the production database.',
+      eyebrow: 'Administration',
+      welcome: 'Welcome back, {name}',
+      welcomeHelp: 'Here is the live performance overview of Thesis Flow.',
       accountsHeading: 'Accounts and theses',
       invitationsHeading: 'Invitations',
       registrationsHeading: 'Registrations',
@@ -1510,7 +1611,8 @@ export const en = {
     },
     users: {
       title: 'Users',
-      subtitle: 'Create accounts, edit profiles, suspend or reactivate.',
+      subtitle:
+        'Create accounts (including doctoral or supervisor), edit profiles, delete or reactivate.',
       searchPlaceholder: 'Name or email',
       filterStatus: 'Status',
       filterRole: 'Thesis role',
@@ -1530,7 +1632,16 @@ export const en = {
       next: 'Next',
       create: 'Create user',
       createTitle: 'Create a user',
-      createHelp: 'Creates a sign-in account. Soft-delete is suspension, not permanent removal.',
+      createHelp:
+        'Creates a sign-in account. Platform role is global; thesis role is doctoral or supervisor. Soft-delete is suspension, not permanent removal.',
+      createThesisRole: 'Thesis role',
+      createThesisRoleHelp:
+        'Doctoral student: creates a thesis for them. Supervisor: account ready to accept invitations.',
+      thesisRoleNone: 'None (account only)',
+      createThesisTitle: 'Thesis title',
+      createThesisTitleHelp: 'Optional. A default title is used if empty.',
+      createSupervisorHelp:
+        'A supervisor joins a thesis only after accepting an invitation from a doctoral student.',
       createSubmit: 'Create',
       open: 'Open',
       edit: 'Edit profile',
@@ -1550,11 +1661,15 @@ export const en = {
       actionsHelp: 'Suspension blocks sign-in and revokes active sessions. Actions are audited.',
       cannotSelfSuspend: 'You cannot suspend your own account.',
       suspend: 'Suspend account',
+      delete: 'Delete',
       reactivate: 'Reactivate account',
       suspendTitle: 'Suspend this account?',
+      deleteTitle: 'Delete this account?',
       reactivateTitle: 'Reactivate this account?',
       suspendConfirm:
         'The person will lose access immediately. Provide a reason for the audit log.',
+      deleteConfirm:
+        'The account will be soft-deleted (suspended): sign-in is blocked and sessions are revoked. It is not permanently removed from the database.',
       reactivateConfirm: 'The person will be able to sign in again.',
       reasonRequired: 'Reason (required)',
       reasonOptional: 'Reason (optional)',

@@ -244,6 +244,9 @@ function Topbar({
               <AccountLink to="/parametres" icon="settings" onSelect={close}>
                 {t('common.settings')}
               </AccountLink>
+              <AccountLink to="/guide" icon="notice" onSelect={close}>
+                {t('onboarding.reviewGuide')}
+              </AccountLink>
               <button
                 type="button"
                 role="menuitem"
@@ -271,7 +274,7 @@ function AccountLink({
   children,
 }: {
   to: string;
-  icon: 'profile' | 'settings';
+  icon: 'profile' | 'settings' | 'notice';
   onSelect: () => void;
   children: string;
 }) {

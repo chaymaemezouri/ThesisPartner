@@ -151,7 +151,107 @@ export const fr: Messages = {
     verifyPending: 'Vérification en cours.',
     verifyIncomplete: 'Ce lien est incomplet.',
     verifySuccess: 'L’adresse est confirmée.',
+    verifyRedirecting: 'Ouverture de votre espace…',
+    verifyExpiredHelp:
+      'Ce lien est invalide, expiré ou déjà utilisé. Demandez un nouvel e-mail de confirmation.',
     backToWorkspace: 'Retour à l’espace de travail',
+    pendingVerifyTitle: 'Vérifiez votre adresse e-mail',
+    pendingVerifySubtitle: 'Confirmez votre adresse avant d’accéder à Thesis Flow.',
+    pendingVerifyBody:
+      'Nous avons envoyé un lien sécurisé à votre boîte. Ouvrez-le dans les 24 heures pour activer le compte.',
+    pendingVerifyHelp:
+      'Vérifiez les indésirables si rien n’arrive. Vous pouvez renvoyer un nouveau lien ci-dessous.',
+    pendingVerifyWrongEmail: 'Mauvaise adresse ?',
+    resendVerification: 'Renvoyer l’e-mail',
+    resendVerificationSent: 'Un nouvel e-mail de confirmation a été envoyé.',
+    resendVerificationFailed: 'Envoi impossible. Réessayez dans une minute.',
+    refreshVerification: 'J’ai déjà confirmé',
+  },
+  onboarding: {
+    checklistTitle: 'Premiers pas',
+    checklistSubtitle:
+      'Complétez ces étapes pour configurer votre espace. La progression suit vos actions réelles.',
+    openGuide: 'Ouvrir le guide',
+    reviewGuide: 'Revoir le guide de démarrage',
+    guidePageTitle: 'Guide de démarrage',
+    guidePageSubtitle: 'Checklist interactive selon votre compte et votre rôle.',
+    go: 'Y aller',
+    finish: 'Terminer',
+    skip: 'Passer pour l’instant',
+    next: 'Suivant',
+    previous: 'Précédent',
+    inviteBannerTodo: 'Invitez votre encadrant par e-mail pour démarrer la co-supervision.',
+    inviteBannerPending: 'Invitation en attente — en attente de l’acceptation de votre encadrant.',
+    inviteBannerDone: 'Encadrant associé à votre thèse.',
+    inviteCta: 'Inviter l’encadrant',
+    emptySupervisorTitle: 'Aucun doctorant associé',
+    emptySupervisorBody:
+      'Acceptez une invitation d’un doctorant pour accéder à son espace de thèse.',
+    welcomeDoctoralTitle: 'Bienvenue sur Thesis Flow',
+    welcomeDoctoralBody:
+      'Organisez votre thèse : essai, objectifs, livrables, réunions et suivi avec votre encadrant.',
+    welcomeSupervisorTitle: 'Bienvenue, encadrant',
+    welcomeSupervisorBody:
+      'Suivez vos doctorants : invitations, objectifs, livrables, réunions et remarques.',
+    welcomeBothTitle: 'Bienvenue sur Thesis Flow',
+    welcomeBothBody:
+      'Vous avez les rôles doctorant et encadrant. Utilisez la checklist pour finaliser chaque parcours.',
+    status: {
+      done: 'Terminé',
+      todo: 'À faire',
+      blocked: 'Verrouillé',
+      pending: 'En attente',
+    },
+    steps: {
+      email: {
+        title: 'Adresse e-mail vérifiée',
+        help: 'Obligatoire avant d’accéder aux fonctionnalités protégées.',
+      },
+      trial: {
+        title: 'Activer l’essai gratuit de 30 jours',
+        help: 'Obligatoire avant de créer votre thèse.',
+      },
+      thesis: {
+        title: 'Créer sa thèse',
+        help: 'Décrivez votre projet de recherche dans le profil.',
+      },
+      invite: {
+        title: 'Inviter son encadrant',
+        help: 'Facultatif mais recommandé — vous pouvez travailler seul selon votre abonnement.',
+      },
+      objectives: {
+        title: 'Définir ses premiers objectifs',
+        help: 'Découpez la recherche en buts clairs.',
+      },
+      explore: {
+        title: 'Découvrir livrables, réunions et documents',
+        help: 'Explorez les outils de suivi de progression.',
+      },
+      supervisor_email: {
+        title: 'Adresse e-mail vérifiée',
+        help: 'Obligatoire avant d’accepter une invitation.',
+      },
+      supervisor_invitation: {
+        title: 'Consulter ou accepter une invitation',
+        help: 'Ouvrez votre boîte d’invitations.',
+      },
+      supervisor_students: {
+        title: 'Découvrir Mes doctorants',
+        help: 'Ouvrez le bureau d’encadrement une fois un doctorant associé.',
+      },
+      supervisor_objectives: {
+        title: 'Consulter les objectifs',
+        help: 'Suivez les buts de recherche du doctorant.',
+      },
+      supervisor_deliverables: {
+        title: 'Évaluer les livrables',
+        help: 'Examinez les dépôts et demandez des corrections si besoin.',
+      },
+      supervisor_meetings: {
+        title: 'Gérer réunions et remarques',
+        help: 'Planifiez les échanges et laissez un retour structuré.',
+      },
+    },
   },
   settings: {
     title: 'Paramètres',
@@ -970,6 +1070,7 @@ export const fr: Messages = {
     photoSaved: 'Photo enregistrée.',
     cvSaved: 'CV enregistré.',
     profileSaved: 'Profil enregistré.',
+    displayName: 'Nom affiché',
     givenName: 'Prénom',
     familyName: 'Nom',
     academicTitle: 'Titre ou mention',
@@ -1431,6 +1532,9 @@ export const fr: Messages = {
     dashboard: {
       title: 'Vue d’ensemble de la plateforme',
       subtitle: 'Indicateurs calculés à partir des données réelles.',
+      eyebrow: 'Administration',
+      welcome: 'Bon retour, {name}',
+      welcomeHelp: 'Voici la vue d’ensemble en direct de Thesis Flow.',
       accountsHeading: 'Comptes et thèses',
       invitationsHeading: 'Invitations',
       registrationsHeading: 'Inscriptions',
@@ -1523,7 +1627,8 @@ export const fr: Messages = {
     },
     users: {
       title: 'Utilisateurs',
-      subtitle: 'Créer des comptes, modifier les profils, suspendre ou réactiver.',
+      subtitle:
+        'Créer des comptes (doctorant ou encadrant), modifier les profils, supprimer ou réactiver.',
       searchPlaceholder: 'Nom ou e-mail',
       filterStatus: 'Statut',
       filterRole: 'Rôle dans une thèse',
@@ -1544,7 +1649,15 @@ export const fr: Messages = {
       create: 'Créer un utilisateur',
       createTitle: 'Créer un utilisateur',
       createHelp:
-        'Crée un compte de connexion. La suppression est une suspension, pas un effacement définitif.',
+        'Crée un compte de connexion. Le rôle plateforme est global ; le rôle thèse est doctorant ou encadrant. La suppression est une suspension, pas un effacement définitif.',
+      createThesisRole: 'Rôle thèse',
+      createThesisRoleHelp:
+        'Doctorant : crée une thèse pour ce compte. Encadrant : compte prêt à accepter des invitations.',
+      thesisRoleNone: 'Aucun (compte seul)',
+      createThesisTitle: 'Titre de la thèse',
+      createThesisTitleHelp: 'Facultatif. Un titre par défaut est utilisé si vide.',
+      createSupervisorHelp:
+        'Un encadrant rejoint une thèse seulement après avoir accepté l’invitation d’un doctorant.',
       createSubmit: 'Créer',
       open: 'Ouvrir',
       edit: 'Modifier le profil',
@@ -1566,11 +1679,15 @@ export const fr: Messages = {
         'La suspension bloque la connexion et révoque les sessions. Les actions sont journalisées.',
       cannotSelfSuspend: 'Vous ne pouvez pas suspendre votre propre compte.',
       suspend: 'Suspendre le compte',
+      delete: 'Supprimer',
       reactivate: 'Réactiver le compte',
       suspendTitle: 'Suspendre ce compte ?',
+      deleteTitle: 'Supprimer ce compte ?',
       reactivateTitle: 'Réactiver ce compte ?',
       suspendConfirm:
         'La personne perdra l’accès immédiatement. Indiquez un motif pour le journal d’audit.',
+      deleteConfirm:
+        'Le compte sera soft-supprimé (suspendu) : connexion bloquée et sessions révoquées. Il n’est pas effacé définitivement de la base.',
       reactivateConfirm: 'La personne pourra à nouveau se connecter.',
       reasonRequired: 'Motif (obligatoire)',
       reasonOptional: 'Motif (facultatif)',

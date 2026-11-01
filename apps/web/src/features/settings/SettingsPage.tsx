@@ -138,6 +138,22 @@ export function SettingsPage() {
 
       <section
         className="rounded-md border border-line bg-surface px-4 py-4"
+        aria-labelledby="guide-access-title"
+      >
+        <h2 id="guide-access-title" className="text-sm font-medium text-ink">
+          {t('onboarding.guidePageTitle')}
+        </h2>
+        <p className="mt-1 text-sm text-muted">{t('onboarding.guidePageSubtitle')}</p>
+        <Link
+          to="/guide"
+          className="mt-4 inline-flex h-10 items-center justify-center rounded-lg border border-line bg-canvas px-4 text-sm font-semibold text-ink hover:border-ink/20"
+        >
+          {t('onboarding.reviewGuide')}
+        </Link>
+      </section>
+
+      <section
+        className="rounded-md border border-line bg-surface px-4 py-4"
         aria-labelledby="invitations-access-title"
       >
         <h2 id="invitations-access-title" className="text-sm font-medium text-ink">

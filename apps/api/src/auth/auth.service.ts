@@ -213,6 +213,22 @@ export class AuthService {
   async requestVerification(auth: AuthContext): Promise<void> {
     const user = await this.prisma.user.findUnique({ where: { id: auth.userId } });
     if (!user || user.emailVerifiedAt || user.disabledAt) return;
+    const recent = await this.prisma.authToken.findFirst({
+      where: { userId: user.id, purpose: 'EMAIL_VERIFICATION' },
+      orderBy: { createdAt: 'desc' },
+      select: { createdAt: true },
+    });
+    if (
+      this.env.NODE_ENV !== 'test' &&
+      recent &&
+      Date.now() - recent.createdAt.getTime() < 60_000
+    ) {
+      throw new AppException(
+        429,
+        'RATE_LIMITED',
+        'Wait a minute before requesting another confirmation email',
+      );
+    }
     const token = await this.prisma.$transaction((tx) =>
       this.replaceToken(tx, user.id, 'EMAIL_VERIFICATION', DAY_MS),
     );

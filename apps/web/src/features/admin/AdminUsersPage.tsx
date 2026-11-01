@@ -20,6 +20,8 @@ const emptyCreate = {
   familyName: '',
   institution: '',
   platformRole: 'USER' as 'USER' | 'SUPER_ADMIN',
+  thesisRole: 'NONE' as 'NONE' | 'DOCTORAL_STUDENT' | 'SUPERVISOR',
+  thesisTitle: '',
   markEmailVerified: true,
 };
 
@@ -58,6 +60,11 @@ export function AdminUsersPage() {
         familyName: createForm.familyName.trim(),
         institution: createForm.institution.trim() || undefined,
         platformRole: createForm.platformRole,
+        thesisRole: createForm.thesisRole,
+        thesisTitle:
+          createForm.thesisRole === 'DOCTORAL_STUDENT'
+            ? createForm.thesisTitle.trim() || undefined
+            : undefined,
         markEmailVerified: createForm.markEmailVerified,
       });
       setCreateOpen(false);
@@ -259,7 +266,9 @@ export function AdminUsersPage() {
                               {!isSelf ? (
                                 <button
                                   type="button"
-                                  className="text-sm font-medium text-ink hover:underline"
+                                  className={`text-sm font-medium hover:underline ${
+                                    user.disabledAt ? 'text-ink' : 'text-danger'
+                                  }`}
                                   onClick={() => {
                                     setStatusError(null);
                                     setStatusReason('');
@@ -272,7 +281,7 @@ export function AdminUsersPage() {
                                 >
                                   {user.disabledAt
                                     ? t('admin.users.reactivate')
-                                    : t('admin.users.suspend')}
+                                    : t('admin.users.delete')}
                                 </button>
                               ) : null}
                             </div>
@@ -384,6 +393,36 @@ export function AdminUsersPage() {
             <option value="USER">{t('admin.roles.user')}</option>
             <option value="SUPER_ADMIN">{t('admin.roles.superAdmin')}</option>
           </Select>
+          <Select
+            id="admin-create-thesis-role"
+            label={t('admin.users.createThesisRole')}
+            hint={t('admin.users.createThesisRoleHelp')}
+            value={createForm.thesisRole}
+            onChange={(event) =>
+              setCreateForm((c) => ({
+                ...c,
+                thesisRole: event.target.value as 'NONE' | 'DOCTORAL_STUDENT' | 'SUPERVISOR',
+              }))
+            }
+          >
+            <option value="NONE">{t('admin.users.thesisRoleNone')}</option>
+            <option value="DOCTORAL_STUDENT">{t('admin.roles.doctoral')}</option>
+            <option value="SUPERVISOR">{t('admin.roles.supervisor')}</option>
+          </Select>
+          {createForm.thesisRole === 'DOCTORAL_STUDENT' ? (
+            <Input
+              id="admin-create-thesis-title"
+              label={t('admin.users.createThesisTitle')}
+              hint={t('admin.users.createThesisTitleHelp')}
+              value={createForm.thesisTitle}
+              onChange={(event) =>
+                setCreateForm((c) => ({ ...c, thesisTitle: event.target.value }))
+              }
+            />
+          ) : null}
+          {createForm.thesisRole === 'SUPERVISOR' ? (
+            <p className="text-sm text-muted">{t('admin.users.createSupervisorHelp')}</p>
+          ) : null}
           <label className="flex items-center gap-2 text-sm text-ink">
             <input
               type="checkbox"
@@ -418,7 +457,7 @@ export function AdminUsersPage() {
       <Modal
         open={Boolean(statusUser)}
         title={
-          statusUser?.disabled ? t('admin.users.reactivateTitle') : t('admin.users.suspendTitle')
+          statusUser?.disabled ? t('admin.users.reactivateTitle') : t('admin.users.deleteTitle')
         }
         closeLabel={t('common.close')}
         onClose={() => {
@@ -429,7 +468,7 @@ export function AdminUsersPage() {
           <p className="text-sm text-muted">
             {statusUser?.disabled
               ? t('admin.users.reactivateConfirm')
-              : t('admin.users.suspendConfirm')}
+              : t('admin.users.deleteConfirm')}
             {statusUser ? ` (${statusUser.name})` : null}
           </p>
           <Input
@@ -461,7 +500,7 @@ export function AdminUsersPage() {
               disabled={suspend.isPending || reactivate.isPending}
               onClick={() => void submitStatus()}
             >
-              {statusUser?.disabled ? t('admin.users.reactivate') : t('admin.users.suspend')}
+              {statusUser?.disabled ? t('admin.users.reactivate') : t('admin.users.delete')}
             </Button>
           </div>
         </div>

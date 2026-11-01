@@ -391,6 +391,8 @@ export class AdminService {
     }
 
     const displayName = `${body.givenName} ${body.familyName}`.slice(0, 160);
+    const institution = body.institution?.trim() ? body.institution.trim() : null;
+    const thesisRole = body.thesisRole ?? 'NONE';
     try {
       const created = await this.prisma.$transaction(async (tx) => {
         const user = await tx.user.create({
@@ -404,7 +406,7 @@ export class AdminService {
                 givenName: body.givenName,
                 familyName: body.familyName,
                 displayName,
-                institution: body.institution?.trim() ? body.institution.trim() : null,
+                institution,
               },
             },
             trial: {
@@ -416,6 +418,31 @@ export class AdminService {
             },
           },
         });
+
+        let thesisId: string | null = null;
+        if (thesisRole === 'DOCTORAL_STUDENT') {
+          const title = body.thesisTitle?.trim() || `Thesis — ${displayName}`.slice(0, 300);
+          const thesis = await tx.thesis.create({
+            data: {
+              title,
+              institution,
+              memberships: {
+                create: { userId: user.id, role: 'DOCTORAL_STUDENT' },
+              },
+            },
+          });
+          thesisId = thesis.id;
+          await this.audit.record(tx, {
+            actorId,
+            thesisId: thesis.id,
+            action: 'thesis.create',
+            entityType: 'thesis',
+            entityId: thesis.id,
+            requestId,
+            metadata: { source: 'admin.user_create' },
+          });
+        }
+
         await this.audit.record(tx, {
           actorId,
           action: 'admin.user_create',
@@ -425,6 +452,8 @@ export class AdminService {
           metadata: {
             email: body.email,
             platformRole: body.platformRole,
+            thesisRole,
+            thesisId,
             markEmailVerified: body.markEmailVerified,
           },
         });

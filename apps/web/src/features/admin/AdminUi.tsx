@@ -6,14 +6,59 @@ export type AdminTone = 'brand' | 'ok' | 'warn' | 'danger' | 'teal' | 'violet' |
 
 export type AdminTrendPoint = { date: string; count: number };
 
-const TONE: Record<AdminTone, { bar: string; deltaUp: string; deltaDown: string }> = {
-  brand: { bar: '#2463c5', deltaUp: 'text-ok', deltaDown: 'text-danger' },
-  ok: { bar: '#167448', deltaUp: 'text-ok', deltaDown: 'text-danger' },
-  warn: { bar: '#b85c12', deltaUp: 'text-ok', deltaDown: 'text-danger' },
-  danger: { bar: '#c72e3a', deltaUp: 'text-ok', deltaDown: 'text-danger' },
-  teal: { bar: '#0f766e', deltaUp: 'text-ok', deltaDown: 'text-danger' },
-  violet: { bar: '#6650b8', deltaUp: 'text-ok', deltaDown: 'text-danger' },
-  muted: { bar: '#8a8a93', deltaUp: 'text-ok', deltaDown: 'text-danger' },
+const TONE: Record<
+  AdminTone,
+  { bar: string; soft: string; ink: string; deltaUp: string; deltaDown: string }
+> = {
+  brand: {
+    bar: '#2463c5',
+    soft: 'bg-brand-soft text-brand',
+    ink: 'text-brand',
+    deltaUp: 'text-ok',
+    deltaDown: 'text-danger',
+  },
+  ok: {
+    bar: '#167448',
+    soft: 'bg-ok-soft text-ok',
+    ink: 'text-ok',
+    deltaUp: 'text-ok',
+    deltaDown: 'text-danger',
+  },
+  warn: {
+    bar: '#b85c12',
+    soft: 'bg-warn-soft text-warn',
+    ink: 'text-warn',
+    deltaUp: 'text-ok',
+    deltaDown: 'text-danger',
+  },
+  danger: {
+    bar: '#c72e3a',
+    soft: 'bg-danger-soft text-danger',
+    ink: 'text-danger',
+    deltaUp: 'text-ok',
+    deltaDown: 'text-danger',
+  },
+  teal: {
+    bar: '#0f766e',
+    soft: 'bg-teal-soft text-teal',
+    ink: 'text-teal',
+    deltaUp: 'text-ok',
+    deltaDown: 'text-danger',
+  },
+  violet: {
+    bar: '#6650b8',
+    soft: 'bg-violet-soft text-violet',
+    ink: 'text-violet',
+    deltaUp: 'text-ok',
+    deltaDown: 'text-danger',
+  },
+  muted: {
+    bar: '#8a8a93',
+    soft: 'bg-canvas text-muted',
+    ink: 'text-muted',
+    deltaUp: 'text-ok',
+    deltaDown: 'text-danger',
+  },
 };
 
 export type AdminDelta = {
@@ -64,7 +109,7 @@ export function AdminPageHeader({
   return (
     <header className="flex flex-wrap items-end justify-between gap-4">
       <div>
-        <h1 className="text-xl font-semibold tracking-tight text-ink">{title}</h1>
+        <h1 className="text-2xl font-semibold tracking-tight text-ink">{title}</h1>
         <p className="mt-1 max-w-2xl text-sm text-muted">{subtitle}</p>
       </div>
       {action}
@@ -104,52 +149,53 @@ export function AdminKpi({
     share && share.total > 0 ? Math.min(100, (share.part / share.total) * 100) : null;
 
   return (
-    <div className="group relative overflow-hidden rounded-sm border border-[#d0d0d0] bg-white shadow-[0_1px_3px_rgba(0,0,0,0.08)] transition duration-150 hover:z-10 hover:shadow-[0_4px_16px_rgba(0,0,0,0.12)]">
-      <div className="h-[3px] w-full" style={{ background: palette.bar }} />
-      <div className="px-4 pt-3 pb-3">
-        <div className="flex items-start justify-between gap-2">
-          <dt className="min-w-0 text-[11px] leading-4 font-semibold tracking-[0.04em] text-[#605e5c] uppercase">
-            {label}
-          </dt>
-          {icon ? <span className="shrink-0 text-[#605e5c]">{icon}</span> : null}
-        </div>
-        <dd className="mt-2 text-[2.15rem] leading-none font-semibold tabular-nums text-[#252423]">
-          {display}
-        </dd>
-        <div className="mt-2 flex min-h-5 flex-wrap items-center gap-x-2 gap-y-1">
-          {computedDelta ? (
-            <p
-              className={`text-[12px] font-semibold tabular-nums ${good ? 'text-[#107c10]' : 'text-[#d13438]'}`}
-            >
-              {computedDelta.absolute > 0 ? '▲ +' : computedDelta.absolute < 0 ? '▼ ' : '= '}
-              {computedDelta.absolute === 0
-                ? '0'
-                : Math.abs(computedDelta.absolute).toLocaleString()}
-              {computedDelta.percent != null ? ` (${formatSignedPercent(computedDelta)})` : ''}
-              {computedDelta.label ? (
-                <span className="ml-1 font-medium text-[#605e5c]"> {computedDelta.label}</span>
-              ) : null}
-            </p>
-          ) : null}
-          {share ? (
-            <p className="text-[12px] tabular-nums text-[#605e5c]">
-              {share.part.toLocaleString()} / {share.total.toLocaleString()}
-              {sharePercent != null ? ` · ${sharePercent.toFixed(0)}%` : ''}
-              {share.label ? ` ${share.label}` : ''}
-            </p>
-          ) : null}
-          {hint ? <p className="text-[12px] text-[#605e5c]">{hint}</p> : null}
-        </div>
-        {sharePercent != null ? (
-          <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-[#f3f2f1]">
-            <div
-              className="h-full rounded-full transition-[width] duration-300"
-              style={{ width: `${sharePercent}%`, background: palette.bar }}
-            />
-          </div>
+    <div className="group relative overflow-hidden rounded-2xl border border-line bg-surface p-4 shadow-[0_8px_24px_rgba(15,23,42,0.04)] transition duration-200 hover:-translate-y-0.5 hover:border-brand/25 hover:shadow-[0_14px_32px_rgba(36,99,197,0.1)]">
+      <div className="flex items-start justify-between gap-3">
+        <dt className="min-w-0 text-[11px] leading-4 font-semibold tracking-[0.06em] text-muted uppercase">
+          {label}
+        </dt>
+        {icon ? (
+          <span
+            className={`inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${palette.soft}`}
+          >
+            {icon}
+          </span>
         ) : null}
-        {trend && trend.length > 1 ? <MiniSpark points={trend} color={palette.bar} /> : null}
       </div>
+      <dd className="mt-3 text-[2rem] leading-none font-semibold tracking-tight tabular-nums text-ink">
+        {display}
+      </dd>
+      <div className="mt-2.5 flex min-h-5 flex-wrap items-center gap-x-2 gap-y-1">
+        {computedDelta ? (
+          <p
+            className={`text-xs font-semibold tabular-nums ${good ? palette.deltaUp : palette.deltaDown}`}
+          >
+            {computedDelta.absolute > 0 ? '▲ +' : computedDelta.absolute < 0 ? '▼ ' : '= '}
+            {computedDelta.absolute === 0 ? '0' : Math.abs(computedDelta.absolute).toLocaleString()}
+            {computedDelta.percent != null ? ` (${formatSignedPercent(computedDelta)})` : ''}
+            {computedDelta.label ? (
+              <span className="ml-1 font-medium text-muted"> {computedDelta.label}</span>
+            ) : null}
+          </p>
+        ) : null}
+        {share ? (
+          <p className="text-xs tabular-nums text-muted">
+            {share.part.toLocaleString()} / {share.total.toLocaleString()}
+            {sharePercent != null ? ` · ${sharePercent.toFixed(0)}%` : ''}
+            {share.label ? ` ${share.label}` : ''}
+          </p>
+        ) : null}
+        {hint ? <p className="text-xs text-muted">{hint}</p> : null}
+      </div>
+      {sharePercent != null ? (
+        <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-canvas">
+          <div
+            className="h-full rounded-full transition-[width] duration-300"
+            style={{ width: `${sharePercent}%`, background: palette.bar }}
+          />
+        </div>
+      ) : null}
+      {trend && trend.length > 1 ? <MiniSpark points={trend} color={palette.bar} /> : null}
     </div>
   );
 }
@@ -174,9 +220,15 @@ function MiniSpark({ points, color }: { points: AdminTrendPoint[]; color: string
   const lastX = (points.length - 1) * step;
   const lastY = last ? height - (last.count / max) * (height - 2) - 1 : height;
   return (
-    <svg viewBox={`0 0 ${width} ${height}`} className="mt-2 h-7 w-full" aria-hidden="true">
-      <path d={coords.join(' ')} fill="none" stroke={color} strokeWidth="1.6" />
-      <circle cx={lastX} cy={lastY} r="2" fill={color} />
+    <svg viewBox={`0 0 ${width} ${height}`} className="mt-3 h-7 w-full" aria-hidden="true">
+      <path
+        d={coords.join(' ')}
+        fill="none"
+        stroke={color}
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
+      <circle cx={lastX} cy={lastY} r="2.2" fill={color} />
     </svg>
   );
 }
@@ -185,21 +237,24 @@ export function AdminPanel({
   title,
   children,
   className = '',
+  action,
 }: {
   title?: string;
   children: ReactNode;
   className?: string;
+  action?: ReactNode;
 }) {
   return (
     <section
-      className={`overflow-hidden rounded-sm border border-[#d0d0d0] bg-white shadow-[0_1px_3px_rgba(0,0,0,0.08)] ${className}`}
+      className={`overflow-hidden rounded-2xl border border-line bg-surface shadow-[0_8px_24px_rgba(15,23,42,0.04)] ${className}`}
     >
       {title ? (
-        <h2 className="border-b border-[#eee] px-4 py-2.5 text-[13px] font-semibold text-[#252423]">
-          {title}
-        </h2>
+        <div className="flex items-center justify-between gap-3 border-b border-line/80 px-5 py-3.5">
+          <h2 className="text-sm font-semibold tracking-tight text-ink">{title}</h2>
+          {action}
+        </div>
       ) : null}
-      <div className="p-4">{children}</div>
+      <div className="p-5">{children}</div>
     </section>
   );
 }
@@ -222,7 +277,7 @@ export function AdminBadge({
   };
   return (
     <span
-      className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold tracking-wide ${styles[tone]}`}
+      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-semibold tracking-wide ${styles[tone]}`}
     >
       {children}
     </span>
@@ -245,7 +300,7 @@ export function AdminState({
         {[0, 1, 2, 3, 4, 5].map((item) => (
           <div
             key={item}
-            className="h-[7.5rem] animate-pulse rounded-sm border border-[#d0d0d0] bg-white"
+            className="h-[8.5rem] animate-pulse rounded-2xl border border-line bg-surface"
           />
         ))}
         <p className="sr-only">{t('common.loading')}</p>

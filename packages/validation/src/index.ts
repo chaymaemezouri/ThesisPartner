@@ -1956,6 +1956,8 @@ export const adminReactivateBodySchema = z
   })
   .strict();
 
+export const adminCreateThesisRoleSchema = z.enum(['NONE', 'DOCTORAL_STUDENT', 'SUPERVISOR']);
+
 export const adminCreateUserBodySchema = z
   .object({
     email: emailSchema,
@@ -1964,6 +1966,9 @@ export const adminCreateUserBodySchema = z
     familyName: personNameSchema,
     institution: z.string().trim().max(200).optional(),
     platformRole: platformRoleSchema.default('USER'),
+    /** Thesis membership intent. Not a platform role. Doctoral creates a thesis; supervisor waits for invitations. */
+    thesisRole: adminCreateThesisRoleSchema.default('NONE'),
+    thesisTitle: z.string().trim().min(1).max(300).optional(),
     markEmailVerified: z.boolean().default(true),
   })
   .strict();
@@ -2374,5 +2379,31 @@ export const adminRefundBodySchema = z
   .object({
     reason: boundedTextSchema(500),
     amountMinor: z.number().int().positive().optional(),
+  })
+  .strict();
+
+export const onboardingStepStatusSchema = z.enum(['done', 'todo', 'blocked', 'pending']);
+
+export const onboardingStepSchema = z
+  .object({
+    id: boundedTextSchema(40),
+    status: onboardingStepStatusSchema,
+    href: z.string().max(200).nullable(),
+  })
+  .strict();
+
+export const onboardingStatusSchema = z
+  .object({
+    persona: z.enum(['DOCTORAL_STUDENT', 'SUPERVISOR', 'BOTH', 'NONE']),
+    emailVerified: z.boolean(),
+    welcomeDismissed: z.boolean(),
+    guideCompleted: z.boolean(),
+    steps: z.array(onboardingStepSchema).max(20),
+  })
+  .strict();
+
+export const onboardingActionBodySchema = z
+  .object({
+    action: z.enum(['dismiss_welcome', 'complete_guide', 'reopen_guide']),
   })
   .strict();

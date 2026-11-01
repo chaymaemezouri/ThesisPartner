@@ -1,5 +1,7 @@
 import { emailSchema } from '@thesispartner/validation';
 
+const AUTH_NEXT_KEY = 'tp_auth_next';
+
 /** Keep authentication return paths inside the app, including after URL normalization. */
 export function safeAuthDestination(value: string | null): string {
   if (!value?.startsWith('/') || value.startsWith('//') || value.includes('\\')) return '/';
@@ -11,6 +13,30 @@ export function safeAuthDestination(value: string | null): string {
   } catch {
     return '/';
   }
+}
+
+/** Persist post-verification destination across the email-link round-trip (same browser). */
+export function rememberAuthDestination(next: string): void {
+  const safe = safeAuthDestination(next);
+  try {
+    if (safe === '/') sessionStorage.removeItem(AUTH_NEXT_KEY);
+    else sessionStorage.setItem(AUTH_NEXT_KEY, safe);
+  } catch {
+    /* Ignore private-mode / storage failures. */
+  }
+}
+
+export function consumeAuthDestination(fallback: string | null = null): string {
+  let stored: string | null = null;
+  try {
+    stored = sessionStorage.getItem(AUTH_NEXT_KEY);
+    sessionStorage.removeItem(AUTH_NEXT_KEY);
+  } catch {
+    stored = null;
+  }
+  return safeAuthDestination(fallback) !== '/'
+    ? safeAuthDestination(fallback)
+    : safeAuthDestination(stored);
 }
 
 export function authNavigation(params: URLSearchParams) {

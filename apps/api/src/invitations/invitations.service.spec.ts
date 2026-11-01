@@ -182,7 +182,7 @@ describe('InvitationsService', () => {
     });
 
     await expect(service.accept(inviteeId, token)).rejects.toMatchObject({
-      appCode: 'FORBIDDEN',
+      appCode: 'EMAIL_NOT_VERIFIED',
     });
     expect(prisma.thesisMembership.create).not.toHaveBeenCalled();
   });

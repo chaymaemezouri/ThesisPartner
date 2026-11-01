@@ -217,7 +217,7 @@ export function AdminUserDetailPage() {
                     setConfirmOpen(true);
                   }}
                 >
-                  {isDisabled ? t('admin.users.reactivate') : t('admin.users.suspend')}
+                  {isDisabled ? t('admin.users.reactivate') : t('admin.users.delete')}
                 </Button>
               )}
             </div>
@@ -299,7 +299,7 @@ export function AdminUserDetailPage() {
 
       <Modal
         open={confirmOpen}
-        title={isDisabled ? t('admin.users.reactivateTitle') : t('admin.users.suspendTitle')}
+        title={isDisabled ? t('admin.users.reactivateTitle') : t('admin.users.deleteTitle')}
         closeLabel={t('common.close')}
         onClose={() => {
           if (!pending) setConfirmOpen(false);
@@ -307,7 +307,7 @@ export function AdminUserDetailPage() {
       >
         <div className="space-y-4">
           <p className="text-sm text-muted">
-            {isDisabled ? t('admin.users.reactivateConfirm') : t('admin.users.suspendConfirm')}
+            {isDisabled ? t('admin.users.reactivateConfirm') : t('admin.users.deleteConfirm')}
           </p>
           <Textarea
             id="admin-suspend-reason"

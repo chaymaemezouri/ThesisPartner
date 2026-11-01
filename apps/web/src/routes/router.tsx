@@ -2,11 +2,14 @@ import { lazy, Suspense, type ReactNode } from 'react';
 import { Navigate, Route, Routes, useParams } from 'react-router-dom';
 import { Skeleton } from '@thesispartner/ui';
 import { RequireAuth } from '../layouts/RequireAuth';
+import { RequireEmailVerified } from '../layouts/RequireEmailVerified';
 import { AppShell } from '../layouts/AppShell';
 import { ForgotPasswordPage, ResetPasswordPage } from '../pages/auth/RecoveryPages';
 import { LoginPage } from '../pages/auth/LoginPage';
 import { RegisterPage } from '../pages/auth/RegisterPage';
+import { PendingEmailVerificationPage } from '../pages/auth/PendingEmailVerificationPage';
 import { VerifyEmailPage } from '../pages/auth/VerifyEmailPage';
+import { OnboardingGuidePage } from '../features/onboarding/OnboardingGuidePage';
 import {
   DoctoralObjectiveDetailPage,
   DoctoralObjectivesPage,
@@ -152,94 +155,98 @@ export function AppRoutes() {
       <Route path="/verifier-email" element={<VerifyEmailPage />} />
       <Route path="/invitation" element={<InvitationRespondPage />} />
       <Route element={<RequireAuth />}>
-        <Route element={<RequireSuperAdmin />}>
-          <Route path="admin" element={<AdminShell />}>
-            <Route index element={<AdminDashboardPage />} />
-            <Route path="analytics" element={<AdminAnalyticsPage />} />
-            <Route path="utilisateurs" element={<AdminUsersPage />} />
-            <Route path="utilisateurs/:userId" element={<AdminUserDetailPage />} />
-            <Route path="invitations" element={<AdminInvitationsPage />} />
-            <Route path="theses/:thesisId" element={<AdminThesisRelationsPage />} />
-            <Route path="audit" element={<AdminAuditPage />} />
-            <Route path="system" element={<AdminSystemPage />} />
-            <Route path="abonnements" element={<AdminBillingPage />} />
-            <Route path="plans" element={<AdminPlansPage />} />
-            <Route path="paiements" element={<AdminPaymentsPage />} />
-            <Route path="factures" element={<AdminInvoicesPage />} />
+        <Route path="/confirmation-email" element={<PendingEmailVerificationPage />} />
+        <Route element={<RequireEmailVerified />}>
+          <Route element={<RequireSuperAdmin />}>
+            <Route path="admin" element={<AdminShell />}>
+              <Route index element={<AdminDashboardPage />} />
+              <Route path="analytics" element={<AdminAnalyticsPage />} />
+              <Route path="utilisateurs" element={<AdminUsersPage />} />
+              <Route path="utilisateurs/:userId" element={<AdminUserDetailPage />} />
+              <Route path="invitations" element={<AdminInvitationsPage />} />
+              <Route path="theses/:thesisId" element={<AdminThesisRelationsPage />} />
+              <Route path="audit" element={<AdminAuditPage />} />
+              <Route path="system" element={<AdminSystemPage />} />
+              <Route path="abonnements" element={<AdminBillingPage />} />
+              <Route path="plans" element={<AdminPlansPage />} />
+              <Route path="paiements" element={<AdminPaymentsPage />} />
+              <Route path="factures" element={<AdminInvoicesPage />} />
+            </Route>
           </Route>
-        </Route>
-        <Route element={<AppShell />}>
-          <Route index element={<DashboardPage />} />
-          <Route path="these" element={<Navigate to="/profil" replace />} />
-          <Route path="profil" element={<ProfilePage />} />
-          <Route path="parametres" element={<SettingsPage />} />
-          <Route path="abonnement" element={<BillingPage />} />
-          <Route path="paiement/simulation/:sessionId" element={<MockCheckoutPage />} />
-          <Route path="invitations" element={<InvitationsInboxPage />} />
-          <Route path="objectifs" element={<DoctoralObjectivesPage />} />
-          <Route path="objectifs/:objectiveId" element={<DoctoralObjectiveDetailPage />} />
-          <Route path="livrables" element={<DeliverablesEntry />} />
-          <Route
-            path="livrables/:deliverableId"
-            element={
-              <Deferred>
-                <DoctoralDeliverableDetailPage />
-              </Deferred>
-            }
-          />
-          <Route path="encadrement" element={<SupervisionPage />} />
-          <Route path="encadrement/:thesisId" element={<SupervisorDossierPage />} />
-          <Route path="encadrement/:thesisId/these" element={<StudentThesisRedirect />} />
-          <Route path="encadrement/:thesisId/profil" element={<StudentProfilePage />} />
-          <Route
-            path="encadrement/:thesisId/livrables"
-            element={
-              <Deferred>
-                <SupervisorDeliverablesPage />
-              </Deferred>
-            }
-          />
-          <Route
-            path="encadrement/:thesisId/livrables/:deliverableId"
-            element={
-              <Deferred>
-                <SupervisorDeliverableDetailPage />
-              </Deferred>
-            }
-          />
-          <Route path="encadrement/:thesisId/objectifs" element={<SupervisorObjectivesPage />} />
-          <Route
-            path="encadrement/:thesisId/objectifs/:objectiveId"
-            element={<SupervisorObjectiveDetailPage />}
-          />
-          <Route path="portfolio" element={<PortfolioPage />} />
-          <Route path="ressources" element={<ResourcesPage />} />
-          <Route path="radar" element={<ResearchAiPage />} />
-          <Route path="suivi" element={<SupervisorDeskPage />} />
-          <Route path="messagerie" element={<MessagesPage />} />
-          <Route path="messagerie/:conversationId" element={<MessagesPage />} />
-          <Route path="reunions" element={<MeetingsEntry />} />
-          <Route path="reunions/:meetingId" element={<DoctoralMeetingDetailPage />} />
-          <Route path="encadrement/:thesisId/reunions" element={<SupervisorMeetingsPage />} />
-          <Route
-            path="encadrement/:thesisId/reunions/:meetingId"
-            element={<SupervisorMeetingDetailPage />}
-          />
-          <Route path="remarques" element={<DoctoralRemarksPage />} />
-          <Route path="remarques/:remarkId" element={<DoctoralRemarkDetailPage />} />
-          <Route path="encadrement/:thesisId/remarques" element={<SupervisorRemarksPage />} />
-          <Route
-            path="encadrement/:thesisId/remarques/:remarkId"
-            element={<SupervisorRemarkDetailPage />}
-          />
-          {modules.map((item) => (
+          <Route element={<AppShell />}>
+            <Route index element={<DashboardPage />} />
+            <Route path="these" element={<Navigate to="/profil" replace />} />
+            <Route path="profil" element={<ProfilePage />} />
+            <Route path="parametres" element={<SettingsPage />} />
+            <Route path="guide" element={<OnboardingGuidePage />} />
+            <Route path="abonnement" element={<BillingPage />} />
+            <Route path="paiement/simulation/:sessionId" element={<MockCheckoutPage />} />
+            <Route path="invitations" element={<InvitationsInboxPage />} />
+            <Route path="objectifs" element={<DoctoralObjectivesPage />} />
+            <Route path="objectifs/:objectiveId" element={<DoctoralObjectiveDetailPage />} />
+            <Route path="livrables" element={<DeliverablesEntry />} />
             <Route
-              key={item.to}
-              path={item.to.slice(1)}
-              element={<ModulePage title={t(item.labelKey)} />}
+              path="livrables/:deliverableId"
+              element={
+                <Deferred>
+                  <DoctoralDeliverableDetailPage />
+                </Deferred>
+              }
             />
-          ))}
-          <Route path="*" element={<NotFoundPage />} />
+            <Route path="encadrement" element={<SupervisionPage />} />
+            <Route path="encadrement/:thesisId" element={<SupervisorDossierPage />} />
+            <Route path="encadrement/:thesisId/these" element={<StudentThesisRedirect />} />
+            <Route path="encadrement/:thesisId/profil" element={<StudentProfilePage />} />
+            <Route
+              path="encadrement/:thesisId/livrables"
+              element={
+                <Deferred>
+                  <SupervisorDeliverablesPage />
+                </Deferred>
+              }
+            />
+            <Route
+              path="encadrement/:thesisId/livrables/:deliverableId"
+              element={
+                <Deferred>
+                  <SupervisorDeliverableDetailPage />
+                </Deferred>
+              }
+            />
+            <Route path="encadrement/:thesisId/objectifs" element={<SupervisorObjectivesPage />} />
+            <Route
+              path="encadrement/:thesisId/objectifs/:objectiveId"
+              element={<SupervisorObjectiveDetailPage />}
+            />
+            <Route path="portfolio" element={<PortfolioPage />} />
+            <Route path="ressources" element={<ResourcesPage />} />
+            <Route path="radar" element={<ResearchAiPage />} />
+            <Route path="suivi" element={<SupervisorDeskPage />} />
+            <Route path="messagerie" element={<MessagesPage />} />
+            <Route path="messagerie/:conversationId" element={<MessagesPage />} />
+            <Route path="reunions" element={<MeetingsEntry />} />
+            <Route path="reunions/:meetingId" element={<DoctoralMeetingDetailPage />} />
+            <Route path="encadrement/:thesisId/reunions" element={<SupervisorMeetingsPage />} />
+            <Route
+              path="encadrement/:thesisId/reunions/:meetingId"
+              element={<SupervisorMeetingDetailPage />}
+            />
+            <Route path="remarques" element={<DoctoralRemarksPage />} />
+            <Route path="remarques/:remarkId" element={<DoctoralRemarkDetailPage />} />
+            <Route path="encadrement/:thesisId/remarques" element={<SupervisorRemarksPage />} />
+            <Route
+              path="encadrement/:thesisId/remarques/:remarkId"
+              element={<SupervisorRemarkDetailPage />}
+            />
+            {modules.map((item) => (
+              <Route
+                key={item.to}
+                path={item.to.slice(1)}
+                element={<ModulePage title={t(item.labelKey)} />}
+              />
+            ))}
+            <Route path="*" element={<NotFoundPage />} />
+          </Route>
         </Route>
       </Route>
     </Routes>

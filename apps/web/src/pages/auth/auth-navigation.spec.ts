@@ -1,7 +1,20 @@
-import { describe, expect, it } from 'vitest';
-import { authNavigation, safeAuthDestination } from './auth-navigation';
+import { afterEach, describe, expect, it } from 'vitest';
+import {
+  authNavigation,
+  consumeAuthDestination,
+  rememberAuthDestination,
+  safeAuthDestination,
+} from './auth-navigation';
 
 describe('authentication return destination', () => {
+  afterEach(() => {
+    try {
+      sessionStorage.clear();
+    } catch {
+      /* ignore */
+    }
+  });
+
   it.each([
     null,
     '',
@@ -38,5 +51,16 @@ describe('authentication return destination', () => {
     expect(
       authNavigation(new URLSearchParams({ email: 'invalid', next: '//example.com' })),
     ).toEqual({ email: '', next: '/', loginUrl: '/connexion', registerUrl: '/inscription' });
+  });
+
+  it('remembers the invitation path across the email verification round-trip', () => {
+    rememberAuthDestination('/invitation?token=abc');
+    expect(consumeAuthDestination(null)).toBe('/invitation?token=abc');
+    expect(consumeAuthDestination(null)).toBe('/');
+  });
+
+  it('prefers an explicit safe next query over stored destination', () => {
+    rememberAuthDestination('/invitation?token=stored');
+    expect(consumeAuthDestination('/profil')).toBe('/profil');
   });
 });

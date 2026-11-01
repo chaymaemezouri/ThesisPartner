@@ -73,6 +73,10 @@ export function LoginPage() {
                   );
                   queryClient.setQueryData(['me'], body);
                   queryClient.removeQueries({ queryKey: ['supervision'] });
+                  if (!body.user.emailVerified) {
+                    await navigate(`/confirmation-email?next=${encodeURIComponent(next)}`);
+                    return;
+                  }
                   await navigate(next);
                 } catch (error) {
                   applyFieldErrors(error, form.setError);

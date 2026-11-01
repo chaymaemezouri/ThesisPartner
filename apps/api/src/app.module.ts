@@ -33,6 +33,7 @@ import { RedisModule } from './infrastructure/redis/redis.module';
 import { StorageModule } from './storage/storage.module';
 import { ThesesModule } from './theses/theses.module';
 import { BillingModule } from './billing/billing.module';
+import { OnboardingModule } from './onboarding/onboarding.module';
 
 @Module({
   imports: [
@@ -46,6 +47,7 @@ import { BillingModule } from './billing/billing.module';
     AuthModule,
     AdminModule,
     BillingModule,
+    OnboardingModule,
     ThesisAccessModule,
     ThesesModule,
     InvitationsModule,

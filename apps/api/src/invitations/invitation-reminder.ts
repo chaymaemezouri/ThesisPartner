@@ -17,11 +17,13 @@ export class InvitationReminder implements OnModuleInit, OnModuleDestroy {
 
   onModuleInit(): void {
     if (this.env.NODE_ENV === 'test') return;
-    void this.tick();
     this.timer = setInterval(() => {
       void this.tick();
     }, REMINDER_INTERVAL_MS);
     this.timer.unref();
+    setTimeout(() => {
+      void this.tick();
+    }, 15_000).unref();
   }
 
   onModuleDestroy(): void {

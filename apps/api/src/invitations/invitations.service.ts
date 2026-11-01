@@ -246,7 +246,7 @@ export class InvitationsService {
     if (!actor.emailVerifiedAt) {
       throw new AppException(
         403,
-        'FORBIDDEN',
+        'EMAIL_NOT_VERIFIED',
         'Verify your email address before accepting this invitation',
       );
     }
@@ -650,6 +650,7 @@ export class InvitationsService {
       actorId,
       thesisId,
       allowedRoles: MEMBERSHIP_ROLES,
+      requireVerified: true,
     });
     const actor = await this.prisma.thesisMembership.findUnique({
       where: { thesisId_userId: { thesisId, userId: actorId } },
