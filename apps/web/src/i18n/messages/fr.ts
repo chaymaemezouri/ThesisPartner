@@ -167,92 +167,6 @@ export const fr: Messages = {
     resendVerificationFailed: 'Envoi impossible. Réessayez dans une minute.',
     refreshVerification: 'J’ai déjà confirmé',
   },
-  onboarding: {
-    checklistTitle: 'Premiers pas',
-    checklistSubtitle:
-      'Complétez ces étapes pour configurer votre espace. La progression suit vos actions réelles.',
-    openGuide: 'Ouvrir le guide',
-    reviewGuide: 'Revoir le guide de démarrage',
-    guidePageTitle: 'Guide de démarrage',
-    guidePageSubtitle: 'Checklist interactive selon votre compte et votre rôle.',
-    go: 'Y aller',
-    finish: 'Terminer',
-    skip: 'Passer pour l’instant',
-    next: 'Suivant',
-    previous: 'Précédent',
-    inviteBannerTodo: 'Invitez votre encadrant par e-mail pour démarrer la co-supervision.',
-    inviteBannerPending: 'Invitation en attente — en attente de l’acceptation de votre encadrant.',
-    inviteBannerDone: 'Encadrant associé à votre thèse.',
-    inviteCta: 'Inviter l’encadrant',
-    emptySupervisorTitle: 'Aucun doctorant associé',
-    emptySupervisorBody:
-      'Acceptez une invitation d’un doctorant pour accéder à son espace de thèse.',
-    welcomeDoctoralTitle: 'Bienvenue sur Thesis Flow',
-    welcomeDoctoralBody:
-      'Organisez votre thèse : essai, objectifs, livrables, réunions et suivi avec votre encadrant.',
-    welcomeSupervisorTitle: 'Bienvenue, encadrant',
-    welcomeSupervisorBody:
-      'Suivez vos doctorants : invitations, objectifs, livrables, réunions et remarques.',
-    welcomeBothTitle: 'Bienvenue sur Thesis Flow',
-    welcomeBothBody:
-      'Vous avez les rôles doctorant et encadrant. Utilisez la checklist pour finaliser chaque parcours.',
-    status: {
-      done: 'Terminé',
-      todo: 'À faire',
-      blocked: 'Verrouillé',
-      pending: 'En attente',
-    },
-    steps: {
-      email: {
-        title: 'Adresse e-mail vérifiée',
-        help: 'Obligatoire avant d’accéder aux fonctionnalités protégées.',
-      },
-      trial: {
-        title: 'Activer l’essai gratuit de 30 jours',
-        help: 'Obligatoire avant de créer votre thèse.',
-      },
-      thesis: {
-        title: 'Créer sa thèse',
-        help: 'Décrivez votre projet de recherche dans le profil.',
-      },
-      invite: {
-        title: 'Inviter son encadrant',
-        help: 'Facultatif mais recommandé — vous pouvez travailler seul selon votre abonnement.',
-      },
-      objectives: {
-        title: 'Définir ses premiers objectifs',
-        help: 'Découpez la recherche en buts clairs.',
-      },
-      explore: {
-        title: 'Découvrir livrables, réunions et documents',
-        help: 'Explorez les outils de suivi de progression.',
-      },
-      supervisor_email: {
-        title: 'Adresse e-mail vérifiée',
-        help: 'Obligatoire avant d’accepter une invitation.',
-      },
-      supervisor_invitation: {
-        title: 'Consulter ou accepter une invitation',
-        help: 'Ouvrez votre boîte d’invitations.',
-      },
-      supervisor_students: {
-        title: 'Découvrir Mes doctorants',
-        help: 'Ouvrez le bureau d’encadrement une fois un doctorant associé.',
-      },
-      supervisor_objectives: {
-        title: 'Consulter les objectifs',
-        help: 'Suivez les buts de recherche du doctorant.',
-      },
-      supervisor_deliverables: {
-        title: 'Évaluer les livrables',
-        help: 'Examinez les dépôts et demandez des corrections si besoin.',
-      },
-      supervisor_meetings: {
-        title: 'Gérer réunions et remarques',
-        help: 'Planifiez les échanges et laissez un retour structuré.',
-      },
-    },
-  },
   settings: {
     title: 'Paramètres',
     subtitle: 'Préférences de votre espace de travail.',
@@ -1628,7 +1542,7 @@ export const fr: Messages = {
     users: {
       title: 'Utilisateurs',
       subtitle:
-        'Créer des comptes (doctorant ou encadrant), modifier les profils, supprimer ou réactiver.',
+        'Créer des comptes (doctorant ou encadrant), modifier les profils, suspendre, supprimer ou réactiver.',
       searchPlaceholder: 'Nom ou e-mail',
       filterStatus: 'Statut',
       filterRole: 'Rôle dans une thèse',
@@ -1643,13 +1557,14 @@ export const fr: Messages = {
       colActions: 'Actions',
       statusActive: 'Actif',
       statusDisabled: 'Suspendu',
+      statusDeleted: 'Supprimé',
       pagination: 'Page {page} sur {totalPages} · {total} utilisateurs',
       prev: 'Précédent',
       next: 'Suivant',
       create: 'Créer un utilisateur',
       createTitle: 'Créer un utilisateur',
       createHelp:
-        'Crée un compte de connexion. Le rôle plateforme est global ; le rôle thèse est doctorant ou encadrant. La suppression est une suspension, pas un effacement définitif.',
+        'Crée un compte de connexion. Le rôle plateforme est global ; le rôle thèse est doctorant ou encadrant. Suspendre est réversible ; supprimer est une soft-suppression séparée.',
       createThesisRole: 'Rôle thèse',
       createThesisRoleHelp:
         'Doctorant : crée une thèse pour ce compte. Encadrant : compte prêt à accepter des invitations.',
@@ -1670,24 +1585,25 @@ export const fr: Messages = {
       profile: 'Profil',
       emailVerified: 'E-mail vérifié',
       disabledAt: 'Suspendu le',
+      deletedAt: 'Supprimé le',
       memberships: 'Relations d’encadrement',
       membershipsHelp:
         'Appartenances aux thèses uniquement — pas de livrables, documents ni messages.',
       noMemberships: 'Aucune appartenance à une thèse pour l’instant.',
       actions: 'Statut du compte',
       actionsHelp:
-        'La suspension bloque la connexion et révoque les sessions. Les actions sont journalisées.',
-      cannotSelfSuspend: 'Vous ne pouvez pas suspendre votre propre compte.',
+        'Suspendre bloque temporairement la connexion (réversible). Supprimer soft-retire le compte et libère l’e-mail (non réactivable). Les actions sont journalisées.',
+      cannotSelfSuspend: 'Vous ne pouvez pas suspendre ni supprimer votre propre compte.',
       suspend: 'Suspendre le compte',
-      delete: 'Supprimer',
+      delete: 'Supprimer le compte',
       reactivate: 'Réactiver le compte',
       suspendTitle: 'Suspendre ce compte ?',
       deleteTitle: 'Supprimer ce compte ?',
       reactivateTitle: 'Réactiver ce compte ?',
       suspendConfirm:
-        'La personne perdra l’accès immédiatement. Indiquez un motif pour le journal d’audit.',
+        'La personne perdra l’accès immédiatement. Vous pourrez réactiver plus tard. Indiquez un motif pour l’audit.',
       deleteConfirm:
-        'Le compte sera soft-supprimé (suspendu) : connexion bloquée et sessions révoquées. Il n’est pas effacé définitivement de la base.',
+        'Soft-suppression : connexion bloquée, sessions révoquées, e-mail libéré pour un nouveau compte. Non annulable via Réactiver.',
       reactivateConfirm: 'La personne pourra à nouveau se connecter.',
       reasonRequired: 'Motif (obligatoire)',
       reasonOptional: 'Motif (facultatif)',

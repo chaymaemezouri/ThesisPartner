@@ -61,7 +61,7 @@ export class SessionService {
       include: { user: { include: { profile: true } } },
     });
     if (!session || session.revokedAt || session.expiresAt.getTime() <= Date.now()) return null;
-    if (session.user.disabledAt || !session.user.profile) return null;
+    if (session.user.disabledAt || session.user.deletedAt || !session.user.profile) return null;
 
     return {
       userId: session.user.id,

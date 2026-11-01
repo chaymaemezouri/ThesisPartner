@@ -11,9 +11,17 @@ vi.mock('../features/supervision/SupervisorDashboard', () => ({
   SupervisorDashboard: () => <p>Supervisor dashboard</p>,
 }));
 
-function renderDashboard(cached?: { theses: { thesisId: string }[] }, staleTime = Infinity) {
+function renderDashboard(
+  cached?: { theses: { thesisId: string }[]; pendingSupervisorInvite?: boolean },
+  staleTime = Infinity,
+) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false, staleTime } } });
-  if (cached) client.setQueryData(['supervision', 'theses'], cached);
+  if (cached) {
+    client.setQueryData(['supervision', 'theses'], {
+      pendingSupervisorInvite: false,
+      ...cached,
+    });
+  }
   render(
     <QueryClientProvider client={client}>
       <LocaleProvider initialLocale="en">
@@ -49,8 +57,16 @@ describe('dashboard selection', () => {
   it.each([
     { theses: [], expected: 'Doctoral dashboard' },
     { theses: [{ thesisId: 'accepted-thesis' }], expected: 'Supervisor dashboard' },
-  ])('shows $expected after supervision is known', ({ theses, expected }) => {
-    renderDashboard({ theses });
-    expect(screen.getByText(expected)).toBeInTheDocument();
-  });
+    {
+      theses: [],
+      pendingSupervisorInvite: true,
+      expected: 'Supervisor dashboard',
+    },
+  ])(
+    'shows $expected after supervision is known',
+    ({ theses, pendingSupervisorInvite, expected }) => {
+      renderDashboard({ theses, pendingSupervisorInvite });
+      expect(screen.getByText(expected)).toBeInTheDocument();
+    },
+  );
 });

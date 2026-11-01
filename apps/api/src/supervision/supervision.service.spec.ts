@@ -16,16 +16,39 @@ describe('SupervisionService access', () => {
   it('lists only theses where the actor is the supervisor', async () => {
     const findMany = jest.fn().mockResolvedValue([]);
     const service = new SupervisionService(
-      { thesisMembership: { findMany } } as never,
+      {
+        user: { findUnique: jest.fn().mockResolvedValue({ email: 'sup@example.test' }) },
+        invitation: { count: jest.fn().mockResolvedValue(0) },
+        thesisMembership: { findMany },
+      } as never,
       access as never,
     );
 
-    await expect(service.list(actorId)).resolves.toEqual({ theses: [] });
+    await expect(service.list(actorId)).resolves.toEqual({
+      theses: [],
+      pendingSupervisorInvite: false,
+    });
     expect(findMany).toHaveBeenCalledWith(
       expect.objectContaining({
         where: { userId: actorId, role: 'SUPERVISOR' },
       }),
     );
+  });
+
+  it('flags a pending supervisor invitation for invitees without membership yet', async () => {
+    const service = new SupervisionService(
+      {
+        user: { findUnique: jest.fn().mockResolvedValue({ email: 'sup@example.test' }) },
+        invitation: { count: jest.fn().mockResolvedValue(1) },
+        thesisMembership: { findMany: jest.fn().mockResolvedValue([]) },
+      } as never,
+      access as never,
+    );
+
+    await expect(service.list(actorId)).resolves.toEqual({
+      theses: [],
+      pendingSupervisorInvite: true,
+    });
   });
 
   it('hides a thesis the actor does not supervise', async () => {
@@ -101,10 +124,15 @@ describe('SupervisionService access', () => {
       },
     ]);
     const service = new SupervisionService(
-      { thesisMembership: { findMany } } as never,
+      {
+        user: { findUnique: jest.fn().mockResolvedValue({ email: 'sup@example.test' }) },
+        invitation: { count: jest.fn().mockResolvedValue(0) },
+        thesisMembership: { findMany },
+      } as never,
       access as never,
     );
     const result = await service.list(actorId);
+    expect(result.pendingSupervisorInvite).toBe(false);
     expect(result.theses[0]).toMatchObject({
       nextDeadline: {
         id: 'work',

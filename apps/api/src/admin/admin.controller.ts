@@ -16,6 +16,7 @@ import {
   adminAuditEntrySchema,
   adminAuditListSchema,
   adminCreateUserBodySchema,
+  adminDeleteUserBodySchema,
   adminInvitationListSchema,
   adminReactivateBodySchema,
   adminStatsSchema,
@@ -39,7 +40,7 @@ import { SuperAdminGuard } from './super-admin.guard';
 const listQuerySchema = z
   .object({
     search: z.string().trim().max(200).optional(),
-    status: z.enum(['ACTIVE', 'DISABLED']).optional(),
+    status: z.enum(['ACTIVE', 'DISABLED', 'DELETED']).optional(),
     membershipRole: membershipRoleSchema.optional(),
     platformRole: platformRoleSchema.optional(),
     page: z.coerce.number().int().min(1).default(1),
@@ -170,6 +171,26 @@ export class AdminController {
         actorId(request),
         userId,
         adminSuspendBodySchema.parse(body),
+        request.requestId,
+      ),
+    );
+  }
+
+  @Post('users/:userId/delete')
+  @ValidateBody(adminDeleteUserBodySchema)
+  @ApiOperation({
+    summary: 'Soft-delete a user account (distinct from suspend; frees email; not reactivatable)',
+  })
+  async deleteUser(
+    @Param('userId', ParseUUIDPipe) userId: string,
+    @Body() body: unknown,
+    @Req() request: Request,
+  ) {
+    return adminUserDetailSchema.parse(
+      await this.admin.deleteUser(
+        actorId(request),
+        userId,
+        adminDeleteUserBodySchema.parse(body),
         request.requestId,
       ),
     );

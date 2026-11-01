@@ -86,6 +86,7 @@ export const ADMIN_ACTIVITY_ACTIONS = [
   'supervision.replaced',
   'membership.create',
   'admin.user_suspend',
+  'admin.user_delete',
   'admin.user_reactivate',
   'admin.bootstrap_super_admin',
 ] as const;

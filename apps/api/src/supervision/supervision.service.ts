@@ -17,6 +17,7 @@ import {
   resolveAvatarUrl,
   toAcademicProfile,
 } from '../profile/profile.service';
+import { hasPendingSupervisorInvite } from '../invitations/pending-supervisor';
 
 /**
  * The principal doctoral student is the DOCTORAL_STUDENT membership with the
@@ -32,6 +33,13 @@ export class SupervisionService {
 
   async list(actorId: string) {
     const now = new Date();
+    const actor = await this.prisma.user.findUnique({
+      where: { id: actorId },
+      select: { email: true },
+    });
+    const pendingSupervisorInvite = actor
+      ? await hasPendingSupervisorInvite(this.prisma, actor.email)
+      : false;
     const memberships = await this.prisma.thesisMembership.findMany({
       where: { userId: actorId, role: 'SUPERVISOR' },
       include: {
@@ -83,6 +91,7 @@ export class SupervisionService {
       memberships.map((membership) => this.access.coverageForThesis(membership.thesis.id)),
     );
     return {
+      pendingSupervisorInvite,
       theses: memberships.map((membership, index) => {
         const students = membership.thesis.memberships.flatMap((item) => {
           if (item.role !== 'DOCTORAL_STUDENT' || !item.user.profile) return [];

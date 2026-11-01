@@ -38,7 +38,6 @@ export function VerifyEmailPage() {
         if (!active) return;
         setState('ok');
         await queryClient.invalidateQueries({ queryKey: ['me'] });
-        await queryClient.invalidateQueries({ queryKey: ['onboarding'] });
       })
       .catch((error: unknown) => {
         if (!active) return;

@@ -162,92 +162,6 @@ export const en = {
     resendVerificationFailed: 'Could not send the email. Try again in a minute.',
     refreshVerification: 'I already confirmed',
   },
-  onboarding: {
-    checklistTitle: 'Getting started',
-    checklistSubtitle:
-      'Complete these steps to set up your workspace. Progress follows real actions.',
-    openGuide: 'Open guide',
-    reviewGuide: 'Review startup guide',
-    guidePageTitle: 'Startup guide',
-    guidePageSubtitle: 'Interactive checklist based on your account and role.',
-    go: 'Go',
-    finish: 'Finish',
-    skip: 'Skip for now',
-    next: 'Next',
-    previous: 'Previous',
-    inviteBannerTodo: 'Invite your supervisor by email to start co-supervision.',
-    inviteBannerPending: 'Invitation pending — waiting for your supervisor to accept.',
-    inviteBannerDone: 'Supervisor linked to your thesis.',
-    inviteCta: 'Invite supervisor',
-    emptySupervisorTitle: 'No doctoral students yet',
-    emptySupervisorBody:
-      'Accept an invitation from a doctoral student to access their thesis workspace.',
-    welcomeDoctoralTitle: 'Welcome to Thesis Flow',
-    welcomeDoctoralBody:
-      'Organize your thesis: trial, objectives, deliverables, meetings, and progress with your supervisor.',
-    welcomeSupervisorTitle: 'Welcome, supervisor',
-    welcomeSupervisorBody:
-      'Follow your doctoral students: invitations, objectives, deliverables, meetings, and remarks.',
-    welcomeBothTitle: 'Welcome to Thesis Flow',
-    welcomeBothBody:
-      'You have both doctoral and supervisor roles. Use the checklist to finish setup for each.',
-    status: {
-      done: 'Done',
-      todo: 'To do',
-      blocked: 'Locked',
-      pending: 'Pending',
-    },
-    steps: {
-      email: {
-        title: 'Email verified',
-        help: 'Required before accessing protected features.',
-      },
-      trial: {
-        title: 'Activate the 30-day free trial',
-        help: 'Required before creating your thesis.',
-      },
-      thesis: {
-        title: 'Create your thesis',
-        help: 'Describe your research project in your profile.',
-      },
-      invite: {
-        title: 'Invite your supervisor',
-        help: 'Optional but recommended — you can work alone under your plan.',
-      },
-      objectives: {
-        title: 'Set first objectives',
-        help: 'Break the research into clear goals.',
-      },
-      explore: {
-        title: 'Discover deliverables, meetings and documents',
-        help: 'Explore the tools that track your progress.',
-      },
-      supervisor_email: {
-        title: 'Email verified',
-        help: 'Required before accepting invitations.',
-      },
-      supervisor_invitation: {
-        title: 'Review or accept an invitation',
-        help: 'Open your invitations inbox.',
-      },
-      supervisor_students: {
-        title: 'Discover My doctoral students',
-        help: 'Open the supervision desk once a student is linked.',
-      },
-      supervisor_objectives: {
-        title: 'Review objectives',
-        help: 'Follow the student’s research goals.',
-      },
-      supervisor_deliverables: {
-        title: 'Evaluate deliverables',
-        help: 'Review submissions and request changes when needed.',
-      },
-      supervisor_meetings: {
-        title: 'Manage meetings and remarks',
-        help: 'Plan exchanges and leave structured feedback.',
-      },
-    },
-  },
   settings: {
     title: 'Settings',
     subtitle: 'Account preferences for your workspace.',
@@ -1614,7 +1528,7 @@ export const en = {
     users: {
       title: 'Users',
       subtitle:
-        'Create accounts (including doctoral or supervisor), edit profiles, delete or reactivate.',
+        'Create accounts (including doctoral or supervisor), edit profiles, suspend, delete or reactivate.',
       searchPlaceholder: 'Name or email',
       filterStatus: 'Status',
       filterRole: 'Thesis role',
@@ -1629,13 +1543,14 @@ export const en = {
       colActions: 'Actions',
       statusActive: 'Active',
       statusDisabled: 'Suspended',
+      statusDeleted: 'Deleted',
       pagination: 'Page {page} of {totalPages} · {total} users',
       prev: 'Previous',
       next: 'Next',
       create: 'Create user',
       createTitle: 'Create a user',
       createHelp:
-        'Creates a sign-in account. Platform role is global; thesis role is doctoral or supervisor. Soft-delete is suspension, not permanent removal.',
+        'Creates a sign-in account. Platform role is global; thesis role is doctoral or supervisor. Suspend is reversible; delete is a separate soft-delete.',
       createThesisRole: 'Thesis role',
       createThesisRoleHelp:
         'Doctoral student: creates a thesis for them. Supervisor: account ready to accept invitations.',
@@ -1656,22 +1571,24 @@ export const en = {
       profile: 'Profile',
       emailVerified: 'Email verified',
       disabledAt: 'Suspended on',
+      deletedAt: 'Deleted on',
       memberships: 'Supervision relations',
       membershipsHelp: 'Thesis memberships only — no deliverables, documents or messages.',
       noMemberships: 'No thesis membership yet.',
       actions: 'Account status',
-      actionsHelp: 'Suspension blocks sign-in and revokes active sessions. Actions are audited.',
-      cannotSelfSuspend: 'You cannot suspend your own account.',
+      actionsHelp:
+        'Suspend temporarily blocks sign-in (reversible). Delete soft-removes the account and frees the email (not reactivatable). Actions are audited.',
+      cannotSelfSuspend: 'You cannot suspend or delete your own account.',
       suspend: 'Suspend account',
-      delete: 'Delete',
+      delete: 'Delete account',
       reactivate: 'Reactivate account',
       suspendTitle: 'Suspend this account?',
       deleteTitle: 'Delete this account?',
       reactivateTitle: 'Reactivate this account?',
       suspendConfirm:
-        'The person will lose access immediately. Provide a reason for the audit log.',
+        'The person will lose access immediately. You can reactivate later. Provide a reason for the audit log.',
       deleteConfirm:
-        'The account will be soft-deleted (suspended): sign-in is blocked and sessions are revoked. It is not permanently removed from the database.',
+        'Soft-delete: sign-in is blocked, sessions are revoked, and the email is freed for a new account. This cannot be undone with Reactivate.',
       reactivateConfirm: 'The person will be able to sign in again.',
       reasonRequired: 'Reason (required)',
       reasonOptional: 'Reason (optional)',

@@ -3,6 +3,7 @@ import {
   adminAnalyticsSchema,
   adminAuditListSchema,
   adminCreateUserBodySchema,
+  adminDeleteUserBodySchema,
   adminReactivateBodySchema,
   adminStatsSchema,
   adminSuspendBodySchema,
@@ -17,7 +18,7 @@ import { apiGet, apiSend } from '../../../api/client';
 
 export type AdminUserListParams = {
   search?: string;
-  status?: 'ACTIVE' | 'DISABLED';
+  status?: 'ACTIVE' | 'DISABLED' | 'DELETED';
   membershipRole?: 'DOCTORAL_STUDENT' | 'SUPERVISOR' | 'ADMIN';
   platformRole?: 'USER' | 'SUPER_ADMIN';
   page?: number;
@@ -111,6 +112,22 @@ export function useSuspendUser() {
         `/api/v1/admin/users/${input.userId}/suspend`,
         adminUserDetailSchema,
         adminSuspendBodySchema.parse({ reason: input.reason }),
+      ),
+    onSuccess: async (data) => {
+      await client.invalidateQueries({ queryKey: ['admin'] });
+      client.setQueryData(['admin', 'users', data.id], data);
+    },
+  });
+}
+
+export function useDeleteAdminUser() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (input: { userId: string; reason: string }) =>
+      apiSend(
+        `/api/v1/admin/users/${input.userId}/delete`,
+        adminUserDetailSchema,
+        adminDeleteUserBodySchema.parse({ reason: input.reason }),
       ),
     onSuccess: async (data) => {
       await client.invalidateQueries({ queryKey: ['admin'] });

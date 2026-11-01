@@ -20,6 +20,8 @@ model User {
   passwordHash    String       @map("password_hash")
   emailVerifiedAt DateTime?    @map("email_verified_at")
   disabledAt      DateTime?    @map("disabled_at")
+  /// Soft-delete timestamp. Distinct from suspension (disabledAt); not restored by reactivate.
+  deletedAt       DateTime?    @map("deleted_at")
   /// Global platform role. Independent of ThesisMembership roles.
   platformRole    PlatformRole @default(USER) @map("platform_role")
   createdAt       DateTime     @default(now()) @map("created_at")
@@ -90,10 +92,6 @@ model Profile {
   googleScholarUrl String?  @map("google_scholar_url") @db.VarChar(500)
   linkedinUrl      String?  @map("linkedin_url") @db.VarChar(500)
   doctoralYear     Int      @default(1) @map("doctoral_year")
-  /// First-run welcome dismissed (role-agnostic UX preference).
-  onboardingWelcomeDismissedAt DateTime? @map("onboarding_welcome_dismissed_at")
-  /// Optional guided tour marked completed by the user.
-  onboardingGuideCompletedAt   DateTime? @map("onboarding_guide_completed_at")
   createdAt        DateTime @default(now()) @map("created_at")
   updatedAt        DateTime @updatedAt @map("updated_at")
 

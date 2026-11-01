@@ -7,6 +7,7 @@ import { StudentNotificationsBell } from '../features/resources/StudentNotificat
 import { useLogout, useMeQuery } from '../hooks/use-session';
 import { useSupervisedTheses } from '../features/supervision/hooks/use-supervised-theses';
 import { portraitUrl } from '../features/supervision/temporary-portraits';
+import { isSupervisorWorkspace } from '../features/supervision/workspace-mode';
 import { useT } from '../i18n/LocaleContext';
 import {
   navItemForPath,
@@ -170,14 +171,13 @@ function Topbar({
     media.addEventListener('change', update);
     return () => media.removeEventListener('change', update);
   }, []);
-  const navigation =
-    (supervised.data?.theses.length ?? 0) > 0
-      ? [...SUPERVISOR_NAV, ...SECONDARY_NAV]
-      : [...PRIMARY_NAV, ...SECONDARY_NAV];
+  const isSupervisor = isSupervisorWorkspace(supervised.data);
+  const navigation = isSupervisor
+    ? [...SUPERVISOR_NAV, ...SECONDARY_NAV]
+    : [...PRIMARY_NAV, ...SECONDARY_NAV];
   const current = navItemForPath(location.pathname, navigation);
   const accountLabel = me.data?.user.displayName ?? t('common.account');
   const currentLabel = current ? t(current.labelKey) : t('common.appName');
-  const isSupervisor = (supervised.data?.theses.length ?? 0) > 0;
 
   return (
     <header className="sticky top-0 z-10 flex h-14 shrink-0 items-center justify-between gap-3 border-b border-line bg-surface px-4 md:px-6">
@@ -244,9 +244,6 @@ function Topbar({
               <AccountLink to="/parametres" icon="settings" onSelect={close}>
                 {t('common.settings')}
               </AccountLink>
-              <AccountLink to="/guide" icon="notice" onSelect={close}>
-                {t('onboarding.reviewGuide')}
-              </AccountLink>
               <button
                 type="button"
                 role="menuitem"
@@ -274,7 +271,7 @@ function AccountLink({
   children,
 }: {
   to: string;
-  icon: 'profile' | 'settings' | 'notice';
+  icon: 'profile' | 'settings';
   onSelect: () => void;
   children: string;
 }) {
@@ -308,7 +305,7 @@ function Sidebar({
         : undefined;
   const supervised = useSupervisedTheses();
   const t = useT();
-  const primary = (supervised.data?.theses.length ?? 0) > 0 ? SUPERVISOR_NAV : PRIMARY_NAV;
+  const primary = isSupervisorWorkspace(supervised.data) ? SUPERVISOR_NAV : PRIMARY_NAV;
 
   return (
     <div className="flex h-full min-h-0 flex-col">

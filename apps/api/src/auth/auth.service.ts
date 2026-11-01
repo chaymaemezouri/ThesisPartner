@@ -143,7 +143,7 @@ export class AuthService {
     });
     const passwordHash = user?.passwordHash ?? (await this.dummyHash());
     const passwordOk = await this.passwords.verify(body.password, passwordHash);
-    if (!user || !user.profile || user.disabledAt || !passwordOk) {
+    if (!user || !user.profile || user.disabledAt || user.deletedAt || !passwordOk) {
       this.attempts.recordFailure(body.email);
       await this.audit.record(this.prisma, {
         action: 'auth.login_failed',
@@ -188,7 +188,7 @@ export class AuthService {
       where: { id: userId },
       include: { profile: true },
     });
-    if (!user || !user.profile || user.disabledAt) {
+    if (!user || !user.profile || user.disabledAt || user.deletedAt) {
       throw new AppException(401, 'UNAUTHORIZED', 'Authentication required');
     }
     return { user: toPublicUser(user) };
@@ -212,7 +212,7 @@ export class AuthService {
 
   async requestVerification(auth: AuthContext): Promise<void> {
     const user = await this.prisma.user.findUnique({ where: { id: auth.userId } });
-    if (!user || user.emailVerifiedAt || user.disabledAt) return;
+    if (!user || user.emailVerifiedAt || user.disabledAt || user.deletedAt) return;
     const recent = await this.prisma.authToken.findFirst({
       where: { userId: user.id, purpose: 'EMAIL_VERIFICATION' },
       orderBy: { createdAt: 'desc' },
@@ -247,7 +247,7 @@ export class AuthService {
 
   async requestPasswordReset(email: string): Promise<void> {
     const user = await this.prisma.user.findUnique({ where: { email } });
-    if (!user || user.disabledAt) return;
+    if (!user || user.disabledAt || user.deletedAt) return;
     const token = await this.prisma.$transaction((tx) =>
       this.replaceToken(tx, user.id, 'PASSWORD_RESET', HOUR_MS),
     );

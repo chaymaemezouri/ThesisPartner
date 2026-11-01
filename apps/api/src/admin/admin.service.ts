@@ -2,6 +2,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import { Prisma, type MembershipRole } from '@prisma/client';
 import type {
   AdminCreateUserBody,
+  AdminDeleteUserBody,
   AdminReactivateBody,
   AdminSuspendBody,
   AdminUpdateUserBody,
@@ -24,7 +25,7 @@ import {
 
 export type AdminUserListQuery = {
   search?: string;
-  status?: 'ACTIVE' | 'DISABLED';
+  status?: 'ACTIVE' | 'DISABLED' | 'DELETED';
   membershipRole?: MembershipRole;
   platformRole?: 'USER' | 'SUPER_ADMIN';
   page: number;
@@ -76,9 +77,9 @@ export class AdminService {
       registrationRows,
       health,
     ] = await Promise.all([
-      this.prisma.user.count(),
-      this.prisma.user.count({ where: { disabledAt: null } }),
-      this.prisma.user.count({ where: { disabledAt: { not: null } } }),
+      this.prisma.user.count({ where: { deletedAt: null } }),
+      this.prisma.user.count({ where: { deletedAt: null, disabledAt: null } }),
+      this.prisma.user.count({ where: { deletedAt: null, disabledAt: { not: null } } }),
       this.prisma.thesis.count(),
       this.prisma.thesis.count({ where: { status: 'ACTIVE' } }),
       this.distinctMembershipUsers('DOCTORAL_STUDENT'),
@@ -331,6 +332,7 @@ export class AdminService {
           familyName: user.profile.familyName,
           platformRole: user.platformRole,
           disabledAt: user.disabledAt?.toISOString() ?? null,
+          deletedAt: user.deletedAt?.toISOString() ?? null,
           createdAt: user.createdAt.toISOString(),
           membershipRoles,
         };
@@ -367,6 +369,7 @@ export class AdminService {
       academicTitle: user.profile.academicTitle,
       platformRole: user.platformRole,
       disabledAt: user.disabledAt?.toISOString() ?? null,
+      deletedAt: user.deletedAt?.toISOString() ?? null,
       createdAt: user.createdAt.toISOString(),
       memberships: user.memberships.map((item) => ({
         thesisId: item.thesis.id,
@@ -488,9 +491,9 @@ export class AdminService {
       target.platformRole === 'SUPER_ADMIN'
     ) {
       const activeSuperAdmins = await this.prisma.user.count({
-        where: { platformRole: 'SUPER_ADMIN', disabledAt: null },
+        where: { platformRole: 'SUPER_ADMIN', disabledAt: null, deletedAt: null },
       });
-      if (activeSuperAdmins <= 1 && !target.disabledAt) {
+      if (activeSuperAdmins <= 1 && !target.disabledAt && !target.deletedAt) {
         throw new AppException(400, 'BAD_REQUEST', 'Cannot demote the last active Super Admin');
       }
     }
@@ -555,13 +558,16 @@ export class AdminService {
     if (!target) {
       throw new AppException(404, 'NOT_FOUND', 'User not found');
     }
+    if (target.deletedAt) {
+      throw new AppException(409, 'CONFLICT', 'Deleted accounts cannot be suspended');
+    }
     if (target.disabledAt) {
       throw new AppException(409, 'CONFLICT', 'Account is already suspended');
     }
 
     if (target.platformRole === 'SUPER_ADMIN') {
       const activeSuperAdmins = await this.prisma.user.count({
-        where: { platformRole: 'SUPER_ADMIN', disabledAt: null },
+        where: { platformRole: 'SUPER_ADMIN', disabledAt: null, deletedAt: null },
       });
       if (activeSuperAdmins <= 1) {
         throw new AppException(400, 'BAD_REQUEST', 'Cannot suspend the last active Super Admin');
@@ -591,6 +597,63 @@ export class AdminService {
     return this.getUser(targetUserId);
   }
 
+  async deleteUser(
+    actorId: string,
+    targetUserId: string,
+    body: AdminDeleteUserBody,
+    requestId?: string,
+  ) {
+    if (actorId === targetUserId) {
+      throw new AppException(400, 'BAD_REQUEST', 'You cannot delete your own account');
+    }
+
+    const target = await this.prisma.user.findUnique({ where: { id: targetUserId } });
+    if (!target) {
+      throw new AppException(404, 'NOT_FOUND', 'User not found');
+    }
+    if (target.deletedAt) {
+      throw new AppException(409, 'CONFLICT', 'Account is already deleted');
+    }
+
+    if (target.platformRole === 'SUPER_ADMIN') {
+      const activeSuperAdmins = await this.prisma.user.count({
+        where: { platformRole: 'SUPER_ADMIN', disabledAt: null, deletedAt: null },
+      });
+      if (activeSuperAdmins <= 1 && !target.disabledAt) {
+        throw new AppException(400, 'BAD_REQUEST', 'Cannot delete the last active Super Admin');
+      }
+    }
+
+    const now = new Date();
+    const freedEmail = `deleted.${targetUserId.replace(/-/g, '')}@deleted.invalid`;
+
+    await this.prisma.$transaction(async (tx) => {
+      await tx.user.update({
+        where: { id: targetUserId },
+        data: {
+          deletedAt: now,
+          disabledAt: target.disabledAt ?? now,
+          email: freedEmail,
+        },
+      });
+      await this.sessions.revokeAll(tx, targetUserId);
+      await this.audit.record(tx, {
+        actorId,
+        action: 'admin.user_delete',
+        entityType: 'user',
+        entityId: targetUserId,
+        requestId,
+        metadata: {
+          reason: body.reason,
+          targetEmail: target.email,
+          targetPlatformRole: target.platformRole,
+        },
+      });
+    });
+
+    return this.getUser(targetUserId);
+  }
+
   async reactivate(
     actorId: string,
     targetUserId: string,
@@ -600,6 +663,9 @@ export class AdminService {
     const target = await this.prisma.user.findUnique({ where: { id: targetUserId } });
     if (!target) {
       throw new AppException(404, 'NOT_FOUND', 'User not found');
+    }
+    if (target.deletedAt) {
+      throw new AppException(409, 'CONFLICT', 'Deleted accounts cannot be reactivated');
     }
     if (!target.disabledAt) {
       throw new AppException(409, 'CONFLICT', 'Account is already active');
@@ -721,8 +787,18 @@ export class AdminService {
   private buildUserWhere(query: AdminUserListQuery): Prisma.UserWhereInput {
     const where: Prisma.UserWhereInput = {};
 
-    if (query.status === 'ACTIVE') where.disabledAt = null;
-    if (query.status === 'DISABLED') where.disabledAt = { not: null };
+    if (query.status === 'ACTIVE') {
+      where.deletedAt = null;
+      where.disabledAt = null;
+    } else if (query.status === 'DISABLED') {
+      where.deletedAt = null;
+      where.disabledAt = { not: null };
+    } else if (query.status === 'DELETED') {
+      where.deletedAt = { not: null };
+    } else {
+      // Default list hides soft-deleted accounts.
+      where.deletedAt = null;
+    }
     if (query.platformRole) where.platformRole = query.platformRole;
     if (query.membershipRole) {
       where.memberships = { some: { role: query.membershipRole } };

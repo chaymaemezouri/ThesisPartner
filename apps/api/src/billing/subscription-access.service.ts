@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { AppException } from '../common/errors/app.exception';
+import { hasPendingSupervisorInvite } from '../invitations/pending-supervisor';
 import { PrismaService } from '../infrastructure/prisma/prisma.service';
 import { refreshSubscriptionStatus, subscriptionWrites, trialStatusAt } from './billing.util';
 
@@ -88,6 +89,17 @@ export class SubscriptionAccessService {
     });
     if (existing > 0 && process.env.NODE_ENV !== 'test') {
       throw new AppException(409, 'CONFLICT', 'V1 covers one main thesis per doctoral student');
+    }
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { email: true },
+    });
+    if (user && (await hasPendingSupervisorInvite(this.prisma, user.email))) {
+      throw new AppException(
+        403,
+        'FORBIDDEN',
+        'Accept your supervisor invitation before creating a personal thesis',
+      );
     }
     const snapshot = await this.userWriteSnapshot(userId, now);
     if (!snapshot.writable) {

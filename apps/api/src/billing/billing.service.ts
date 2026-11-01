@@ -2,6 +2,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import { Prisma, type PlanCode } from '@prisma/client';
 import { AuditService } from '../audit/audit.service';
 import { AppException } from '../common/errors/app.exception';
+import { hasPendingSupervisorInvite } from '../invitations/pending-supervisor';
 import { PrismaService } from '../infrastructure/prisma/prisma.service';
 import { BillingMailer } from './billing-mailer';
 import { PAYMENT_PROVIDER, type PaymentProvider } from './payment-provider';
@@ -79,6 +80,13 @@ export class BillingService {
       user.memberships.length > 0 && user.memberships.every((item) => item.role === 'SUPERVISOR');
     if (onlySupervisor) {
       throw new AppException(403, 'FORBIDDEN', 'Supervisors do not start a personal trial');
+    }
+    if (await hasPendingSupervisorInvite(this.prisma, user.email)) {
+      throw new AppException(
+        403,
+        'FORBIDDEN',
+        'Accept your supervisor invitation before using doctoral trial features',
+      );
     }
     const settings = await this.settings();
     const now = new Date();

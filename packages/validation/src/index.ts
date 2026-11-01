@@ -907,6 +907,8 @@ export const supervisedThesisSchema = z
 export const supervisedThesisListSchema = z
   .object({
     theses: z.array(supervisedThesisSchema).max(50),
+    /** Invitee has a pending SUPERVISOR invitation (no membership yet). */
+    pendingSupervisorInvite: z.boolean().default(false),
   })
   .strict();
 
@@ -1793,7 +1795,7 @@ export const researchAiSynthesisSchema = z
   })
   .strict();
 
-export const adminAccountStatusSchema = z.enum(['ACTIVE', 'DISABLED']);
+export const adminAccountStatusSchema = z.enum(['ACTIVE', 'DISABLED', 'DELETED']);
 
 export const adminTimeSeriesPointSchema = z
   .object({
@@ -1913,6 +1915,7 @@ export const adminUserSummarySchema = z
     familyName: boundedTextSchema(80),
     platformRole: platformRoleSchema,
     disabledAt: z.string().datetime().nullable(),
+    deletedAt: z.string().datetime().nullable(),
     createdAt: z.string().datetime(),
     membershipRoles: z.array(membershipRoleSchema).max(3),
   })
@@ -1939,12 +1942,19 @@ export const adminUserDetailSchema = z
     academicTitle: z.string().max(80).nullable(),
     platformRole: platformRoleSchema,
     disabledAt: z.string().datetime().nullable(),
+    deletedAt: z.string().datetime().nullable(),
     createdAt: z.string().datetime(),
     memberships: z.array(adminMembershipSummarySchema).max(50),
   })
   .strict();
 
 export const adminSuspendBodySchema = z
+  .object({
+    reason: boundedTextSchema(500),
+  })
+  .strict();
+
+export const adminDeleteUserBodySchema = z
   .object({
     reason: boundedTextSchema(500),
   })
@@ -1993,6 +2003,7 @@ export const adminUpdateUserBodySchema = z
   );
 
 export type AdminSuspendBody = z.infer<typeof adminSuspendBodySchema>;
+export type AdminDeleteUserBody = z.infer<typeof adminDeleteUserBodySchema>;
 export type AdminReactivateBody = z.infer<typeof adminReactivateBodySchema>;
 export type AdminCreateUserBody = z.infer<typeof adminCreateUserBodySchema>;
 export type AdminUpdateUserBody = z.infer<typeof adminUpdateUserBodySchema>;
@@ -2379,31 +2390,5 @@ export const adminRefundBodySchema = z
   .object({
     reason: boundedTextSchema(500),
     amountMinor: z.number().int().positive().optional(),
-  })
-  .strict();
-
-export const onboardingStepStatusSchema = z.enum(['done', 'todo', 'blocked', 'pending']);
-
-export const onboardingStepSchema = z
-  .object({
-    id: boundedTextSchema(40),
-    status: onboardingStepStatusSchema,
-    href: z.string().max(200).nullable(),
-  })
-  .strict();
-
-export const onboardingStatusSchema = z
-  .object({
-    persona: z.enum(['DOCTORAL_STUDENT', 'SUPERVISOR', 'BOTH', 'NONE']),
-    emailVerified: z.boolean(),
-    welcomeDismissed: z.boolean(),
-    guideCompleted: z.boolean(),
-    steps: z.array(onboardingStepSchema).max(20),
-  })
-  .strict();
-
-export const onboardingActionBodySchema = z
-  .object({
-    action: z.enum(['dismiss_welcome', 'complete_guide', 'reopen_guide']),
   })
   .strict();

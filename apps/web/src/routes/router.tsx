@@ -9,7 +9,6 @@ import { LoginPage } from '../pages/auth/LoginPage';
 import { RegisterPage } from '../pages/auth/RegisterPage';
 import { PendingEmailVerificationPage } from '../pages/auth/PendingEmailVerificationPage';
 import { VerifyEmailPage } from '../pages/auth/VerifyEmailPage';
-import { OnboardingGuidePage } from '../features/onboarding/OnboardingGuidePage';
 import {
   DoctoralObjectiveDetailPage,
   DoctoralObjectivesPage,
@@ -40,6 +39,7 @@ import { SupervisorDossierPage } from '../features/supervision/SupervisorDossier
 import { SupervisorDeliverablesIndex } from '../features/supervision/SupervisorDeliverablesIndex';
 import { SupervisorMeetingsIndex } from '../features/supervision/SupervisorMeetingsIndex';
 import { useSupervisedTheses } from '../features/supervision/hooks/use-supervised-theses';
+import { isSupervisorWorkspace } from '../features/supervision/workspace-mode';
 import { MessagesPage } from '../features/messages/MessagesPage';
 import { PortfolioPage } from '../features/portfolio/PortfolioPage';
 import { ResearchAiPage } from '../features/research-ai/ResearchAiPage';
@@ -94,7 +94,7 @@ const SupervisorDeliverableDetailPage = lazy(() =>
 
 function DeliverablesEntry() {
   const supervised = useSupervisedTheses();
-  if ((supervised.data?.theses.length ?? 0) > 0) return <SupervisorDeliverablesIndex />;
+  if (isSupervisorWorkspace(supervised.data)) return <SupervisorDeliverablesIndex />;
   return (
     <Deferred>
       <DoctoralDeliverablesPage />
@@ -104,7 +104,7 @@ function DeliverablesEntry() {
 
 function MeetingsEntry() {
   const supervised = useSupervisedTheses();
-  if ((supervised.data?.theses.length ?? 0) > 0) return <SupervisorMeetingsIndex />;
+  if (isSupervisorWorkspace(supervised.data)) return <SupervisorMeetingsIndex />;
   return <DoctoralMeetingsPage />;
 }
 
@@ -178,7 +178,6 @@ export function AppRoutes() {
             <Route path="these" element={<Navigate to="/profil" replace />} />
             <Route path="profil" element={<ProfilePage />} />
             <Route path="parametres" element={<SettingsPage />} />
-            <Route path="guide" element={<OnboardingGuidePage />} />
             <Route path="abonnement" element={<BillingPage />} />
             <Route path="paiement/simulation/:sessionId" element={<MockCheckoutPage />} />
             <Route path="invitations" element={<InvitationsInboxPage />} />

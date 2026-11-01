@@ -30,6 +30,7 @@ describe('AdminService', () => {
             email: 'user@example.test',
             platformRole: 'USER',
             disabledAt: null,
+            deletedAt: null,
           }
         : overrides.target;
 
@@ -247,6 +248,7 @@ describe('AdminService', () => {
       email: 'user@example.test',
       platformRole: 'USER',
       disabledAt: suspended ? new Date('2026-10-23T12:00:00.000Z') : null,
+      deletedAt: null,
       emailVerifiedAt: new Date('2026-01-01T00:00:00.000Z'),
       createdAt: new Date('2026-01-01T00:00:00.000Z'),
       profile: {
@@ -283,6 +285,77 @@ describe('AdminService', () => {
     );
     expect(result.id).toBe(targetId);
     expect(result.disabledAt).toBe('2026-10-23T12:00:00.000Z');
+  });
+
+  it('soft-deletes a user separately from suspension and frees the email', async () => {
+    const { service, prisma, audit, sessions } = buildService({});
+    let deleted = false;
+    prisma.user.findUnique = jest.fn().mockImplementation(async () => ({
+      id: targetId,
+      email: deleted
+        ? `deleted.${targetId.replace(/-/g, '')}@deleted.invalid`
+        : 'user@example.test',
+      platformRole: 'USER',
+      disabledAt: deleted ? new Date('2026-10-23T12:00:00.000Z') : null,
+      deletedAt: deleted ? new Date('2026-10-23T12:00:00.000Z') : null,
+      emailVerifiedAt: new Date('2026-01-01T00:00:00.000Z'),
+      createdAt: new Date('2026-01-01T00:00:00.000Z'),
+      profile: {
+        displayName: 'Ada Lovelace',
+        givenName: 'Ada',
+        familyName: 'Lovelace',
+        institution: null,
+        academicTitle: null,
+      },
+      memberships: [],
+    }));
+    prisma.user.update = jest.fn().mockImplementation(async () => {
+      deleted = true;
+      return {};
+    });
+
+    const result = await service.deleteUser(
+      actorId,
+      targetId,
+      { reason: 'GDPR request' },
+      'req-del',
+    );
+
+    expect(prisma.user.update).toHaveBeenCalledWith({
+      where: { id: targetId },
+      data: {
+        deletedAt: expect.any(Date),
+        disabledAt: expect.any(Date),
+        email: `deleted.${targetId.replace(/-/g, '')}@deleted.invalid`,
+      },
+    });
+    expect(sessions.revokeAll).toHaveBeenCalledWith(prisma, targetId);
+    expect(audit.record).toHaveBeenCalledWith(
+      prisma,
+      expect.objectContaining({
+        action: 'admin.user_delete',
+        metadata: expect.objectContaining({
+          reason: 'GDPR request',
+          targetEmail: 'user@example.test',
+        }),
+      }),
+    );
+    expect(result.deletedAt).toBe('2026-10-23T12:00:00.000Z');
+  });
+
+  it('refuses reactivating a deleted account', async () => {
+    const { service } = buildService({
+      target: {
+        id: targetId,
+        email: 'gone@example.test',
+        platformRole: 'USER',
+        disabledAt: new Date(),
+        deletedAt: new Date(),
+      },
+    });
+    await expect(
+      service.reactivate(actorId, targetId, { reason: 'oops' }, 'req-r'),
+    ).rejects.toMatchObject({ appCode: 'CONFLICT' });
   });
 
   it('allows suspending a Super Admin when another remains active', async () => {

@@ -8,6 +8,7 @@ import { AdminBadge, AdminEmpty, AdminPageHeader, AdminPanel, AdminState } from 
 import {
   useAdminUsers,
   useCreateAdminUser,
+  useDeleteAdminUser,
   useReactivateUser,
   useSuspendUser,
   type AdminUserListParams,
@@ -34,6 +35,7 @@ export function AdminUsersPage() {
   const list = useAdminUsers(params);
   const create = useCreateAdminUser();
   const suspend = useSuspendUser();
+  const deleteUser = useDeleteAdminUser();
   const reactivate = useReactivateUser();
 
   const [createOpen, setCreateOpen] = useState(false);
@@ -42,11 +44,12 @@ export function AdminUsersPage() {
 
   const [statusUser, setStatusUser] = useState<{
     id: string;
-    disabled: boolean;
+    action: 'suspend' | 'delete' | 'reactivate';
     name: string;
   } | null>(null);
   const [statusReason, setStatusReason] = useState('');
   const [statusError, setStatusError] = useState<string | null>(null);
+  const statusPending = suspend.isPending || deleteUser.isPending || reactivate.isPending;
 
   const totalPages = list.data ? Math.max(1, Math.ceil(list.data.total / list.data.pageSize)) : 1;
 
@@ -79,13 +82,15 @@ export function AdminUsersPage() {
     if (!statusUser) return;
     setStatusError(null);
     const reason = statusReason.trim();
-    if (!statusUser.disabled && reason.length < 1) {
+    if (statusUser.action !== 'reactivate' && reason.length < 1) {
       setStatusError(t('admin.users.reasonRequired'));
       return;
     }
     try {
-      if (statusUser.disabled) {
+      if (statusUser.action === 'reactivate') {
         await reactivate.mutateAsync({ userId: statusUser.id, reason: reason || undefined });
+      } else if (statusUser.action === 'delete') {
+        await deleteUser.mutateAsync({ userId: statusUser.id, reason });
       } else {
         await suspend.mutateAsync({ userId: statusUser.id, reason });
       }
@@ -137,6 +142,7 @@ export function AdminUsersPage() {
             <option value="">{t('common.all')}</option>
             <option value="ACTIVE">{t('admin.users.statusActive')}</option>
             <option value="DISABLED">{t('admin.users.statusDisabled')}</option>
+            <option value="DELETED">{t('admin.users.statusDeleted')}</option>
           </Select>
         </div>
         <div className="w-48">
@@ -246,10 +252,14 @@ export function AdminUsersPage() {
                             </div>
                           </td>
                           <td className="px-4 py-3">
-                            <AdminBadge tone={user.disabledAt ? 'danger' : 'ok'}>
-                              {user.disabledAt
-                                ? t('admin.users.statusDisabled')
-                                : t('admin.users.statusActive')}
+                            <AdminBadge
+                              tone={user.deletedAt ? 'danger' : user.disabledAt ? 'warn' : 'ok'}
+                            >
+                              {user.deletedAt
+                                ? t('admin.users.statusDeleted')
+                                : user.disabledAt
+                                  ? t('admin.users.statusDisabled')
+                                  : t('admin.users.statusActive')}
                             </AdminBadge>
                           </td>
                           <td className="px-4 py-3 tabular-nums text-muted">
@@ -263,26 +273,57 @@ export function AdminUsersPage() {
                               >
                                 {t('admin.users.open')}
                               </Link>
-                              {!isSelf ? (
-                                <button
-                                  type="button"
-                                  className={`text-sm font-medium hover:underline ${
-                                    user.disabledAt ? 'text-ink' : 'text-danger'
-                                  }`}
-                                  onClick={() => {
-                                    setStatusError(null);
-                                    setStatusReason('');
-                                    setStatusUser({
-                                      id: user.id,
-                                      disabled: Boolean(user.disabledAt),
-                                      name: user.displayName,
-                                    });
-                                  }}
-                                >
-                                  {user.disabledAt
-                                    ? t('admin.users.reactivate')
-                                    : t('admin.users.delete')}
-                                </button>
+                              {!isSelf && !user.deletedAt ? (
+                                <>
+                                  {user.disabledAt ? (
+                                    <button
+                                      type="button"
+                                      className="text-sm font-medium text-ink hover:underline"
+                                      onClick={() => {
+                                        setStatusError(null);
+                                        setStatusReason('');
+                                        setStatusUser({
+                                          id: user.id,
+                                          action: 'reactivate',
+                                          name: user.displayName,
+                                        });
+                                      }}
+                                    >
+                                      {t('admin.users.reactivate')}
+                                    </button>
+                                  ) : (
+                                    <button
+                                      type="button"
+                                      className="text-sm font-medium text-warn hover:underline"
+                                      onClick={() => {
+                                        setStatusError(null);
+                                        setStatusReason('');
+                                        setStatusUser({
+                                          id: user.id,
+                                          action: 'suspend',
+                                          name: user.displayName,
+                                        });
+                                      }}
+                                    >
+                                      {t('admin.users.suspend')}
+                                    </button>
+                                  )}
+                                  <button
+                                    type="button"
+                                    className="text-sm font-medium text-danger hover:underline"
+                                    onClick={() => {
+                                      setStatusError(null);
+                                      setStatusReason('');
+                                      setStatusUser({
+                                        id: user.id,
+                                        action: 'delete',
+                                        name: user.displayName,
+                                      });
+                                    }}
+                                  >
+                                    {t('admin.users.delete')}
+                                  </button>
+                                </>
                               ) : null}
                             </div>
                           </td>
@@ -457,24 +498,30 @@ export function AdminUsersPage() {
       <Modal
         open={Boolean(statusUser)}
         title={
-          statusUser?.disabled ? t('admin.users.reactivateTitle') : t('admin.users.deleteTitle')
+          statusUser?.action === 'reactivate'
+            ? t('admin.users.reactivateTitle')
+            : statusUser?.action === 'delete'
+              ? t('admin.users.deleteTitle')
+              : t('admin.users.suspendTitle')
         }
         closeLabel={t('common.close')}
         onClose={() => {
-          if (!suspend.isPending && !reactivate.isPending) setStatusUser(null);
+          if (!statusPending) setStatusUser(null);
         }}
       >
         <div className="space-y-4">
           <p className="text-sm text-muted">
-            {statusUser?.disabled
+            {statusUser?.action === 'reactivate'
               ? t('admin.users.reactivateConfirm')
-              : t('admin.users.deleteConfirm')}
+              : statusUser?.action === 'delete'
+                ? t('admin.users.deleteConfirm')
+                : t('admin.users.suspendConfirm')}
             {statusUser ? ` (${statusUser.name})` : null}
           </p>
           <Input
             id="admin-list-status-reason"
             label={
-              statusUser?.disabled
+              statusUser?.action === 'reactivate'
                 ? t('admin.users.reasonOptional')
                 : t('admin.users.reasonRequired')
             }
@@ -490,17 +537,17 @@ export function AdminUsersPage() {
             <Button
               type="button"
               variant="ghost"
-              disabled={suspend.isPending || reactivate.isPending}
+              disabled={statusPending}
               onClick={() => setStatusUser(null)}
             >
               {t('common.cancel')}
             </Button>
-            <Button
-              type="button"
-              disabled={suspend.isPending || reactivate.isPending}
-              onClick={() => void submitStatus()}
-            >
-              {statusUser?.disabled ? t('admin.users.reactivate') : t('admin.users.delete')}
+            <Button type="button" disabled={statusPending} onClick={() => void submitStatus()}>
+              {statusUser?.action === 'reactivate'
+                ? t('admin.users.reactivate')
+                : statusUser?.action === 'delete'
+                  ? t('admin.users.delete')
+                  : t('admin.users.suspend')}
             </Button>
           </div>
         </div>

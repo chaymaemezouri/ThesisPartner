@@ -7,10 +7,13 @@ import { useT } from '../../i18n/LocaleContext';
 import { AdminBadge, AdminPanel } from './AdminUi';
 import {
   useAdminUser,
+  useDeleteAdminUser,
   useReactivateUser,
   useSuspendUser,
   useUpdateAdminUser,
 } from './hooks/use-admin';
+
+type ConfirmAction = 'suspend' | 'delete' | 'reactivate';
 
 export function AdminUserDetailPage() {
   const t = useT();
@@ -18,9 +21,10 @@ export function AdminUserDetailPage() {
   const me = useMeQuery();
   const detail = useAdminUser(userId);
   const suspend = useSuspendUser();
+  const deleteUser = useDeleteAdminUser();
   const reactivate = useReactivateUser();
   const update = useUpdateAdminUser();
-  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [confirmAction, setConfirmAction] = useState<ConfirmAction | null>(null);
   const [editOpen, setEditOpen] = useState(false);
   const [reason, setReason] = useState('');
   const [actionError, setActionError] = useState<string | null>(null);
@@ -35,8 +39,9 @@ export function AdminUserDetailPage() {
 
   const user = detail.data;
   const isSelf = Boolean(user && me.data?.user.id === user.id);
-  const isDisabled = Boolean(user?.disabledAt);
-  const pending = suspend.isPending || reactivate.isPending;
+  const isDeleted = Boolean(user?.deletedAt);
+  const isDisabled = Boolean(user?.disabledAt) && !isDeleted;
+  const pending = suspend.isPending || deleteUser.isPending || reactivate.isPending;
 
   const openEdit = () => {
     if (!user) return;
@@ -72,20 +77,22 @@ export function AdminUserDetailPage() {
   };
 
   const submitAction = async () => {
-    if (!user) return;
+    if (!user || !confirmAction) return;
     setActionError(null);
     const trimmed = reason.trim();
-    if (!isDisabled && trimmed.length < 1) {
+    if (confirmAction !== 'reactivate' && trimmed.length < 1) {
       setActionError(t('admin.users.reasonRequired'));
       return;
     }
     try {
-      if (isDisabled) {
+      if (confirmAction === 'reactivate') {
         await reactivate.mutateAsync({ userId: user.id, reason: trimmed || undefined });
+      } else if (confirmAction === 'delete') {
+        await deleteUser.mutateAsync({ userId: user.id, reason: trimmed });
       } else {
         await suspend.mutateAsync({ userId: user.id, reason: trimmed });
       }
-      setConfirmOpen(false);
+      setConfirmAction(null);
       setReason('');
     } catch (error) {
       setActionError(error instanceof ApiClientError ? error.body.message : t('errors.generic'));
@@ -125,10 +132,12 @@ export function AdminUserDetailPage() {
                   {t('admin.users.colStatus')}
                 </dt>
                 <dd className="mt-1">
-                  <AdminBadge tone={user.disabledAt ? 'danger' : 'ok'}>
-                    {user.disabledAt
-                      ? t('admin.users.statusDisabled')
-                      : t('admin.users.statusActive')}
+                  <AdminBadge tone={isDeleted ? 'danger' : isDisabled ? 'warn' : 'ok'}>
+                    {isDeleted
+                      ? t('admin.users.statusDeleted')
+                      : isDisabled
+                        ? t('admin.users.statusDisabled')
+                        : t('admin.users.statusActive')}
                   </AdminBadge>
                 </dd>
               </div>
@@ -161,6 +170,12 @@ export function AdminUserDetailPage() {
                 <Field
                   label={t('admin.users.disabledAt')}
                   value={new Date(user.disabledAt).toLocaleString()}
+                />
+              ) : null}
+              {user.deletedAt ? (
+                <Field
+                  label={t('admin.users.deletedAt')}
+                  value={new Date(user.deletedAt).toLocaleString()}
                 />
               ) : null}
             </dl>
@@ -200,25 +215,53 @@ export function AdminUserDetailPage() {
             <h2 className="text-sm font-medium text-ink">{t('admin.users.actions')}</h2>
             <p className="mt-1 text-sm text-muted">{t('admin.users.actionsHelp')}</p>
             <div className="mt-4 flex flex-wrap gap-2">
-              <Button type="button" variant="secondary" onClick={openEdit}>
-                {t('admin.users.edit')}
-              </Button>
+              {!isDeleted ? (
+                <Button type="button" variant="secondary" onClick={openEdit}>
+                  {t('admin.users.edit')}
+                </Button>
+              ) : null}
               {isSelf ? (
                 <p className="self-center text-sm text-muted">
                   {t('admin.users.cannotSelfSuspend')}
                 </p>
-              ) : (
-                <Button
-                  type="button"
-                  variant={isDisabled ? 'primary' : 'secondary'}
-                  onClick={() => {
-                    setActionError(null);
-                    setReason('');
-                    setConfirmOpen(true);
-                  }}
-                >
-                  {isDisabled ? t('admin.users.reactivate') : t('admin.users.delete')}
-                </Button>
+              ) : isDeleted ? null : (
+                <>
+                  {isDisabled ? (
+                    <Button
+                      type="button"
+                      onClick={() => {
+                        setActionError(null);
+                        setReason('');
+                        setConfirmAction('reactivate');
+                      }}
+                    >
+                      {t('admin.users.reactivate')}
+                    </Button>
+                  ) : (
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      onClick={() => {
+                        setActionError(null);
+                        setReason('');
+                        setConfirmAction('suspend');
+                      }}
+                    >
+                      {t('admin.users.suspend')}
+                    </Button>
+                  )}
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={() => {
+                      setActionError(null);
+                      setReason('');
+                      setConfirmAction('delete');
+                    }}
+                  >
+                    {t('admin.users.delete')}
+                  </Button>
+                </>
               )}
             </div>
           </section>
@@ -298,20 +341,34 @@ export function AdminUserDetailPage() {
       </Modal>
 
       <Modal
-        open={confirmOpen}
-        title={isDisabled ? t('admin.users.reactivateTitle') : t('admin.users.deleteTitle')}
+        open={Boolean(confirmAction)}
+        title={
+          confirmAction === 'reactivate'
+            ? t('admin.users.reactivateTitle')
+            : confirmAction === 'delete'
+              ? t('admin.users.deleteTitle')
+              : t('admin.users.suspendTitle')
+        }
         closeLabel={t('common.close')}
         onClose={() => {
-          if (!pending) setConfirmOpen(false);
+          if (!pending) setConfirmAction(null);
         }}
       >
         <div className="space-y-4">
           <p className="text-sm text-muted">
-            {isDisabled ? t('admin.users.reactivateConfirm') : t('admin.users.deleteConfirm')}
+            {confirmAction === 'reactivate'
+              ? t('admin.users.reactivateConfirm')
+              : confirmAction === 'delete'
+                ? t('admin.users.deleteConfirm')
+                : t('admin.users.suspendConfirm')}
           </p>
           <Textarea
-            id="admin-suspend-reason"
-            label={isDisabled ? t('admin.users.reasonOptional') : t('admin.users.reasonRequired')}
+            id="admin-status-reason"
+            label={
+              confirmAction === 'reactivate'
+                ? t('admin.users.reasonOptional')
+                : t('admin.users.reasonRequired')
+            }
             value={reason}
             onChange={(event) => setReason(event.target.value)}
             rows={3}
@@ -327,17 +384,16 @@ export function AdminUserDetailPage() {
               type="button"
               variant="ghost"
               disabled={pending}
-              onClick={() => setConfirmOpen(false)}
+              onClick={() => setConfirmAction(null)}
             >
               {t('common.cancel')}
             </Button>
-            <Button
-              type="button"
-              variant={isDisabled ? 'primary' : 'secondary'}
-              disabled={pending}
-              onClick={() => void submitAction()}
-            >
-              {t('common.confirm')}
+            <Button type="button" disabled={pending} onClick={() => void submitAction()}>
+              {confirmAction === 'reactivate'
+                ? t('admin.users.reactivate')
+                : confirmAction === 'delete'
+                  ? t('admin.users.delete')
+                  : t('admin.users.suspend')}
             </Button>
           </div>
         </div>
@@ -350,7 +406,7 @@ function Field({ label, value }: { label: string; value: string }) {
   return (
     <div>
       <dt className="text-[11px] font-medium tracking-wide text-muted uppercase">{label}</dt>
-      <dd className="mt-0.5 break-words text-ink">{value}</dd>
+      <dd className="mt-1 break-all text-sm text-ink">{value}</dd>
     </div>
   );
 }
