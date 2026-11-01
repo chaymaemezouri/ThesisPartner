@@ -15,7 +15,11 @@ export function useOnboardingAction() {
   const client = useQueryClient();
   return useMutation({
     mutationFn: (action: 'dismiss_welcome' | 'complete_guide' | 'reopen_guide') =>
-      apiSend('/api/v1/onboarding/actions', onboardingStatusSchema, onboardingActionBodySchema.parse({ action })),
+      apiSend(
+        '/api/v1/onboarding/actions',
+        onboardingStatusSchema,
+        onboardingActionBodySchema.parse({ action }),
+      ),
     onSuccess: async (data) => {
       client.setQueryData(['onboarding'], data);
     },

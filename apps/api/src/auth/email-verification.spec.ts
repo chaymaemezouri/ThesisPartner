@@ -26,9 +26,9 @@ describe('AuthService email verification', () => {
         update: jest.fn(),
       },
       authToken: {
-        findFirst: jest.fn().mockResolvedValue(
-          opts?.recentTokenAt ? { createdAt: opts.recentTokenAt } : null,
-        ),
+        findFirst: jest
+          .fn()
+          .mockResolvedValue(opts?.recentTokenAt ? { createdAt: opts.recentTokenAt } : null),
         deleteMany: jest.fn(),
         create: jest.fn(),
         findUnique: jest.fn(),

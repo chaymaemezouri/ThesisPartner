@@ -148,7 +148,8 @@ export const en = {
     verifyIncomplete: 'This link is incomplete.',
     verifySuccess: 'Your email is confirmed.',
     verifyRedirecting: 'Opening your workspace…',
-    verifyExpiredHelp: 'This link is invalid, expired, or already used. Request a new confirmation email.',
+    verifyExpiredHelp:
+      'This link is invalid, expired, or already used. Request a new confirmation email.',
     backToWorkspace: 'Back to workspace',
     pendingVerifyTitle: 'Verify your email address',
     pendingVerifySubtitle: 'Confirm your address before accessing Thesis Flow.',
@@ -163,7 +164,8 @@ export const en = {
   },
   onboarding: {
     checklistTitle: 'Getting started',
-    checklistSubtitle: 'Complete these steps to set up your workspace. Progress follows real actions.',
+    checklistSubtitle:
+      'Complete these steps to set up your workspace. Progress follows real actions.',
     openGuide: 'Open guide',
     reviewGuide: 'Review startup guide',
     guidePageTitle: 'Startup guide',

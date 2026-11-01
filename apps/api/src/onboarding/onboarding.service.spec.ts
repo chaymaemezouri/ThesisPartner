@@ -34,18 +34,14 @@ describe('OnboardingService', () => {
       },
       subscription: { findFirst: jest.fn().mockResolvedValue(null) },
       thesisMembership: {
-        findFirst: jest
-          .fn()
-          .mockResolvedValue(overrides.supervisor ? { id: 'membership' } : null),
+        findFirst: jest.fn().mockResolvedValue(overrides.supervisor ? { id: 'membership' } : null),
       },
       objective: { count: jest.fn().mockResolvedValue(overrides.objectives ?? 0) },
       deliverable: { count: jest.fn().mockResolvedValue(0) },
       meeting: { count: jest.fn().mockResolvedValue(0) },
       remark: { count: jest.fn().mockResolvedValue(0) },
       invitation: {
-        findFirst: jest
-          .fn()
-          .mockResolvedValue(overrides.pendingInvite ? { id: 'invite' } : null),
+        findFirst: jest.fn().mockResolvedValue(overrides.pendingInvite ? { id: 'invite' } : null),
         count: jest.fn().mockResolvedValue(0),
       },
       profile: {

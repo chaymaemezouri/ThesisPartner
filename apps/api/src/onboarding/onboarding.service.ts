@@ -148,12 +148,11 @@ export class OnboardingService {
         },
         {
           id: 'explore',
-          status:
-            !doctoralThesisId
-              ? 'blocked'
-              : deliverableCount + meetingCount > 0 || objectiveCount > 0
-                ? 'done'
-                : 'todo',
+          status: !doctoralThesisId
+            ? 'blocked'
+            : deliverableCount + meetingCount > 0 || objectiveCount > 0
+              ? 'done'
+              : 'todo',
           href: '/livrables',
         },
       );
@@ -177,14 +176,12 @@ export class OnboardingService {
         },
         {
           id: 'supervisor_objectives',
-          status:
-            supervisedCount === 0 ? 'blocked' : supervisedObjectives > 0 ? 'done' : 'todo',
+          status: supervisedCount === 0 ? 'blocked' : supervisedObjectives > 0 ? 'done' : 'todo',
           href: '/encadrement',
         },
         {
           id: 'supervisor_deliverables',
-          status:
-            supervisedCount === 0 ? 'blocked' : supervisedDeliverables > 0 ? 'done' : 'todo',
+          status: supervisedCount === 0 ? 'blocked' : supervisedDeliverables > 0 ? 'done' : 'todo',
           href: '/livrables',
         },
         {

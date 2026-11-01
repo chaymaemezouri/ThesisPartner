@@ -38,9 +38,7 @@ export function RegisterPage() {
             queryClient.setQueryData(['me'], body);
             queryClient.removeQueries({ queryKey: ['supervision'] });
             if (!body.user.emailVerified) {
-              await navigate(
-                `/confirmation-email?next=${encodeURIComponent(next)}`,
-              );
+              await navigate(`/confirmation-email?next=${encodeURIComponent(next)}`);
               return;
             }
             await navigate(next);

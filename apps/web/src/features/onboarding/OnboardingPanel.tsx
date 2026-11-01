@@ -95,7 +95,10 @@ export function OnboardingPanel({ forceOpen = false }: { forceOpen?: boolean }) 
             </Button>
           </div>
           <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-canvas">
-            <div className="h-full rounded-full bg-brand transition-all" style={{ width: `${progress}%` }} />
+            <div
+              className="h-full rounded-full bg-brand transition-all"
+              style={{ width: `${progress}%` }}
+            />
           </div>
           <p className="mt-1 text-[11px] font-medium text-muted">
             {doneCount}/{data.steps.length}
@@ -107,9 +110,7 @@ export function OnboardingPanel({ forceOpen = false }: { forceOpen?: boolean }) 
                 className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-line bg-canvas/60 px-3 py-2"
               >
                 <div className="min-w-0">
-                  <p className="text-sm font-medium text-ink">
-                    {t(stepTitleKey(step.id))}
-                  </p>
+                  <p className="text-sm font-medium text-ink">{t(stepTitleKey(step.id))}</p>
                   <p className="text-xs text-muted">{t(stepHelpKey(step.id))}</p>
                 </div>
                 <div className="flex items-center gap-2">

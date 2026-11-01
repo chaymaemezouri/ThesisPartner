@@ -26,11 +26,12 @@ function renderGate(path: string, account: typeof verified) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   vi.stubGlobal(
     'fetch',
-    vi.fn(async () =>
-      new Response(JSON.stringify(account), {
-        status: 200,
-        headers: { 'content-type': 'application/json' },
-      }),
+    vi.fn(
+      async () =>
+        new Response(JSON.stringify(account), {
+          status: 200,
+          headers: { 'content-type': 'application/json' },
+        }),
     ),
   );
   render(
