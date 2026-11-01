@@ -103,7 +103,7 @@ export class ThesesService {
     };
   }
 
-  async create(userId: string, body: CreateThesisBody, requestId?: string) {
+  async create(userId: string, body: CreateThesisBody, requestId?: string, locale?: string) {
     await this.access.assertCanCreateThesis(userId);
     const thesis = await this.prisma.$transaction(async (tx) => {
       const created = await tx.thesis.create({
@@ -122,7 +122,7 @@ export class ThesesService {
         entityId: created.id,
         requestId,
       });
-      await this.standardPath.apply(tx, created.id, userId);
+      await this.standardPath.apply(tx, created.id, userId, locale);
       return created;
     });
     return {
@@ -208,7 +208,7 @@ export class ThesesService {
     return { applied: await this.standardPath.applied(thesisId) };
   }
 
-  async applyStandardPath(actorId: string, thesisId: string) {
+  async applyStandardPath(actorId: string, thesisId: string, locale?: string) {
     await this.access.assertCanAccess({
       actorId,
       thesisId,
@@ -216,9 +216,19 @@ export class ThesesService {
       write: true,
     });
     const created = await this.prisma.$transaction((tx) =>
-      this.standardPath.apply(tx, thesisId, actorId),
+      this.standardPath.apply(tx, thesisId, actorId, locale),
     );
     return { applied: true, created };
+  }
+
+  async localizeStandardPath(actorId: string, thesisId: string, locale?: string) {
+    await this.access.assertCanAccess({
+      actorId,
+      thesisId,
+      allowedRoles: ['DOCTORAL_STUDENT', 'SUPERVISOR', 'ADMIN'],
+    });
+    await this.standardPath.localize(thesisId, locale);
+    return { localized: true };
   }
 
   /** @deprecated Prefer POST /theses/:id/invitations — kept for compatibility. */

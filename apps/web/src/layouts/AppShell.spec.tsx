@@ -81,6 +81,7 @@ describe('application shell', () => {
                 overdue: 0,
               },
               upcomingDeadlines: [],
+              activityByDay: [],
               recentActivity: [],
             }),
             { status: 200, headers: { 'content-type': 'application/json' } },

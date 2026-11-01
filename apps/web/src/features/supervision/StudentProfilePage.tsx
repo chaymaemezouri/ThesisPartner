@@ -57,7 +57,10 @@ export function StudentProfilePage() {
               count: thesis.doctoralYear,
             })}
           />
-          <Fact label={t('supervision.university')} value={thesis.institution} />
+          <Fact
+            label={t('supervision.university')}
+            value={thesis.institution?.trim() || profile.institution}
+          />
           <Fact label={t('profile.specialty')} value={thesis.discipline} />
           <Fact
             label={t('supervision.startDate')}

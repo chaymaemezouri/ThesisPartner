@@ -142,7 +142,7 @@ export function ThesisDocuments({ canManage }: { canManage: boolean }) {
             <div
               role="tablist"
               aria-label={t('resources.proposed.sourceColumn')}
-              className="grid w-full grid-cols-2 gap-1 rounded-md border border-line bg-surface p-1 sm:flex sm:w-auto sm:flex-wrap"
+              className="flex w-full max-w-full justify-start gap-1 overflow-x-auto rounded-2xl border border-line/80 bg-line/45 p-1.5 sm:w-fit [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
             >
               {(
                 [
@@ -161,31 +161,70 @@ export function ThesisDocuments({ canManage }: { canManage: boolean }) {
                     'profile',
                   ],
                 ] as const
-              ).map(([id, label, shortLabel, count, icon]) => (
-                <button
-                  key={id}
-                  type="button"
-                  role="tab"
-                  aria-selected={sourceTab === id}
-                  aria-label={`${t(label)} (${count})`}
-                  title={`${t(label)} (${count})`}
-                  className={`inline-flex min-w-0 items-center justify-center gap-1.5 rounded-md px-2 py-2 text-xs font-medium sm:justify-start sm:px-3 sm:py-1.5 ${
-                    sourceTab === id ? 'bg-brand-soft text-brand' : 'text-muted hover:bg-canvas'
-                  }`}
-                  onClick={() => {
-                    setSourceTab(id);
-                    setOpenId(null);
-                  }}
-                >
-                  <Icon name={icon} className="h-3.5 w-3.5 shrink-0" />
-                  <span className="truncate sm:hidden">
-                    {t(shortLabel)} ({count})
-                  </span>
-                  <span className="hidden truncate sm:inline">
-                    {t(label)} ({count})
-                  </span>
-                </button>
-              ))}
+              ).map(([id, label, shortLabel, count, icon], index, items) => {
+                const selected = sourceTab === id;
+                return (
+                  <button
+                    key={id}
+                    type="button"
+                    role="tab"
+                    aria-selected={selected}
+                    tabIndex={selected ? 0 : -1}
+                    aria-label={`${t(label)} (${count})`}
+                    title={`${t(label)} (${count})`}
+                    className={`flex min-w-0 shrink-0 items-center gap-2 rounded-xl px-2.5 py-2 text-left transition-[background-color,box-shadow,color] duration-150 ${
+                      selected
+                        ? 'bg-surface text-ink shadow-[0_1px_3px_rgba(15,23,42,0.08)]'
+                        : 'text-ink/80 hover:bg-surface/70'
+                    }`}
+                    onClick={() => {
+                      setSourceTab(id);
+                      setOpenId(null);
+                    }}
+                    onKeyDown={(event) => {
+                      if (!['ArrowRight', 'ArrowLeft', 'Home', 'End'].includes(event.key)) return;
+                      event.preventDefault();
+                      const nextIndex =
+                        event.key === 'Home'
+                          ? 0
+                          : event.key === 'End'
+                            ? items.length - 1
+                            : (index + (event.key === 'ArrowRight' ? 1 : -1) + items.length) %
+                              items.length;
+                      const next = items[nextIndex];
+                      if (!next) return;
+                      setSourceTab(next[0]);
+                      setOpenId(null);
+                      event.currentTarget.parentElement
+                        ?.querySelectorAll<HTMLButtonElement>('[role="tab"]')
+                        [nextIndex]?.focus();
+                    }}
+                  >
+                    <span
+                      aria-hidden="true"
+                      className={`grid h-8 w-8 shrink-0 place-items-center rounded-lg ${
+                        selected ? 'bg-brand-soft text-brand' : 'bg-surface/80 text-muted'
+                      }`}
+                    >
+                      <Icon name={icon} className="h-4 w-4" />
+                    </span>
+                    <span
+                      className={`min-w-0 truncate text-sm sm:hidden ${
+                        selected ? 'font-semibold' : 'font-medium'
+                      }`}
+                    >
+                      {t(shortLabel)} ({count})
+                    </span>
+                    <span
+                      className={`hidden min-w-0 truncate text-sm sm:inline ${
+                        selected ? 'font-semibold' : 'font-medium'
+                      }`}
+                    >
+                      {t(label)} ({count})
+                    </span>
+                  </button>
+                );
+              })}
             </div>
           )}
         </div>

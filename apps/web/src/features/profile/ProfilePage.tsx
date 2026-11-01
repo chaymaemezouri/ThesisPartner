@@ -5,17 +5,30 @@ import {
   updateProfileSchema,
 } from '@thesispartner/validation';
 import { useRef, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import type { z } from 'zod';
 import { Avatar, Button, Input } from '@thesispartner/ui';
 import { ApiClientError, apiGet, apiSend, apiUpload } from '../../api/client';
+import { Icon } from '../../components/Icon';
 import { applyFieldErrors, formErrorMessage } from '../../forms/api-errors';
 import { useZodForm } from '../../forms/use-zod-form';
 import { useT } from '../../i18n/LocaleContext';
+import type { IconName } from '../../routes/nav';
+import { ProfileAnalytics } from './ProfileAnalytics';
 import { ProfileThesisDossier } from './ProfileThesisDossier';
+
+type ProfileTab = 'identity' | 'analytics';
+
+const PROFILE_TAB_ICONS = {
+  identity: 'profile',
+  analytics: 'dashboard',
+} satisfies Record<ProfileTab, IconName>;
 
 export function ProfilePage() {
   const t = useT();
   const queryClient = useQueryClient();
+  const [params, setParams] = useSearchParams();
+  const tab: ProfileTab = params.get('tab') === 'analyses' ? 'analytics' : 'identity';
   const profile = useQuery({
     queryKey: ['profile'],
     queryFn: () => apiGet('/api/v1/profile', academicProfileSchema),
@@ -30,18 +43,96 @@ export function ProfilePage() {
     );
   }
 
+  const tabs = [
+    { id: 'identity' as const, label: t('profile.tabIdentity'), param: null as string | null },
+    {
+      id: 'analytics' as const,
+      label: t('profile.tabAnalytics'),
+      param: 'analyses' as string | null,
+    },
+  ];
+
   return (
     <div className="w-full max-w-none">
       <h1 className="sr-only">{t('profile.title')}</h1>
-      <ProfileForm
-        initial={profile.data}
-        onSaved={async () => {
-          await queryClient.invalidateQueries({ queryKey: ['profile'] });
-          await queryClient.invalidateQueries({ queryKey: ['dashboard'] });
-          await queryClient.invalidateQueries({ queryKey: ['me'] });
-        }}
-      />
-      <ProfileThesisDossier />
+      <div
+        className="mb-4 flex w-fit max-w-full justify-start gap-1 overflow-x-auto rounded-2xl border border-line/80 bg-line/45 p-1.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        role="tablist"
+        aria-label={t('profile.tabsAria')}
+      >
+        {tabs.map((item, index) => {
+          const selected = tab === item.id;
+          return (
+            <button
+              key={item.id}
+              type="button"
+              role="tab"
+              aria-selected={selected}
+              tabIndex={selected ? 0 : -1}
+              className={`flex shrink-0 items-center gap-2 rounded-xl px-2.5 py-2 text-left transition-[background-color,box-shadow,color] duration-150 ${
+                selected
+                  ? 'bg-surface text-ink shadow-[0_1px_3px_rgba(15,23,42,0.08)]'
+                  : 'text-ink/80 hover:bg-surface/70'
+              }`}
+              onClick={() => {
+                const next = new URLSearchParams(params);
+                if (item.param) next.set('tab', item.param);
+                else next.delete('tab');
+                setParams(next, { replace: true });
+              }}
+              onKeyDown={(event) => {
+                if (!['ArrowRight', 'ArrowLeft', 'Home', 'End'].includes(event.key)) return;
+                event.preventDefault();
+                const nextIndex =
+                  event.key === 'Home'
+                    ? 0
+                    : event.key === 'End'
+                      ? tabs.length - 1
+                      : (index + (event.key === 'ArrowRight' ? 1 : -1) + tabs.length) % tabs.length;
+                const nextTab = tabs[nextIndex];
+                if (!nextTab) return;
+                const next = new URLSearchParams(params);
+                if (nextTab.param) next.set('tab', nextTab.param);
+                else next.delete('tab');
+                setParams(next, { replace: true });
+                event.currentTarget.parentElement
+                  ?.querySelectorAll<HTMLButtonElement>('[role="tab"]')
+                  [nextIndex]?.focus();
+              }}
+            >
+              <span
+                aria-hidden="true"
+                className={`grid h-8 w-8 shrink-0 place-items-center rounded-lg ${
+                  selected ? 'bg-brand-soft text-brand' : 'bg-surface/80 text-muted'
+                }`}
+              >
+                <Icon name={PROFILE_TAB_ICONS[item.id]} className="h-4 w-4" />
+              </span>
+              <span
+                className={`whitespace-nowrap text-sm ${selected ? 'font-semibold' : 'font-medium'}`}
+              >
+                {item.label}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
+      {tab === 'analytics' ? (
+        <ProfileAnalytics />
+      ) : (
+        <>
+          <ProfileForm
+            initial={profile.data}
+            onSaved={async () => {
+              await queryClient.invalidateQueries({ queryKey: ['profile'] });
+              await queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+              await queryClient.invalidateQueries({ queryKey: ['me'] });
+            }}
+          />
+          <ProfileThesisDossier />
+        </>
+      )}
     </div>
   );
 }

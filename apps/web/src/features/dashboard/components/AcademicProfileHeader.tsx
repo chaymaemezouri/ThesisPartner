@@ -14,15 +14,23 @@ export function AcademicProfileHeader({
 }) {
   const t = useT();
   const specialty = profile.specialty ?? profile.academicTitle;
+  const institution = profile.institution?.trim() || thesis?.institution?.trim() || null;
+  const laboratory = profile.laboratory?.trim() || null;
   const doctoralYearLabel = thesis
     ? t(thesis.doctoralYear === 1 ? 'dashboard.yearOne' : 'dashboard.yearMany', {
         count: thesis.doctoralYear,
       })
     : null;
   const links = [
-    profile.orcid ? { label: 'ORCID', href: `https://orcid.org/${profile.orcid}` } : null,
-    profile.googleScholarUrl ? { label: 'Google Scholar', href: profile.googleScholarUrl } : null,
-    profile.linkedinUrl ? { label: 'LinkedIn', href: profile.linkedinUrl } : null,
+    profile.orcid?.trim()
+      ? { label: 'ORCID', href: `https://orcid.org/${profile.orcid.trim()}` }
+      : null,
+    profile.googleScholarUrl?.trim()
+      ? { label: 'Google Scholar', href: profile.googleScholarUrl.trim() }
+      : null,
+    profile.linkedinUrl?.trim()
+      ? { label: 'LinkedIn', href: profile.linkedinUrl.trim() }
+      : null,
   ].filter((item): item is { label: string; href: string } => item !== null);
 
   return (
@@ -79,16 +87,16 @@ export function AcademicProfileHeader({
               <dt className="text-[11px] font-medium tracking-wide text-muted uppercase">
                 {t('dashboard.university')}
               </dt>
-              <dd className="mt-0.5 line-clamp-2 text-ink">
-                {profile.institution ?? t('common.notProvided')}
+              <dd className="mt-0.5 break-words text-ink">
+                {institution ?? t('common.notProvided')}
               </dd>
             </div>
             <div className="min-w-0">
               <dt className="text-[11px] font-medium tracking-wide text-muted uppercase">
                 {t('dashboard.laboratory')}
               </dt>
-              <dd className="mt-0.5 line-clamp-2 text-ink">
-                {profile.laboratory ?? t('common.notProvided')}
+              <dd className="mt-0.5 break-words text-ink">
+                {laboratory ?? t('common.notProvided')}
               </dd>
             </div>
           </dl>

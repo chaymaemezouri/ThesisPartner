@@ -51,6 +51,7 @@ function dashboard() {
     },
     kpis: [],
     upcomingDeadlines: [],
+    activityByDay: [],
     recentActivity: [],
   };
 }

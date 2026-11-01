@@ -9,7 +9,10 @@ import {
   type createObjectiveSchema,
 } from '@thesispartner/validation';
 import { apiGet, apiSend } from '../../../api/client';
+import { useLocale } from '../../../i18n/LocaleContext';
 import { objectiveKeys, toQuery, type ObjectiveFilters } from '../keys';
+
+const localizedSchema = z.object({ localized: z.boolean() }).strict();
 
 export type Objective = z.output<typeof objectiveSchema>;
 export type ObjectiveBody = z.infer<typeof createObjectiveSchema>;
@@ -58,10 +61,34 @@ export function useStandardPath(thesisId: string | null) {
 
 export function useApplyStandardPath(thesisId: string) {
   const queryClient = useQueryClient();
+  const { locale } = useLocale();
   return useMutation({
     mutationFn: () =>
-      apiSend(`/api/v1/theses/${thesisId}/standard-path`, standardPathResultSchema, {}),
+      apiSend(
+        `/api/v1/theses/${thesisId}/standard-path?locale=${locale}`,
+        standardPathResultSchema,
+        {},
+      ),
     onSuccess: () => invalidateObjectiveViews(queryClient),
+  });
+}
+
+export function useLocalizeStandardPath(thesisId: string | null) {
+  const queryClient = useQueryClient();
+  const { locale } = useLocale();
+  return useQuery({
+    queryKey: ['standard-path', thesisId, 'localize', locale],
+    enabled: Boolean(thesisId),
+    staleTime: Infinity,
+    queryFn: async () => {
+      const result = await apiSend(
+        `/api/v1/theses/${thesisId}/standard-path/localize?locale=${locale}`,
+        localizedSchema,
+        {},
+      );
+      await invalidateObjectiveViews(queryClient);
+      return result;
+    },
   });
 }
 

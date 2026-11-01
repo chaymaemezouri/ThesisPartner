@@ -492,6 +492,16 @@ export const dashboardSchema = z
         percentage: z.number().int().min(0).max(100),
       })
       .strict(),
+    activityByDay: z
+      .array(
+        z
+          .object({
+            date: daySchema,
+            count: z.number().int().nonnegative(),
+          })
+          .strict(),
+      )
+      .max(40),
     recentActivity: z
       .array(
         z

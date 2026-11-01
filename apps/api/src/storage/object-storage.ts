@@ -16,6 +16,7 @@ export type ObjectStorage = {
   }): Promise<void>;
   deleteObject(key: string): Promise<void>;
   objectExists(key: string): Promise<boolean>;
+  objectContentType(key: string): Promise<string | null>;
   createSignedDownloadUrl(input: {
     key: string;
     downloadName: string;

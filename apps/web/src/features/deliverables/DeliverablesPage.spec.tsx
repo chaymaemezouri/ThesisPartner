@@ -163,6 +163,7 @@ function dashboard() {
     },
     kpis: [{ id: 'progress', value: '0' }],
     upcomingDeadlines: [],
+    activityByDay: [],
     recentActivity: [],
   };
 }

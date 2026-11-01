@@ -8,6 +8,7 @@ import {
   ParseUUIDPipe,
   Patch,
   Post,
+  Query,
   Req,
 } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
@@ -37,8 +38,17 @@ export class ThesesController {
   @HttpCode(201)
   @ValidateBody(createThesisSchema)
   @ApiOperation({ summary: 'Create a thesis as its doctoral student' })
-  create(@Body() body: unknown, @Req() request: Request) {
-    return this.theses.create(actorId(request), createThesisSchema.parse(body), request.requestId);
+  create(
+    @Body() body: unknown,
+    @Query('locale') locale: string | undefined,
+    @Req() request: Request,
+  ) {
+    return this.theses.create(
+      actorId(request),
+      createThesisSchema.parse(body),
+      request.requestId,
+      locale,
+    );
   }
 
   @Get(':thesisId')
@@ -83,10 +93,24 @@ export class ThesesController {
   @ApiOperation({ summary: 'Copy any missing standard objectives onto this thesis' })
   applyStandardPath(
     @Param('thesisId', ParseUUIDPipe) thesisId: string,
+    @Query('locale') locale: string | undefined,
     @Body() _body: unknown,
     @Req() request: Request,
   ) {
-    return this.theses.applyStandardPath(actorId(request), thesisId);
+    return this.theses.applyStandardPath(actorId(request), thesisId, locale);
+  }
+
+  @Post(':thesisId/standard-path/localize')
+  @HttpCode(200)
+  @ValidateBody(emptyBodySchema)
+  @ApiOperation({ summary: 'Translate standard objectives to the UI language' })
+  localizeStandardPath(
+    @Param('thesisId', ParseUUIDPipe) thesisId: string,
+    @Query('locale') locale: string | undefined,
+    @Body() _body: unknown,
+    @Req() request: Request,
+  ) {
+    return this.theses.localizeStandardPath(actorId(request), thesisId, locale);
   }
 
   @Post(':thesisId/members')

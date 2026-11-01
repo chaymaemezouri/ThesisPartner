@@ -139,6 +139,18 @@ export class S3ObjectStorage implements ObjectStorage, OnModuleInit {
     }
   }
 
+  async objectContentType(key: string): Promise<string | null> {
+    try {
+      const head = await this.client.send(
+        new HeadObjectCommand({ Bucket: this.env.S3_BUCKET, Key: key }),
+      );
+      return head.ContentType ?? null;
+    } catch (error) {
+      if (isMissing(error)) return null;
+      throw error;
+    }
+  }
+
   async createSignedDownloadUrl(input: {
     key: string;
     downloadName: string;

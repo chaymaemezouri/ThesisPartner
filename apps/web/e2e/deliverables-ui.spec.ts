@@ -112,6 +112,7 @@ async function workspace(page: Page, supervisor = false, withFile = true) {
           overdue: 0,
         },
         upcomingDeadlines: [],
+        activityByDay: [],
         recentActivity: [],
       };
     else if (path.endsWith('/supervision/theses'))

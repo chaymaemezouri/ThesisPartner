@@ -25,6 +25,8 @@ export function queryErrorMessage(error: unknown, t: Translate = defaultT): stri
   if (error.body.code === 'FORBIDDEN') return t('errors.forbidden');
   if (error.body.code === 'SUBSCRIPTION_REQUIRED') return t('billing.readonlyHelp');
   if (error.body.code === 'STORAGE_UNAVAILABLE') return t('errors.storageUnavailable');
+  if (error.body.code === 'FILE_SCAN_PENDING') return t('errors.fileScanPending');
+  if (error.body.code === 'FILE_INFECTED') return t('errors.fileInfected');
   if (error.body.code === 'PAYLOAD_TOO_LARGE' || error.body.code === 'FILE_TOO_LARGE') {
     return t('deliverables.fileTooLarge');
   }

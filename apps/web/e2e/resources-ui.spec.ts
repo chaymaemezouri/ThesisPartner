@@ -150,6 +150,7 @@ async function mockDocuments(page: Page) {
           overdue: 0,
         },
         upcomingDeadlines: [],
+        activityByDay: [],
         recentActivity: [],
       };
     else if (path.endsWith('/supervision/theses'))

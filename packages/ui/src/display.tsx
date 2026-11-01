@@ -1,4 +1,4 @@
-import type { HTMLAttributes, ReactNode } from 'react';
+import { useState, type HTMLAttributes, type ReactNode } from 'react';
 import { cn } from './cn';
 
 export function Card({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
@@ -47,6 +47,7 @@ export function Avatar({
   size?: 'sm' | 'md' | 'lg' | 'xl';
   className?: string;
 }) {
+  const [failedUrl, setFailedUrl] = useState<string | null>(null);
   const frame = cn(
     'inline-flex items-center justify-center overflow-hidden rounded-full bg-brand-soft font-semibold text-brand',
     size === 'xl'
@@ -58,15 +59,23 @@ export function Avatar({
           : 'h-8 w-8 text-xs',
     className,
   );
-  if (
+  const usableUrl =
     imageUrl &&
+    imageUrl !== failedUrl &&
     (imageUrl.startsWith('https://') ||
       imageUrl.startsWith('http://') ||
       imageUrl.startsWith('/api/') ||
       imageUrl.startsWith('/tmp-avatars/'))
-  ) {
+      ? imageUrl
+      : null;
+  if (usableUrl) {
     return (
-      <img src={imageUrl} alt={decorative ? '' : label} className={cn(frame, 'object-cover')} />
+      <img
+        src={usableUrl}
+        alt={decorative ? '' : label}
+        className={cn(frame, 'object-cover')}
+        onError={() => setFailedUrl(usableUrl)}
+      />
     );
   }
 

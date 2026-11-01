@@ -13,7 +13,7 @@ import { IconAction } from '../../components/IconAction';
 import { apiGet, apiSend } from '../../api/client';
 import { applyFieldErrors, formErrorMessage } from '../../forms/api-errors';
 import { useZodForm } from '../../forms/use-zod-form';
-import { useT } from '../../i18n/LocaleContext';
+import { useLocale, useT } from '../../i18n/LocaleContext';
 import { ThesisEditForm } from '../theses/ThesisForms';
 import { primaryThesis } from '../theses/primary-thesis';
 
@@ -46,11 +46,13 @@ export function ProfileThesisDossier() {
 
 function CreateThesis() {
   const t = useT();
+  const { locale } = useLocale();
   const queryClient = useQueryClient();
   const [message, setMessage] = useState<string | null>(null);
   const form = useZodForm(createThesisSchema, { defaultValues: { title: '' } });
   const mutation = useMutation({
-    mutationFn: (title: string) => apiSend('/api/v1/theses', thesisSummarySchema, { title }),
+    mutationFn: (title: string) =>
+      apiSend(`/api/v1/theses?locale=${locale}`, thesisSummarySchema, { title }),
     onSuccess: async () => {
       form.reset();
       await queryClient.invalidateQueries({ queryKey: ['theses'] });

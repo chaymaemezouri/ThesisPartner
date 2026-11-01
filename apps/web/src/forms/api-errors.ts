@@ -14,6 +14,8 @@ const MESSAGE_KEY: Partial<Record<ApiErrorCode, MessageKey>> = {
   FORBIDDEN: 'errors.forbidden',
   NOT_FOUND: 'errors.accountNotFound',
   STORAGE_UNAVAILABLE: 'errors.storageUnavailable',
+  FILE_SCAN_PENDING: 'errors.fileScanPending',
+  FILE_INFECTED: 'errors.fileInfected',
   PAYLOAD_TOO_LARGE: 'errors.payloadTooLarge',
   FILE_TOO_LARGE: 'deliverables.fileTooLarge',
   FILE_TYPE_NOT_ALLOWED: 'deliverables.fileTypeNotAllowed',

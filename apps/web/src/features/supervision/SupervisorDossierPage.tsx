@@ -1,5 +1,6 @@
 import { useParams } from 'react-router-dom';
 import { Skeleton } from '@thesispartner/ui';
+import { AcademicProfileHeader } from '../dashboard/components/AcademicProfileHeader';
 import { ActivityList } from '../dashboard/components/ActivityList';
 import { ThesisProgressSummary } from '../dashboard/components/ThesisProgressSummary';
 import { UpcomingDeadlines } from '../dashboard/components/UpcomingDeadlines';
@@ -26,6 +27,9 @@ export function SupervisorDossierPage() {
   return (
     <div className="min-w-0">
       <StudentSpaceNav thesisId={thesisId} />
+      <div className="mb-4">
+        <AcademicProfileHeader profile={data.profile} thesis={data.thesis} readOnly />
+      </div>
       <div className="grid items-start gap-4 lg:grid-cols-2">
         <div className="min-w-0 lg:col-span-2">
           <ThesisProgressSummary

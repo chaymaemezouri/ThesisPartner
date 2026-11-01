@@ -62,18 +62,30 @@ export class DashboardService {
     });
     const completion = profileCompletion(user.profile);
     const thesisIds = user.memberships.map((item) => item.thesisId);
-    const logs = await this.prisma.auditLog.findMany({
-      where: {
-        action: { in: [...ACTIVITY_ACTIONS] },
-        OR: [
-          { actorId: userId },
-          ...(thesisIds.length > 0 ? [{ thesisId: { in: thesisIds } }] : []),
-        ],
-      },
-      orderBy: { createdAt: 'desc' },
-      take: 8,
-      select: { action: true, createdAt: true, entityId: true },
-    });
+    const activityScope = {
+      action: { in: [...ACTIVITY_ACTIONS] },
+      OR: [{ actorId: userId }, ...(thesisIds.length > 0 ? [{ thesisId: { in: thesisIds } }] : [])],
+    };
+    const since = new Date();
+    since.setUTCHours(0, 0, 0, 0);
+    since.setUTCDate(since.getUTCDate() - 30);
+    const [logs, monthLogs] = await Promise.all([
+      this.prisma.auditLog.findMany({
+        where: activityScope,
+        orderBy: { createdAt: 'desc' },
+        take: 8,
+        select: { action: true, createdAt: true, entityId: true },
+      }),
+      this.prisma.auditLog.findMany({
+        where: { ...activityScope, createdAt: { gte: since } },
+        select: { createdAt: true },
+        take: 2000,
+      }),
+    ]);
+    const activityByDay = buildActivityByDay(
+      monthLogs.map((row) => row.createdAt),
+      31,
+    );
     const versionIds = logs.flatMap((entry) =>
       entry.action === 'deliverable.version_created' && entry.entityId ? [entry.entityId] : [],
     );
@@ -210,6 +222,7 @@ export class DashboardService {
       deliverables: deliverableCounts,
       kpis,
       workProgress,
+      activityByDay,
       upcomingDeadlines: [
         ...objectiveDeadlines,
         ...taskDeadlines,
@@ -243,4 +256,22 @@ function byDay(left: { occursOn: string }, right: { occursOn: string }): number 
   if (left.occursOn < right.occursOn) return -1;
   if (left.occursOn > right.occursOn) return 1;
   return 0;
+}
+
+function buildActivityByDay(dates: Date[], days: number): Array<{ date: string; count: number }> {
+  const counts = new Map<string, number>();
+  for (const date of dates) {
+    const key = date.toISOString().slice(0, 10);
+    counts.set(key, (counts.get(key) ?? 0) + 1);
+  }
+  const today = new Date();
+  today.setUTCHours(0, 0, 0, 0);
+  const series: Array<{ date: string; count: number }> = [];
+  for (let offset = days - 1; offset >= 0; offset -= 1) {
+    const day = new Date(today);
+    day.setUTCDate(today.getUTCDate() - offset);
+    const key = day.toISOString().slice(0, 10);
+    series.push({ date: key, count: counts.get(key) ?? 0 });
+  }
+  return series;
 }

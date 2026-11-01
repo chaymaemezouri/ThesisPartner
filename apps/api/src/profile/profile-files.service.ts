@@ -62,11 +62,16 @@ export class ProfileFilesService {
     if (!key) throw new AppException(404, 'NOT_FOUND', 'Aucune photo de profil.');
     await this.storage.ensureReady();
     const name = key.split('/').pop() ?? 'avatar.jpg';
+    const storedType = await this.objects.objectContentType(key);
+    const contentType = storedType && storedType.startsWith('image/') ? storedType : 'image/jpeg';
+    const extension =
+      contentType === 'image/png' ? 'png' : contentType === 'image/webp' ? 'webp' : 'jpg';
     return this.objects.createSignedDownloadUrl({
       key,
-      downloadName: name.includes('.') ? name : `${name}.jpg`,
-      contentType: 'application/octet-stream',
+      downloadName: name.includes('.') ? name : `avatar.${extension}`,
+      contentType,
       ttlSeconds: this.env.SIGNED_URL_TTL_SECONDS,
+      inline: true,
     });
   }
 

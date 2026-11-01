@@ -204,11 +204,20 @@ export class DeliverableFilesService {
       throw new AppException(403, 'FILE_INFECTED', 'Ce fichier ne peut pas être téléchargé.');
     }
     if (file.scanStatus !== 'CLEAN') {
-      throw new AppException(
-        409,
-        'FILE_SCAN_PENDING',
-        'Ce fichier n’est pas encore disponible au téléchargement.',
-      );
+      // Production without ClamAV uses FILE_SCAN_MODE=allow: promote stuck PENDING rows
+      // left by an earlier stub deploy so preview/download work without re-upload.
+      if (file.scanStatus === 'PENDING' && this.env.FILE_SCAN_MODE === 'allow') {
+        await this.prisma.storedFile.update({
+          where: { id: file.id },
+          data: { scanStatus: 'CLEAN' },
+        });
+      } else {
+        throw new AppException(
+          409,
+          'FILE_SCAN_PENDING',
+          'Ce fichier n’est pas encore disponible au téléchargement.',
+        );
+      }
     }
     await this.storage.ensureReady();
     try {

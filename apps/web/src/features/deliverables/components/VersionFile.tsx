@@ -67,6 +67,8 @@ export function fileErrorMessage(error: unknown, t: Translate = defaultT): strin
     return t('deliverables.versionFileExists');
   }
   if (error.body.code === 'STORAGE_UNAVAILABLE') return t('errors.storageUnavailable');
+  if (error.body.code === 'FILE_SCAN_PENDING') return t('errors.fileScanPending');
+  if (error.body.code === 'FILE_INFECTED') return t('errors.fileInfected');
   if (error.body.code === 'SUBSCRIPTION_REQUIRED') return t('errors.subscriptionRequired');
   if (error.body.code === 'FORBIDDEN') return t('errors.forbidden');
   if (error.body.code === 'NOT_FOUND') return t('errors.notFound');

@@ -42,6 +42,7 @@ describe('parseEnv', () => {
     const env = parseEnv({ ...valid, NODE_ENV: 'production' });
     expect(env.PAYMENT_PROVIDER).toBe('none');
     expect(env.SMTP_HOST).toBeUndefined();
+    expect(env.FILE_SCAN_MODE).toBe('allow');
   });
 
   it('rejects a missing database url without echoing secrets', () => {

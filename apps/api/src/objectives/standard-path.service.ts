@@ -1,7 +1,12 @@
 import { Injectable, type OnModuleInit } from '@nestjs/common';
 import type { Prisma } from '@prisma/client';
 import { PrismaService } from '../infrastructure/prisma/prisma.service';
-import { STANDARD_OBJECTIVES } from './standard-path.catalog';
+import {
+  STANDARD_OBJECTIVES,
+  parseStandardPathLocale,
+  standardObjectivesFor,
+  type StandardPathLocale,
+} from './standard-path.catalog';
 
 type Db = Prisma.TransactionClient;
 
@@ -10,10 +15,10 @@ export class StandardPathService implements OnModuleInit {
   constructor(private readonly prisma: PrismaService) {}
 
   async onModuleInit(): Promise<void> {
-    await this.prisma.$transaction((tx) => this.ensure(tx));
+    await this.prisma.$transaction((tx) => this.ensureTemplates(tx));
   }
 
-  async ensure(db: Db): Promise<void> {
+  async ensureTemplates(db: Db): Promise<void> {
     const parked = await db.objectiveTemplate.findMany({ select: { id: true, position: true } });
     for (const row of parked) {
       await db.objectiveTemplate.update({
@@ -51,8 +56,49 @@ export class StandardPathService implements OnModuleInit {
     }
   }
 
-  async apply(db: Db, thesisId: string, actorId: string): Promise<number> {
-    await this.ensure(db);
+  private async syncThesisCopies(
+    db: Db,
+    thesisId: string,
+    locale: StandardPathLocale,
+  ): Promise<void> {
+    const localized = standardObjectivesFor(locale);
+    for (const item of localized) {
+      await db.objective.updateMany({
+        where: { thesisId, templateCode: item.code, origin: 'STANDARD_TEMPLATE' },
+        data: { title: item.title, description: item.description },
+      });
+      const objectives = await db.objective.findMany({
+        where: { thesisId, templateCode: item.code, origin: 'STANDARD_TEMPLATE' },
+        select: { id: true },
+      });
+      for (const [taskIndex, task] of item.tasks.entries()) {
+        for (const objective of objectives) {
+          await db.task.updateMany({
+            where: {
+              objectiveId: objective.id,
+              origin: 'STANDARD_TEMPLATE',
+              position: taskIndex + 1,
+            },
+            data: {
+              title: task.title,
+              description: task.description ?? null,
+            },
+          });
+        }
+      }
+    }
+  }
+
+  async apply(
+    db: Db,
+    thesisId: string,
+    actorId: string,
+    localeRaw?: string | null,
+  ): Promise<number> {
+    const locale = parseStandardPathLocale(localeRaw);
+    await this.ensureTemplates(db);
+    const localized = standardObjectivesFor(locale);
+    const byCode = new Map(localized.map((item) => [item.code, item]));
     const templates = await db.objectiveTemplate.findMany({
       orderBy: { position: 'asc' },
       include: { tasks: { orderBy: { position: 'asc' } } },
@@ -70,11 +116,14 @@ export class StandardPathService implements OnModuleInit {
     let created = 0;
     for (const template of templates) {
       if (present.has(template.code)) continue;
+      const copy = byCode.get(template.code);
+      const title = copy?.title ?? template.title;
+      const description = copy?.description ?? template.description;
       const objective = await db.objective.create({
         data: {
           thesisId,
-          title: template.title,
-          description: template.description,
+          title,
+          description,
           status: template.position === 1 ? 'IN_PROGRESS' : 'PLANNED',
           priority: 'MEDIUM',
           progress: 0,
@@ -85,9 +134,17 @@ export class StandardPathService implements OnModuleInit {
           responsibleUserId: student?.userId ?? null,
         },
       });
-      if (template.tasks.length > 0) {
-        await db.task.createMany({
-          data: template.tasks.map((task) => ({
+      const taskRows = copy
+        ? copy.tasks.map((task, taskIndex) => ({
+            objectiveId: objective.id,
+            title: task.title,
+            description: task.description ?? null,
+            status: 'TODO' as const,
+            position: taskIndex + 1,
+            origin: 'STANDARD_TEMPLATE' as const,
+            createdById: actorId,
+          }))
+        : template.tasks.map((task) => ({
             objectiveId: objective.id,
             title: task.title,
             description: task.description,
@@ -95,12 +152,22 @@ export class StandardPathService implements OnModuleInit {
             position: task.position,
             origin: 'STANDARD_TEMPLATE' as const,
             createdById: actorId,
-          })),
-        });
+          }));
+      if (taskRows.length > 0) {
+        await db.task.createMany({ data: taskRows });
       }
       created += 1;
     }
+    await this.syncThesisCopies(db, thesisId, locale);
     return created;
+  }
+
+  async localize(thesisId: string, localeRaw?: string | null): Promise<void> {
+    const locale = parseStandardPathLocale(localeRaw);
+    await this.prisma.$transaction(async (tx) => {
+      await this.ensureTemplates(tx);
+      await this.syncThesisCopies(tx, thesisId, locale);
+    });
   }
 
   async applied(thesisId: string): Promise<boolean> {

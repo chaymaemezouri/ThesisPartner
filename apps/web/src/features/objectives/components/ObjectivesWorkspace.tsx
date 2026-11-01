@@ -8,6 +8,7 @@ import {
   useApplyStandardPath,
   useCreateObjective,
   useDeleteObjective,
+  useLocalizeStandardPath,
   useObjectives,
   useStandardPath,
   useUpdateListedObjective,
@@ -41,6 +42,7 @@ export function ObjectivesWorkspace({
   const filters = filtersFromTab(tab, search);
   const objectives = useObjectives(thesisId, filters);
   const standardPath = useStandardPath(canManage ? thesisId : null);
+  useLocalizeStandardPath(thesisId);
   const applyPath = useApplyStandardPath(thesisId);
   const create = useCreateObjective(thesisId);
   const update = useUpdateListedObjective(thesisId);

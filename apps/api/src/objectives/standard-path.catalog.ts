@@ -10,8 +10,9 @@ export type StandardObjective = {
   tasks: readonly StandardTask[];
 };
 
-/** Starting doctoral path. These rows are templates, never the user's objectives. */
-export const STANDARD_OBJECTIVES: readonly StandardObjective[] = [
+export type StandardPathLocale = 'en' | 'fr';
+
+const STANDARD_OBJECTIVES_EN: readonly StandardObjective[] = [
   {
     code: 'PROBLEMATIQUE',
     title: 'Define the research problem',
@@ -138,3 +139,144 @@ export const STANDARD_OBJECTIVES: readonly StandardObjective[] = [
     ],
   },
 ];
+
+const STANDARD_OBJECTIVES_FR: readonly StandardObjective[] = [
+  {
+    code: 'PROBLEMATIQUE',
+    title: 'Définir la problématique de recherche',
+    description: 'Poser le sujet, la question de recherche et les hypothèses, puis les valider.',
+    tasks: [
+      { title: 'Choisir le sujet' },
+      { title: 'Délimiter le périmètre' },
+      { title: 'Identifier le problème scientifique' },
+      { title: 'Formuler la question de recherche' },
+      { title: 'Définir les hypothèses' },
+      { title: 'Définir les objectifs spécifiques' },
+      { title: 'Validation avec l’encadrant' },
+    ],
+  },
+  {
+    code: 'ETAT_ART',
+    title: 'Construire l’état de l’art',
+    description: 'Recenser, comparer et synthétiser les publications utiles à la recherche.',
+    tasks: [
+      { title: 'Définir les mots-clés' },
+      { title: 'Choisir les bases scientifiques' },
+      { title: 'Rechercher les publications' },
+      { title: 'Filtrer les sources' },
+      { title: 'Lire et annoter' },
+      { title: 'Classer les travaux' },
+      { title: 'Comparer les approches' },
+      { title: 'Identifier les gaps' },
+      { title: 'Rédiger la revue de littérature' },
+    ],
+  },
+  {
+    code: 'METHODOLOGIE',
+    title: 'Définir la méthodologie',
+    description: 'Choisir l’approche, les données et le protocole, puis les faire valider.',
+    tasks: [
+      { title: 'Choisir l’approche de recherche' },
+      { title: 'Définir les données/population' },
+      { title: 'Choisir les méthodes' },
+      { title: 'Définir les outils' },
+      { title: 'Construire le protocole' },
+      { title: 'Définir les critères d’évaluation' },
+      { title: 'Vérifier faisabilité/éthique' },
+      { title: 'Validation encadrant' },
+    ],
+  },
+  {
+    code: 'EXPERIMENTATION',
+    title: 'Produire les résultats scientifiques',
+    description: 'Réaliser le travail expérimental et en conserver une trace exploitable.',
+    tasks: [
+      { title: 'Préparer les données/matériel' },
+      { title: 'Exécuter les expériences' },
+      { title: 'Collecter les résultats' },
+      { title: 'Nettoyer / prétraiter' },
+      { title: 'Analyser' },
+      { title: 'Répéter si besoin' },
+      { title: 'Documenter les résultats' },
+    ],
+  },
+  {
+    code: 'ANALYSE',
+    title: 'Valider et interpréter les résultats',
+    description: 'Mesurer, comparer et interpréter les résultats, puis en préciser les limites.',
+    tasks: [
+      { title: 'Définir les métriques' },
+      { title: 'Tester les résultats' },
+      { title: 'Comparer aux travaux existants' },
+      { title: 'Analyses statistiques / qualitatives' },
+      { title: 'Vérifier la robustesse' },
+      { title: 'Interpréter les findings' },
+      { title: 'Identifier les limites' },
+      { title: 'Formuler les conclusions' },
+    ],
+  },
+  {
+    code: 'PUBLICATION',
+    title: 'Valoriser la recherche',
+    description: 'Préparer, soumettre et présenter des contributions publiables.',
+    tasks: [
+      { title: 'Identifier les contributions publiables' },
+      { title: 'Choisir revue / conférence' },
+      { title: 'Préparer l’article' },
+      { title: 'Validation encadrant' },
+      { title: 'Soumission' },
+      { title: 'Répondre aux reviewers' },
+      { title: 'Réviser' },
+      { title: 'Acceptation / publication' },
+      { title: 'Présentation scientifique' },
+    ],
+  },
+  {
+    code: 'REDACTION',
+    title: 'Rédiger la thèse',
+    description: 'Rédiger le manuscrit, de l’introduction à la version finale.',
+    tasks: [
+      { title: 'Construire le plan' },
+      { title: 'Rédiger l’introduction' },
+      { title: 'Rédiger l’état de l’art' },
+      { title: 'Rédiger la méthodologie' },
+      { title: 'Rédiger les résultats' },
+      { title: 'Discussion' },
+      { title: 'Conclusion / perspectives' },
+      { title: 'Bibliographie' },
+      { title: 'Relecture' },
+      { title: 'Corrections encadrant' },
+      { title: 'Version finale' },
+    ],
+  },
+  {
+    code: 'SOUTENANCE',
+    title: 'Préparer la soutenance',
+    description: 'Déposer le manuscrit, préparer la présentation et la soutenance.',
+    tasks: [
+      { title: 'Vérifier les exigences administratives' },
+      { title: 'Finaliser le manuscrit' },
+      { title: 'Déposer la thèse' },
+      { title: 'Préparer la présentation' },
+      { title: 'Préparer les démonstrations' },
+      { title: 'Anticiper les questions du jury' },
+      { title: 'Soutenance blanche' },
+      { title: 'Réviser la présentation' },
+      { title: 'Soutenance' },
+      { title: 'Corrections post-soutenance' },
+    ],
+  },
+];
+
+/** Canonical English templates (DB + ranking). */
+export const STANDARD_OBJECTIVES = STANDARD_OBJECTIVES_EN;
+
+export function standardObjectivesFor(
+  locale: StandardPathLocale = 'en',
+): readonly StandardObjective[] {
+  return locale === 'fr' ? STANDARD_OBJECTIVES_FR : STANDARD_OBJECTIVES_EN;
+}
+
+export function parseStandardPathLocale(value: string | undefined | null): StandardPathLocale {
+  return value === 'fr' ? 'fr' : 'en';
+}

@@ -69,7 +69,7 @@ const schema = z.object({
     emptyToUndefined,
     z.coerce.number().int().min(1000).max(3_600_000).default(60_000),
   ),
-  FILE_SCAN_MODE: z.preprocess(emptyToUndefined, z.enum(['stub', 'allow']).default('stub')),
+  FILE_SCAN_MODE: z.preprocess(emptyToUndefined, z.enum(['stub', 'allow']).optional()),
   OPENAI_API_KEY: z.preprocess(emptyToUndefined, z.string().min(10).max(200).optional()),
   OPENAI_MODEL: z.preprocess(emptyToUndefined, z.string().min(1).max(80).default('gpt-4o-mini')),
   /** Optional. Promotes this existing account to SUPER_ADMIN when none exists yet. */
@@ -97,9 +97,13 @@ const schema = z.object({
   ),
 });
 
-export type Env = Omit<z.infer<typeof schema>, 'PAYMENT_PROVIDER' | 'MOCK_WEBHOOK_SECRET'> & {
+export type Env = Omit<
+  z.infer<typeof schema>,
+  'PAYMENT_PROVIDER' | 'MOCK_WEBHOOK_SECRET' | 'FILE_SCAN_MODE'
+> & {
   PAYMENT_PROVIDER: 'none' | 'mock';
   MOCK_WEBHOOK_SECRET?: string;
+  FILE_SCAN_MODE: 'stub' | 'allow';
 };
 export type LogLevel = Env['LOG_LEVEL'];
 
@@ -151,6 +155,8 @@ export function parseEnv(source: NodeJS.ProcessEnv): Env {
   const smtpHost =
     data.SMTP_HOST ?? (data.NODE_ENV === 'development' ? '127.0.0.1' : data.SMTP_HOST);
   const provider = data.PAYMENT_PROVIDER ?? (data.NODE_ENV === 'production' ? 'none' : 'mock');
+  // Production without ClamAV: allow (CLEAN). Dev/test keep stub unless overridden.
+  const fileScanMode = data.FILE_SCAN_MODE ?? (data.NODE_ENV === 'production' ? 'allow' : 'stub');
   if (data.NODE_ENV === 'production' && provider === 'mock') {
     throw new Error('Invalid environment: PAYMENT_PROVIDER');
   }
@@ -167,5 +173,6 @@ export function parseEnv(source: NodeJS.ProcessEnv): Env {
     SMTP_HOST: smtpHost,
     PAYMENT_PROVIDER: provider,
     MOCK_WEBHOOK_SECRET: mockSecret,
+    FILE_SCAN_MODE: fileScanMode,
   };
 }

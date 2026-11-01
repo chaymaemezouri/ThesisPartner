@@ -71,13 +71,13 @@ L’extension, le type déclaré et la signature doivent concorder. `application
 
 `scanStatus` vaut `PENDING`, `CLEAN`, `INFECTED` ou `FAILED`.
 
-L’adaptateur actuel est un stub explicite (`FILE_SCAN_MODE=stub`) :
+L’adaptateur actuel est un stub explicite :
 
 - la chaîne EICAR dans l’en-tête marque `INFECTED` et le fichier n’est pas stocké ;
-- hors production, le reste est `CLEAN` ;
-- en production, le stub ne marque jamais `CLEAN` : le statut reste `PENDING`.
+- `FILE_SCAN_MODE=allow` (défaut en production) marque le reste `CLEAN` ;
+- `FILE_SCAN_MODE=stub` hors production marque aussi `CLEAN` ; en production avec `stub`, le statut reste `PENDING`.
 
-Le téléchargement n’est autorisé que pour `CLEAN`. `INFECTED` répond `FILE_INFECTED`. `PENDING` répond `FILE_SCAN_PENDING`. ClamAV pourra remplacer le stub plus tard, derrière le même statut, sans changer le livrable.
+Le téléchargement n’est autorisé que pour `CLEAN`. `INFECTED` répond `FILE_INFECTED`. `PENDING` répond `FILE_SCAN_PENDING`, sauf si `FILE_SCAN_MODE=allow` : les lignes `PENDING` déjà présentes sont alors promues en `CLEAN` au premier téléchargement/aperçu. ClamAV pourra remplacer le stub plus tard, derrière le même statut, sans changer le livrable.
 
 ## Compensation
 

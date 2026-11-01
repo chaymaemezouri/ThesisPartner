@@ -49,6 +49,7 @@ function payload(thesis: unknown) {
       overdue: 0,
     },
     upcomingDeadlines: [],
+    activityByDay: [],
     recentActivity: thesis
       ? [
           { type: 'THESIS_CREATED', occurredAt: '2026-09-28T12:00:00.000Z' },
