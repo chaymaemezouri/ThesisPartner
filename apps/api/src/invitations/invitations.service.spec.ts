@@ -31,6 +31,7 @@ describe('InvitationsService', () => {
       },
       user: {
         findUnique: jest.fn().mockResolvedValue(null),
+        findMany: jest.fn().mockResolvedValue([]),
       },
       invitation: {
         findFirst: jest.fn().mockResolvedValue(null),
