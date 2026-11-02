@@ -358,7 +358,8 @@ export const fr: Messages = {
       validationRequested: 'Validation demandée par le doctorant',
       validationPending: 'Validation demandée',
       finishTasks: 'Terminez les tâches restantes avant de demander la validation.',
-      readyForValidation: 'Toutes les étapes sont terminées. Vous pouvez demander la validation à l’encadrant.',
+      readyForValidation:
+        'Toutes les étapes sont terminées. Vous pouvez demander la validation à l’encadrant.',
       requestValidation: 'Demander la validation',
       requestChanges: 'Demander des modifications',
       approve: 'Valider l’objectif',
@@ -370,7 +371,8 @@ export const fr: Messages = {
       objectiveDocumentTitle: 'Livrable d’objectif — {title}',
       objectiveDocumentHelp:
         'Joignez le document final une fois l’objectif terminé. Il apparaît dans Livrables → Un par objectif.',
-      finishTasksForDocument: 'Terminez les étapes de l’objectif avant de joindre le document final.',
+      finishTasksForDocument:
+        'Terminez les étapes de l’objectif avant de joindre le document final.',
       noObjectiveDocument: 'Aucun document d’objectif joint pour le moment.',
       backAria: 'Retour aux objectifs',
       noDueDate: 'Sans échéance',

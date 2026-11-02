@@ -373,9 +373,7 @@ async function main() {
         const inbox = await api(1, '/invitations/inbox');
         const pending = (inbox.invitations ?? inbox)?.find?.(
           (row) =>
-            row.thesisId === thesis.id &&
-            row.email === supervisorEmail &&
-            row.status === 'PENDING',
+            row.thesisId === thesis.id && row.email === supervisorEmail && row.status === 'PENDING',
         );
         if (pending?.id) await api(1, `/invitations/${pending.id}/accept`, 'POST', {});
       }

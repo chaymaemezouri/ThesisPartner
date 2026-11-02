@@ -61,17 +61,17 @@ node apps/api/scripts/populate-supervisor-demo.mjs https://thesis.academyskills.
 
 Ce script conserve le dossier de Youssef et ajoute huit doctorants fictifs. Il remplit le profil et le portfolio de Karim, les dossiers scientifiques, les livrables, les réunions, les évaluations, les statuts de publication, les décisions, les échanges et la bibliothèque du groupe. Les rubriques du suivi encadrant sont vérifiées en fin d'exécution : notifications, planning, rapports, évaluations, publications, décisions et plan de travail.
 
-| Doctorant           | Email                             | Sujet de démonstration                |
-| ------------------- | --------------------------------- | ------------------------------------- |
-| Youssef El Amrani   | `demo.doctorant@example.test`     | Anomalies des réseaux électriques     |
-| Amina Benjelloun    | `amina.benjelloun@example.test`   | Intelligence artificielle médicale    |
-| Yassine El Fassi    | `yassine.elfassi@example.test`    | Prévision solaire à Fès               |
-| Salma Cherkaoui     | `salma.cherkaoui@example.test`    | Traitement de la darija               |
-| Omar Idrissi        | `omar.idrissi@example.test`       | Patrimoine architectural de Marrakech |
-| Imane Berrada       | `imane.berrada@example.test`      | Gestion intelligente de l'eau         |
-| Hamza Tazi          | `hamza.tazi@example.test`         | Cybersécurité des objets connectés    |
-| Fatima-Zahra Alaoui | `fatima.alaoui@example.test`      | Gouvernance urbaine à Meknès          |
-| Mehdi Bennani       | `mehdi.bennani@example.test`      | Mobilité urbaine à Oujda              |
+| Doctorant           | Email                           | Sujet de démonstration                |
+| ------------------- | ------------------------------- | ------------------------------------- |
+| Youssef El Amrani   | `demo.doctorant@example.test`   | Anomalies des réseaux électriques     |
+| Amina Benjelloun    | `amina.benjelloun@example.test` | Intelligence artificielle médicale    |
+| Yassine El Fassi    | `yassine.elfassi@example.test`  | Prévision solaire à Fès               |
+| Salma Cherkaoui     | `salma.cherkaoui@example.test`  | Traitement de la darija               |
+| Omar Idrissi        | `omar.idrissi@example.test`     | Patrimoine architectural de Marrakech |
+| Imane Berrada       | `imane.berrada@example.test`    | Gestion intelligente de l'eau         |
+| Hamza Tazi          | `hamza.tazi@example.test`       | Cybersécurité des objets connectés    |
+| Fatima-Zahra Alaoui | `fatima.alaoui@example.test`    | Gouvernance urbaine à Meknès          |
+| Mehdi Bennani       | `mehdi.bennani@example.test`    | Mobilité urbaine à Oujda              |
 
 Tous ces comptes fictifs utilisent le même mot de passe de démonstration, sauf surcharge par `DEMO_PASSWORD`. Chaque nouveau doctorant possède sa propre thèse, ses objectifs adaptés au sujet, trois livrables, un CV, un portfolio, des remarques, des réunions et un échange avec Karim. Les niveaux d'avancement et les échéances varient pour montrer des situations régulières et des retards. Aucun résultat de recherche ni publication réelle n'est revendiqué.
 
