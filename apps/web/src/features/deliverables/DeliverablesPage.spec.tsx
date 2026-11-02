@@ -217,7 +217,7 @@ describe('deliverables', () => {
     );
     renderAt('/livrables', <DoctoralDeliverablesPage />);
     expect(await screen.findByText('No deliverables yet')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'New deliverable' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Add to local library' })).toBeInTheDocument();
   });
 
   it('opens the upload form from a dashboard link and keeps filters when cancelled', async () => {
@@ -315,7 +315,7 @@ describe('deliverables', () => {
         return json({ deliverables: items.filter((item) => !status || item.status === status) });
       }),
     );
-    renderAt('/livrables', <DoctoralDeliverablesPage />);
+    renderAt('/livrables?scope=all', <DoctoralDeliverablesPage />);
     expect(await screen.findByRole('row', { name: /Validated report/ })).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: 'All' })).toHaveTextContent('2');
     await user.click(screen.getByRole('button', { name: 'Card view' }));

@@ -188,7 +188,7 @@ describe('doctoral objectives', () => {
     expect(screen.getByRole('button', { name: 'Request validation' })).toBeDisabled();
     expect(screen.getByRole('link', { name: 'View deliverables' })).toHaveAttribute(
       'href',
-      `/livrables?objectiveId=${objectiveId}`,
+      `/livrables?objectiveId=${objectiveId}&scope=objective`,
     );
     expect(
       screen.getByText('Finish the remaining tasks before requesting validation.'),
@@ -336,7 +336,7 @@ describe('supervisor objectives', () => {
     expect(screen.getByRole('button', { name: 'Validate objective' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'View deliverables' })).toHaveAttribute(
       'href',
-      `/encadrement/${thesisId}/livrables?objectiveId=${objectiveId}`,
+      `/encadrement/${thesisId}/livrables?objectiveId=${objectiveId}&scope=objective`,
     );
     expect(screen.getByRole('button', { name: 'Request changes' })).toBeInTheDocument();
     expect(screen.getByLabelText('Status of Rechercher les articles')).toHaveTextContent(
