@@ -209,12 +209,7 @@ export class DeliverableFilesService {
   }
 
   /** Same-origin stream for in-app PDF preview (iframe cannot embed cross-origin S3). */
-  async openContent(
-    actorId: string,
-    thesisId: string,
-    deliverableId: string,
-    versionId: string,
-  ) {
+  async openContent(actorId: string, thesisId: string, deliverableId: string, versionId: string) {
     const file = await this.resolveDownloadableFile(actorId, thesisId, deliverableId, versionId);
     await this.storage.ensureReady();
     try {

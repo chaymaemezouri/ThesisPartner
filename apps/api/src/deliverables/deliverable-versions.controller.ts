@@ -131,12 +131,7 @@ export class DeliverableVersionsController {
     @Req() request: Request,
     @Res() response: Response,
   ) {
-    const file = await this.files.openContent(
-      actorId(request),
-      thesisId,
-      deliverableId,
-      versionId,
-    );
+    const file = await this.files.openContent(actorId(request), thesisId, deliverableId, versionId);
     response.setHeader('Content-Type', file.contentType);
     response.setHeader('Content-Disposition', contentDisposition(file.downloadName, true));
     response.setHeader('Cache-Control', 'private, no-store');

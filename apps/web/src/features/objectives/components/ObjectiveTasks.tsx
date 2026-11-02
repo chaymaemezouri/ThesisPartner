@@ -524,12 +524,16 @@ function ObjectiveDocumentPanel({
     try {
       let deliverableId = deliverable?.id;
       if (!deliverableId) {
-        const created = await apiSend(`/api/v1/theses/${thesisId}/deliverables`, deliverableSchema, {
-          title: t('objectives.detail.objectiveDocumentTitle', { title: objective.title }),
-          type: 'REPORT',
-          objectiveId: objective.id,
-          description: t('objectives.detail.objectiveDocumentHelp'),
-        });
+        const created = await apiSend(
+          `/api/v1/theses/${thesisId}/deliverables`,
+          deliverableSchema,
+          {
+            title: t('objectives.detail.objectiveDocumentTitle', { title: objective.title }),
+            type: 'REPORT',
+            objectiveId: objective.id,
+            description: t('objectives.detail.objectiveDocumentHelp'),
+          },
+        );
         deliverableId = created.id;
       }
       const version = await apiSend(

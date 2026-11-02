@@ -14,7 +14,12 @@ import { apiSend, apiUpload } from '../../../api/client';
 import { useT } from '../../../i18n/LocaleContext';
 import { useObjectives } from '../../objectives/hooks/use-objectives';
 import { QueryError } from '../../objectives/components/QueryError';
-import { useCreateDeliverable, useDeliverables, type Deliverable } from '../hooks/use-deliverables';
+import {
+  useCreateDeliverable,
+  useDeliverables,
+  type Deliverable,
+  type DeliverableListItem,
+} from '../hooks/use-deliverables';
 import { filtersFromSearch } from '../keys';
 import { DELIVERABLE_TAB_IDS, DELIVERABLE_TYPE_LABEL, type DeliverableTab } from '../labels';
 import { DeliverableForm } from './DeliverableForm';
@@ -514,9 +519,9 @@ function tabFromStatus(status: string | undefined): DeliverableTab | 'CANCELLED'
 }
 
 /** One deliverable per objective for supervisor/student overview (prefer objective-level). */
-function oneDeliverablePerObjective(rows: Deliverable[]): Deliverable[] {
-  const byObjective = new Map<string, Deliverable>();
-  const unlinked: Deliverable[] = [];
+function oneDeliverablePerObjective(rows: DeliverableListItem[]): DeliverableListItem[] {
+  const byObjective = new Map<string, DeliverableListItem>();
+  const unlinked: DeliverableListItem[] = [];
   for (const item of rows) {
     const objectiveId = item.objective?.id;
     if (!objectiveId) {
