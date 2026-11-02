@@ -53,7 +53,7 @@ export function ObjectiveDetailView({
     : backTo.startsWith('/encadrement/')
       ? `${backTo}/livrables`
       : '/livrables';
-  const deliverablesHref = `${deliverablesBase}?objectiveId=${objectiveId}`;
+  const deliverablesHref = `${deliverablesBase}?objectiveId=${objectiveId}&scope=objective`;
 
   return (
     <article className="min-w-0 w-full">

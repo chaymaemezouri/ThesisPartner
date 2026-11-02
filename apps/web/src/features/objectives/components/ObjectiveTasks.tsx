@@ -14,6 +14,7 @@ import { apiGet, apiSend, apiUpload } from '../../../api/client';
 import { useLocale, useT } from '../../../i18n/LocaleContext';
 import type { MessageKey } from '../../../i18n/translate';
 import { fileErrorMessage } from '../../deliverables/components/VersionFile';
+import { useDeliverableVersions, useDeliverables } from '../../deliverables/hooks/use-deliverables';
 import { formatDay } from '../../dashboard/labels';
 import type { Objective } from '../hooks/use-objectives';
 import {
@@ -29,6 +30,8 @@ import {
   type TaskDraft,
 } from '../hooks/use-tasks';
 import { TASK_STATUS_LABEL } from '../labels';
+import { Icon } from '../../../components/Icon';
+import { DeliverableStatusBadge } from '../../deliverables/components/DeliverableStatusBadge';
 import { QueryError, queryErrorMessage } from './QueryError';
 import { StepWorkPanel, WorkCount, WorkIcon, type StepPanel } from './StepWorkPanel';
 
@@ -78,9 +81,9 @@ export function ObjectiveTasks({
   };
 
   return (
-    <div className="mt-4 grid min-w-0 items-start gap-4 lg:grid-cols-[minmax(0,1fr)_18rem]">
+    <div className="mt-4 grid min-w-0 items-start gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,20rem)]">
       <section
-        className="rounded-2xl border border-line bg-surface p-4 shadow-[0_2px_12px_rgba(15,23,42,0.04)]"
+        className="min-w-0 rounded-2xl border border-line bg-surface p-4 shadow-[0_2px_12px_rgba(15,23,42,0.04)]"
         aria-labelledby="taches-titre"
       >
         <div className="flex flex-wrap items-center justify-between gap-3">
@@ -164,14 +167,14 @@ export function ObjectiveTasks({
                     </button>
                     <span className="ml-auto flex shrink-0 items-center gap-2">
                       <WorkIcon
-                        label={t('objectives.work.stepDeliverable')}
-                        icon="deliverables"
-                        pressed={isSelected && panel === 'files'}
-                        onClick={() => openStep(task.id, 'files')}
-                      />
-                      <WorkIcon
                         label={t('objectives.work.viewTasks')}
                         icon="objectives"
+                        pressed={isSelected && panel === 'tasks'}
+                        onClick={() => openStep(task.id, 'tasks')}
+                      />
+                      <WorkCount
+                        label={t('objectives.work.taskCount', { count: task.workCount })}
+                        count={task.workCount}
                         pressed={isSelected && panel === 'tasks'}
                         onClick={() => openStep(task.id, 'tasks')}
                       />
@@ -181,11 +184,11 @@ export function ObjectiveTasks({
                         pressed={isSelected && panel === 'remarks'}
                         onClick={() => openStep(task.id, 'remarks')}
                       />
-                      <WorkCount
-                        label={t('objectives.work.taskCount', { count: task.workCount })}
-                        count={task.workCount}
-                        pressed={isSelected && panel === 'tasks'}
-                        onClick={() => openStep(task.id, 'tasks')}
+                      <WorkIcon
+                        label={t('objectives.work.stepDeliverable')}
+                        icon="deliverables"
+                        pressed={isSelected && panel === 'files'}
+                        onClick={() => openStep(task.id, 'files')}
                       />
                     </span>
                     <span className="shrink-0 text-xs font-semibold tabular-nums text-warn">
@@ -230,7 +233,13 @@ export function ObjectiveTasks({
           </ol>
         ) : null}
       </section>
-      <aside className="grid gap-3">
+      <aside className="grid min-w-0 gap-3">
+        <ObjectiveDocumentPanel
+          thesisId={thesisId}
+          objective={objective}
+          canEdit={canManage && !canReview && objective.status !== 'CANCELLED'}
+          canReview={canReview && objective.status !== 'CANCELLED'}
+        />
         <CompletionPanel
           objective={objective}
           canReview={canReview}
@@ -450,17 +459,249 @@ function stepProgress(status: Task['status']): number {
 function LinkCard({ href }: { href: string }) {
   const t = useT();
   return (
-    <section className="rounded-2xl border border-line bg-surface p-4 shadow-[0_2px_12px_rgba(15,23,42,0.04)]">
-      <h2 className="text-xs font-semibold text-ink">
-        {t('objectives.detail.linkedDeliverables')}
-      </h2>
-      <p className="mt-1 text-xs text-muted">{t('objectives.detail.linkedDeliverablesHelp')}</p>
+    <section className="min-w-0 overflow-hidden rounded-2xl border border-line bg-surface p-4 shadow-[0_2px_12px_rgba(15,23,42,0.04)]">
+      <h2 className="text-sm font-medium text-ink">{t('objectives.detail.linkedDeliverables')}</h2>
+      <p className="mt-1 text-xs leading-relaxed text-pretty break-words text-muted">
+        {t('objectives.detail.linkedDeliverablesHelp')}
+      </p>
       <p className="mt-3">
-        <Link to={href} className="text-sm font-medium text-brand">
+        <Link to={href} className="text-sm font-medium text-brand hover:underline">
           {t('objectives.detail.seeDeliverables')}
         </Link>
       </p>
     </section>
+  );
+}
+
+function ObjectiveDocumentPanel({
+  thesisId,
+  objective,
+  canEdit,
+  canReview,
+}: {
+  thesisId: string;
+  objective: Objective;
+  canEdit: boolean;
+  canReview: boolean;
+}) {
+  const t = useT();
+  const queryClient = useQueryClient();
+  const list = useDeliverables(thesisId, { objectiveId: objective.id });
+  const deliverable =
+    list.data?.deliverables.find((item) => item.taskId == null) ??
+    list.data?.deliverables[0] ??
+    null;
+  const versions = useDeliverableVersions(thesisId, deliverable?.id ?? null);
+  const [file, setFile] = useState<File | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const ready = objective.progress >= 100 || objective.status === 'COMPLETED';
+  const latest = versions.data?.versions.find((version) => version.file) ?? null;
+  const canAttach =
+    canEdit &&
+    ready &&
+    objective.status !== 'CANCELLED' &&
+    (!deliverable || deliverable.status === 'DRAFT' || deliverable.status === 'CHANGES_REQUESTED');
+  const canSubmit =
+    canEdit &&
+    deliverable &&
+    (deliverable.status === 'DRAFT' || deliverable.status === 'CHANGES_REQUESTED') &&
+    Boolean(latest?.file);
+  const canValidate = canReview && deliverable?.status === 'SUBMITTED';
+
+  async function refresh() {
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ['deliverables', 'list', thesisId] }),
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] }),
+      queryClient.invalidateQueries({ queryKey: ['objectives'] }),
+    ]);
+  }
+
+  async function attachSelected() {
+    if (!file) return;
+    setBusy(true);
+    setError(null);
+    try {
+      let deliverableId = deliverable?.id;
+      if (!deliverableId) {
+        const created = await apiSend(`/api/v1/theses/${thesisId}/deliverables`, deliverableSchema, {
+          title: t('objectives.detail.objectiveDocumentTitle', { title: objective.title }),
+          type: 'REPORT',
+          objectiveId: objective.id,
+          description: t('objectives.detail.objectiveDocumentHelp'),
+        });
+        deliverableId = created.id;
+      }
+      const version = await apiSend(
+        `/api/v1/theses/${thesisId}/deliverables/${deliverableId}/versions`,
+        deliverableVersionSchema,
+        { changeSummary: file.name },
+      );
+      await apiUpload(
+        `/api/v1/theses/${thesisId}/deliverables/${deliverableId}/versions/${version.id}/file`,
+        storedFileSchema,
+        file,
+      );
+      setFile(null);
+      await refresh();
+    } catch (caught: unknown) {
+      setError(fileErrorMessage(caught, t));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function submitDocument() {
+    if (!deliverable) return;
+    setBusy(true);
+    setError(null);
+    try {
+      await apiSend(
+        `/api/v1/theses/${thesisId}/deliverables/${deliverable.id}/submit`,
+        deliverableSchema,
+        {},
+      );
+      await refresh();
+    } catch (caught: unknown) {
+      setError(queryErrorMessage(caught, t));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function validateDocument() {
+    if (!deliverable) return;
+    setBusy(true);
+    setError(null);
+    try {
+      await apiSend(
+        `/api/v1/theses/${thesisId}/deliverables/${deliverable.id}/approve`,
+        deliverableSchema,
+        {},
+      );
+      await refresh();
+    } catch (caught: unknown) {
+      setError(queryErrorMessage(caught, t));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <section
+      className="min-w-0 overflow-hidden rounded-2xl border border-line bg-surface p-4 shadow-[0_2px_12px_rgba(15,23,42,0.04)]"
+      aria-label={t('objectives.detail.objectiveDocument')}
+    >
+      <div className="min-w-0">
+        <div className="flex flex-wrap items-center gap-2">
+          <p className="text-sm font-medium text-ink">{t('objectives.detail.objectiveDocument')}</p>
+          {deliverable ? <DeliverableStatusBadge status={deliverable.status} /> : null}
+        </div>
+        <p className="mt-1 text-xs leading-relaxed text-pretty break-words text-muted">
+          {t('objectives.detail.objectiveDocumentHelp')}
+        </p>
+      </div>
+
+      {!ready ? (
+        <p className="mt-3 text-sm text-muted">{t('objectives.detail.finishTasksForDocument')}</p>
+      ) : null}
+
+      {latest?.file ? (
+        <div className="mt-3 flex min-w-0 items-center gap-3 rounded-xl border border-line bg-canvas/70 px-3 py-2.5">
+          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-brand-soft text-brand">
+            <Icon name="deliverables" className="h-4 w-4" />
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-sm font-medium text-ink" title={latest.file.originalName}>
+              {latest.file.originalName}
+            </p>
+            <p className="mt-0.5 text-xs text-muted">{t('objectives.detail.objectiveDocument')}</p>
+          </div>
+        </div>
+      ) : ready ? (
+        <p className="mt-3 rounded-xl border border-dashed border-line bg-canvas/40 px-3 py-3 text-sm text-muted">
+          {t('objectives.detail.noObjectiveDocument')}
+        </p>
+      ) : null}
+
+      {canAttach ? (
+        <div className="mt-3 grid min-w-0 gap-2">
+          <ObjectiveFilePicker file={file} onFile={setFile} />
+          <Button
+            className="h-auto min-h-10 w-full whitespace-normal px-3 py-2 text-center"
+            disabled={!file || busy}
+            onClick={() => void attachSelected()}
+          >
+            {busy ? t('common.uploading') : t('common.uploadFile')}
+          </Button>
+        </div>
+      ) : null}
+
+      {canSubmit || canValidate ? (
+        <div className="mt-3 grid min-w-0 gap-2">
+          {canSubmit ? (
+            <Button
+              className="h-auto min-h-10 w-full whitespace-normal px-3 py-2 text-center"
+              disabled={busy}
+              onClick={() => void submitDocument()}
+            >
+              {t('deliverables.submit')}
+            </Button>
+          ) : null}
+          {canValidate ? (
+            <Button
+              className="h-auto min-h-10 w-full whitespace-normal px-3 py-2 text-center"
+              disabled={busy}
+              onClick={() => void validateDocument()}
+            >
+              {t('objectives.work.validate')}
+            </Button>
+          ) : null}
+        </div>
+      ) : null}
+
+      {error ? (
+        <p className="mt-2 break-words text-sm text-danger" role="alert">
+          {error}
+        </p>
+      ) : null}
+    </section>
+  );
+}
+
+function ObjectiveFilePicker({
+  file,
+  onFile,
+}: {
+  file: File | null;
+  onFile: (file: File | null) => void;
+}) {
+  const t = useT();
+  const input = useRef<HTMLInputElement>(null);
+  return (
+    <div className="grid min-w-0 gap-2 rounded-xl border border-line bg-canvas/50 px-2.5 py-2">
+      <input
+        ref={input}
+        type="file"
+        accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        className="sr-only"
+        onChange={(event) => {
+          onFile(event.target.files?.[0] ?? null);
+          event.target.value = '';
+        }}
+      />
+      <Button
+        type="button"
+        variant="secondary"
+        className="h-auto min-h-8 w-full whitespace-normal px-3 py-1.5 text-xs"
+        onClick={() => input.current?.click()}
+      >
+        {file ? t('common.changeFile') : t('common.chooseFile')}
+      </Button>
+      <span className="min-w-0 truncate text-center text-sm text-muted" title={file?.name}>
+        {file?.name ?? t('common.noFile')}
+      </span>
+    </div>
   );
 }
 
@@ -520,18 +761,19 @@ function CompletionPanel({
 
   return (
     <section
-      className="rounded-2xl border border-line bg-surface p-3 shadow-[0_2px_12px_rgba(15,23,42,0.04)]"
+      className="min-w-0 overflow-hidden rounded-2xl border border-line bg-surface p-4 shadow-[0_2px_12px_rgba(15,23,42,0.04)]"
       aria-label={t('objectives.detail.validation')}
     >
+      <p className="text-sm font-medium text-ink">{t('objectives.detail.validation')}</p>
       {review.status === 'CHANGES_REQUESTED' ? (
-        <p className="text-sm text-ink">{t('objectives.detail.changesRequested')}</p>
+        <p className="mt-2 text-sm text-ink">{t('objectives.detail.changesRequested')}</p>
       ) : null}
-      {review.message ? <p className="mt-2 text-sm text-ink">{review.message}</p> : null}
+      {review.message ? (
+        <p className="mt-2 break-words text-sm text-ink">{review.message}</p>
+      ) : null}
       {canReview && review.status === 'PENDING' ? (
-        <div className="mt-3 flex flex-col gap-3">
-          <p className="text-sm font-medium text-ink">
-            {t('objectives.detail.validationRequested')}
-          </p>
+        <div className="mt-3 flex min-w-0 flex-col gap-3">
+          <p className="text-sm text-muted">{t('objectives.detail.validationRequested')}</p>
           <Textarea
             id="review-message"
             label={t('objectives.detail.message')}
@@ -539,31 +781,50 @@ function CompletionPanel({
             maxLength={500}
             onChange={(event) => onReason(event.target.value)}
           />
-          <div className="flex flex-wrap gap-2">
-            <Button variant="secondary" disabled={changesPending} onClick={onChanges}>
+          <div className="grid min-w-0 gap-2">
+            <Button
+              className="h-auto min-h-10 w-full whitespace-normal px-3 py-2"
+              variant="secondary"
+              disabled={changesPending}
+              onClick={onChanges}
+            >
               {t('objectives.detail.requestChanges')}
             </Button>
-            <Button disabled={approvePending} onClick={onApprove}>
+            <Button
+              className="h-auto min-h-10 w-full whitespace-normal px-3 py-2"
+              disabled={approvePending}
+              onClick={onApprove}
+            >
               {t('objectives.detail.approve')}
             </Button>
           </div>
         </div>
       ) : null}
       {!canReview && review.status === 'PENDING' ? (
-        <p className="text-sm font-medium text-ink">{t('objectives.detail.validationPending')}</p>
+        <p className="mt-2 text-sm text-muted">{t('objectives.detail.validationPending')}</p>
       ) : null}
       {!canReview && review.status !== 'PENDING' ? (
-        <div className="mt-3 flex flex-col items-start gap-3">
+        <div className="mt-3 grid min-w-0 gap-2">
           {objective.progress < 100 ? (
-            <p className="text-sm text-muted">{t('objectives.detail.finishTasks')}</p>
-          ) : null}
-          <Button disabled={objective.progress < 100 || requestPending} onClick={onRequest}>
+            <p className="text-sm text-pretty break-words text-muted">
+              {t('objectives.detail.finishTasks')}
+            </p>
+          ) : (
+            <p className="text-sm text-pretty break-words text-muted">
+              {t('objectives.detail.readyForValidation')}
+            </p>
+          )}
+          <Button
+            className="h-auto min-h-10 w-full whitespace-normal px-3 py-2 text-center"
+            disabled={objective.progress < 100 || requestPending}
+            onClick={onRequest}
+          >
             {t('objectives.detail.requestValidation')}
           </Button>
         </div>
       ) : null}
       {error ? (
-        <p className="mt-3 text-sm text-danger" role="alert">
+        <p className="mt-3 break-words text-sm text-danger" role="alert">
           {queryErrorMessage(error, t)}
         </p>
       ) : null}

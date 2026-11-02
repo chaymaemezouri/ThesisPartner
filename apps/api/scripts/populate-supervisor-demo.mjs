@@ -1,4 +1,4 @@
-/** Seven-person fictional Moroccan doctoral cohort, provisioned through the normal API. */
+/** Nine-person fictional Moroccan doctoral cohort, provisioned through the normal API. */
 import { api, pdf, day, key, log, closeSessions, origin } from './populate-demo-platform.mjs';
 
 const password = process.env.DEMO_PASSWORD ?? 'ThesisPartner2026!';
@@ -13,6 +13,7 @@ const students = [
     laboratory: 'LRIT',
     specialty: 'Intelligence artificielle médicale',
     title: 'Apprentissage profond pour le dépistage précoce du diabète au Maroc',
+    avatar: 'amina-benjelloun.jpg',
     progress: [100, 100, 100, 80, 40],
     goals: [
       'Revue des modèles de dépistage',
@@ -36,6 +37,7 @@ const students = [
     laboratory: 'Laboratoire des systèmes intelligents et énergie',
     specialty: 'Prévision énergétique',
     title: 'Prévision de la production solaire des toitures de la médina de Fès',
+    avatar: 'yassine-el-fassi.jpg',
     progress: [100, 70, 30, 0, 0],
     goals: [
       'Cartographie des toitures et sources météo',
@@ -59,6 +61,7 @@ const students = [
     laboratory: 'Laboratoire informatique et traitement des langues',
     specialty: 'Traitement automatique de la darija',
     title: 'Modèles de langue pour la darija dans les services publics marocains',
+    avatar: 'salma-cherkaoui.jpg',
     progress: [100, 100, 100, 70, 30],
     goals: [
       'Constitution du corpus darija fictif',
@@ -82,6 +85,7 @@ const students = [
     laboratory: 'Laboratoire informatique et systèmes',
     specialty: 'Vision par ordinateur et patrimoine',
     title: 'Reconnaissance des motifs du patrimoine architectural de Marrakech',
+    avatar: 'omar-idrissi.jpg',
     progress: [100, 50, 20, 0, 0],
     goals: [
       'Cadrage et autorisations de collecte',
@@ -105,6 +109,7 @@ const students = [
     laboratory: 'Laboratoire systèmes intelligents et environnement',
     specialty: 'Gestion intelligente de l’eau',
     title: 'Détection des fuites et optimisation de l’eau dans les réseaux urbains d’Agadir',
+    avatar: 'imane-berrada.jpg',
     progress: [100, 100, 80, 30, 0],
     goals: [
       'Analyse des réseaux et indicateurs hydriques',
@@ -128,6 +133,7 @@ const students = [
     laboratory: 'Laboratoire informatique et cybersécurité',
     specialty: 'Cybersécurité des objets connectés',
     title: 'Détection d’intrusions dans les objets connectés des infrastructures portuaires',
+    avatar: 'hamza-tazi.jpg',
     progress: [100, 40, 0, 0, 0],
     goals: [
       'État de l’art des attaques IoT',
@@ -141,6 +147,54 @@ const students = [
     startedOn: '2025-01-15',
     defense: '2028-10-30',
     risk: false,
+  },
+  {
+    email: 'fatima.alaoui@example.test',
+    givenName: 'Fatima-Zahra',
+    familyName: 'Alaoui',
+    city: 'Meknès',
+    institution: 'Université Moulay Ismail',
+    laboratory: 'Laboratoire sciences des données et IA',
+    specialty: 'Données ouvertes et gouvernance urbaine',
+    title: 'Tableaux de bord intelligents pour la gouvernance urbaine à Meknès',
+    avatar: 'fatima-zahra-alaoui.jpg',
+    progress: [100, 100, 55, 20, 0],
+    goals: [
+      'Cartographie des sources de données ouvertes',
+      'Indicateurs de gouvernance et qualité',
+      'Prototype de tableau de bord',
+      'Évaluation avec les acteurs locaux',
+      'Article et recommandations territoriales',
+    ],
+    report: 'Rapport d’indicateurs urbains fictifs',
+    article: 'Article fictif — gouvernance urbaine et données ouvertes',
+    startedOn: '2023-09-01',
+    defense: '2027-11-30',
+    risk: false,
+  },
+  {
+    email: 'mehdi.bennani@example.test',
+    givenName: 'Mehdi',
+    familyName: 'Bennani',
+    city: 'Oujda',
+    institution: 'Université Mohammed Premier',
+    laboratory: 'Laboratoire réseaux et systèmes embarqués',
+    specialty: 'Réseaux intelligents et mobilité',
+    title: 'Optimisation de la mobilité urbaine par capteurs et apprentissage à Oujda',
+    avatar: 'mehdi-bennani.jpg',
+    progress: [100, 60, 25, 0, 0],
+    goals: [
+      'État de l’art mobilité et capteurs',
+      'Collecte et nettoyage des traces fictives',
+      'Modèle d’optimisation des trajets',
+      'Simulation et comparaison des scénarios',
+      'Rédaction et valorisation territoriale',
+    ],
+    report: 'Rapport de collecte des traces de mobilité',
+    article: 'Article fictif — mobilité intelligente à Oujda',
+    startedOn: '2024-03-01',
+    defense: '2028-04-15',
+    risk: true,
   },
 ];
 
@@ -178,6 +232,27 @@ async function ensureCv(who, name, specialty) {
     `cv-demo-${key(name).replace(/[^a-z0-9]+/g, '-')}.pdf`,
   );
   await api(who, '/profile/cv', 'POST', form);
+}
+
+async function ensureVerifiedLogin(who, account) {
+  await api(who, '/auth/login', 'POST', {
+    email: account.email,
+    password,
+  }).catch(async (error) => {
+    if (!error.message.includes(': 401 ')) throw error;
+    try {
+      await api(who, '/auth/register', 'POST', {
+        email: account.email,
+        password,
+        givenName: account.givenName,
+        familyName: account.familyName,
+        institution: account.institution,
+      });
+    } catch (registerError) {
+      if (!String(registerError.message).includes(': 409 ')) throw registerError;
+      await api(who, '/auth/login', 'POST', { email: account.email, password });
+    }
+  });
 }
 
 async function main() {
@@ -224,7 +299,7 @@ async function main() {
       {
         title: 'Programme fictif — IA pour les territoires marocains',
         summary:
-          'Coordination pédagogique de sept dossiers de démonstration : énergie, eau, santé, langues, patrimoine et cybersécurité.',
+          'Coordination pédagogique de neuf dossiers de démonstration : énergie, eau, santé, langues, patrimoine, cybersécurité, gouvernance et mobilité.',
       },
       {
         title: 'Atelier fictif — reproductibilité doctorale',
@@ -246,21 +321,10 @@ async function main() {
   const summary = [];
   for (const [index, student] of students.entries()) {
     const who = index + 2;
-    log(`Preparing ${index + 1}/6: ${student.givenName} ${student.familyName}`);
-    await api(who, '/auth/login', 'POST', { email: student.email, password }).catch(
-      async (error) => {
-        if (!error.message.includes(': 401 ')) throw error;
-        await api(who, '/auth/register', 'POST', {
-          email: student.email,
-          password,
-          givenName: student.givenName,
-          familyName: student.familyName,
-          institution: student.institution,
-        });
-      },
-    );
+    log(`Preparing ${index + 1}/${students.length}: ${student.givenName} ${student.familyName}`);
+    await ensureVerifiedLogin(who, student);
     await api(who, '/profile', 'PATCH', {
-      academicTitle: ['Amina', 'Salma', 'Imane'].includes(student.givenName)
+      academicTitle: ['Amina', 'Salma', 'Imane', 'Fatima-Zahra'].includes(student.givenName)
         ? 'Doctorante'
         : 'Doctorant',
       institution: student.institution,
@@ -269,6 +333,7 @@ async function main() {
       specialty: student.specialty,
       city: student.city,
       country: 'Maroc',
+      avatarUrl: `${origin}/tmp-avatars/${student.avatar}`,
     });
     await ensureCv(who, `${student.givenName} ${student.familyName}`, student.specialty);
     const visible = (await api(who, '/theses')).theses;
@@ -276,7 +341,13 @@ async function main() {
       (row) => row.role === 'DOCTORAL_STUDENT' && row.title === student.title,
     );
     if (!thesis) {
-      thesis = await api(who, '/theses', 'POST', { title: student.title });
+      thesis = visible.find((row) => row.role === 'DOCTORAL_STUDENT');
+      if (thesis) {
+        await api(who, `/theses/${thesis.id}`, 'PATCH', { title: student.title });
+        thesis = { ...thesis, title: student.title };
+      } else {
+        thesis = await api(who, '/theses', 'POST', { title: student.title });
+      }
     }
     const base = `/theses/${thesis.id}`;
     // Replace only untouched generated templates in these named fictional cohort dossiers.
@@ -290,9 +361,26 @@ async function main() {
         row.taskSummary?.inProgress === 0
       )
         await api(who, `${base}/objectives/${row.id}`, 'DELETE', {});
-    const detail = await api(who, base);
-    if (!detail.members.some((row) => row.email === supervisorEmail && row.role === 'SUPERVISOR'))
-      await api(who, `${base}/members`, 'POST', { email: supervisorEmail, role: 'SUPERVISOR' });
+    let detail = await api(who, base);
+    if (!detail.members.some((row) => row.email === supervisorEmail && row.role === 'SUPERVISOR')) {
+      const invite = await api(who, `${base}/members`, 'POST', {
+        email: supervisorEmail,
+        role: 'SUPERVISOR',
+      });
+      if (invite?.id) {
+        await api(1, `/invitations/${invite.id}/accept`, 'POST', {});
+      } else {
+        const inbox = await api(1, '/invitations/inbox');
+        const pending = (inbox.invitations ?? inbox)?.find?.(
+          (row) =>
+            row.thesisId === thesis.id &&
+            row.email === supervisorEmail &&
+            row.status === 'PENDING',
+        );
+        if (pending?.id) await api(1, `/invitations/${pending.id}/accept`, 'POST', {});
+      }
+      detail = await api(who, base);
+    }
     await api(who, base, 'PATCH', {
       discipline: 'Informatique',
       institution: student.institution,
@@ -492,6 +580,8 @@ async function main() {
       'IN_PREPARATION',
       'SUBMITTED',
       'IN_PREPARATION',
+      'ACCEPTED',
+      'SUBMITTED',
     ][index];
     if (article && article.status !== targetStatus)
       await api(1, `/supervision/desk/publications/${article.id}/status`, 'POST', {
@@ -610,8 +700,10 @@ async function main() {
       2,
     ),
   );
-  if (supervised.theses.length !== 7)
-    throw new Error(`Expected 7 supervised theses; found ${supervised.theses.length}.`);
+  if (supervised.theses.length !== 9)
+    throw new Error(
+      `Expected 9 supervised theses; found ${supervised.theses.length}. Run apps/api/scripts/trim-demo-supervised.mjs first.`,
+    );
   for (const name of [
     'notifications',
     'schedule',

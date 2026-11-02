@@ -215,16 +215,25 @@ export function useDeliverableFilePreview(
 
 export function useDownloadDeliverableFile(thesisId: string, deliverableId: string) {
   return useMutation({
-    mutationFn: (versionId: string) =>
-      apiGet(
-        `${base(thesisId, deliverableId)}/versions/${versionId}/file/download`,
-        fileDownloadSchema,
-      ),
-    onSuccess: (download) => {
-      const anchor = document.createElement('a');
-      anchor.href = download.url;
-      anchor.rel = 'noopener';
-      anchor.click();
+    mutationFn: async (versionId: string) => {
+      // Open immediately on the user gesture; browsers block late programmatic downloads.
+      const transferTab = window.open('about:blank', '_blank');
+      try {
+        const download = await apiGet(
+          `${base(thesisId, deliverableId)}/versions/${versionId}/file/download`,
+          fileDownloadSchema,
+        );
+        if (transferTab) {
+          transferTab.opener = null;
+          transferTab.location.href = download.url;
+        } else {
+          window.location.assign(download.url);
+        }
+        return download;
+      } catch (error) {
+        transferTab?.close();
+        throw error;
+      }
     },
   });
 }

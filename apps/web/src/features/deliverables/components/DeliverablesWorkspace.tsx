@@ -52,8 +52,10 @@ export function DeliverablesWorkspace({
   const overview = useDeliverables(thesisId, {});
   const onlyOverdue = params.get('late') === '1';
   const view = params.get('view') === 'cards' ? 'cards' : 'list';
+  const scope = params.get('scope') === 'all' ? 'all' : 'objective';
   const rows = deliverables.data?.deliverables ?? [];
-  const visibleRows = rows.filter((item) => !onlyOverdue || item.isOverdue);
+  const scopedRows = scope === 'objective' ? oneDeliverablePerObjective(rows) : rows;
+  const visibleRows = scopedRows.filter((item) => !onlyOverdue || item.isOverdue);
   const counts = overview.data
     ? Object.fromEntries(
         FILTER_TABS.map((status) => [
@@ -182,6 +184,36 @@ export function DeliverablesWorkspace({
 
   return (
     <div className="min-w-0">
+      <div
+        className="mb-3 flex gap-1 overflow-x-auto rounded-2xl border border-line/80 bg-line/45 p-1.5"
+        role="tablist"
+        aria-label={t('deliverables.scopeLabel')}
+      >
+        {(
+          [
+            ['objective', 'deliverables.scope.objective'],
+            ['all', 'deliverables.scope.all'],
+          ] as const
+        ).map(([id, labelKey]) => {
+          const selected = scope === id;
+          return (
+            <button
+              key={id}
+              type="button"
+              role="tab"
+              aria-selected={selected}
+              className={`shrink-0 rounded-xl px-3 py-2 text-sm transition-colors ${
+                selected
+                  ? 'bg-surface font-semibold text-ink shadow-[0_1px_3px_rgba(15,23,42,0.08)]'
+                  : 'font-medium text-ink/80 hover:bg-surface/70'
+              }`}
+              onClick={() => update({ scope: id === 'objective' ? null : id })}
+            >
+              {t(labelKey)}
+            </button>
+          );
+        })}
+      </div>
       <div className="mb-3">{statusTabs}</div>
       <div className="min-w-0 rounded-[14px] border border-line bg-surface p-3 shadow-[0_3px_18px_rgba(15,23,42,0.03)] sm:p-4">
         <div className="flex flex-col gap-3">
@@ -222,9 +254,9 @@ export function DeliverablesWorkspace({
             {canCreate ? (
               <IconAction
                 className="shrink-0"
-                label={t('deliverables.new')}
-                icon="plus"
-                onClick={() => setCreating(true)}
+                label={t('deliverables.addLibraryLocal')}
+                icon="library"
+                onClick={() => navigate('/ressources?addOwn=1&source=STUDENT')}
               />
             ) : null}
           </div>
@@ -479,4 +511,28 @@ function tabFromStatus(status: string | undefined): DeliverableTab | 'CANCELLED'
     return status;
   }
   return 'all';
+}
+
+/** One deliverable per objective for supervisor/student overview (prefer objective-level). */
+function oneDeliverablePerObjective(rows: Deliverable[]): Deliverable[] {
+  const byObjective = new Map<string, Deliverable>();
+  const unlinked: Deliverable[] = [];
+  for (const item of rows) {
+    const objectiveId = item.objective?.id;
+    if (!objectiveId) {
+      unlinked.push(item);
+      continue;
+    }
+    const current = byObjective.get(objectiveId);
+    if (!current) {
+      byObjective.set(objectiveId, item);
+      continue;
+    }
+    const preferObjectiveLevel = item.taskId == null && current.taskId != null;
+    const preferNewer =
+      (item.taskId == null) === (current.taskId == null) &&
+      new Date(item.updatedAt).getTime() > new Date(current.updatedAt).getTime();
+    if (preferObjectiveLevel || preferNewer) byObjective.set(objectiveId, item);
+  }
+  return [...byObjective.values(), ...unlinked];
 }

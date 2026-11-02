@@ -8,14 +8,16 @@ import {
   Post,
   Query,
   Req,
+  Res,
   UseInterceptors,
 } from '@nestjs/common';
 import { unlink } from 'node:fs/promises';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { createDeliverableVersionSchema } from '@thesispartner/validation';
-import type { Request } from 'express';
+import type { Request, Response } from 'express';
 import { AppException } from '../common/errors/app.exception';
 import { ValidateBody } from '../common/validation/zod-body.interceptor';
+import { contentDisposition } from '../storage/file-rules';
 import { DeliverableFilesService } from './deliverable-files.service';
 import { DeliverableVersionsService } from './deliverable-versions.service';
 import { SingleFileUploadInterceptor } from '../storage/upload.interceptor';
@@ -118,6 +120,34 @@ export class DeliverableVersionsController {
       versionId,
       inline === '1',
     );
+  }
+
+  @Get(':versionId/file/content')
+  @ApiOperation({ summary: 'Stream a version file for same-origin in-app preview' })
+  async content(
+    @Param('thesisId', ParseUUIDPipe) thesisId: string,
+    @Param('deliverableId', ParseUUIDPipe) deliverableId: string,
+    @Param('versionId', ParseUUIDPipe) versionId: string,
+    @Req() request: Request,
+    @Res() response: Response,
+  ) {
+    const file = await this.files.openContent(
+      actorId(request),
+      thesisId,
+      deliverableId,
+      versionId,
+    );
+    response.setHeader('Content-Type', file.contentType);
+    response.setHeader('Content-Disposition', contentDisposition(file.downloadName, true));
+    response.setHeader('Cache-Control', 'private, no-store');
+    if (file.contentLength != null) {
+      response.setHeader('Content-Length', String(file.contentLength));
+    }
+    file.body.on('error', () => {
+      if (!response.headersSent) response.status(503).end();
+      else response.destroy();
+    });
+    file.body.pipe(response);
   }
 }
 

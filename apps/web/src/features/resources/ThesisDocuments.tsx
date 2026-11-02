@@ -1,5 +1,6 @@
 import { Button, Input, Modal, Select, Textarea } from '@thesispartner/ui';
 import { Fragment, useRef, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Icon } from '../../components/Icon';
 import { IconAction } from '../../components/IconAction';
 import { useLocale, useT } from '../../i18n/LocaleContext';
@@ -58,14 +59,19 @@ export function ThesisDocuments({ canManage }: { canManage: boolean }) {
     : (dashboard.data?.thesis?.id ?? null);
   const desk = useThesisDocuments(thesisId);
   const shared = useSupervisorDocuments(canManage ? theses.map((thesis) => thesis.thesisId) : []);
-  const [creating, setCreating] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [creating, setCreating] = useState(searchParams.get('addOwn') === '1');
   const [editing, setEditing] = useState<ThesisDocument | null>(null);
   const [openId, setOpenId] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [kindFilter, setKindFilter] = useState('ALL');
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [filtersOpen, setFiltersOpen] = useState(false);
-  const [sourceTab, setSourceTab] = useState<'SUPERVISOR' | 'STUDENT'>('SUPERVISOR');
+  const [sourceTab, setSourceTab] = useState<'SUPERVISOR' | 'STUDENT'>(
+    searchParams.get('source') === 'STUDENT' || searchParams.get('addOwn') === '1'
+      ? 'STUDENT'
+      : 'SUPERVISOR',
+  );
 
   const tableRows = theses.flatMap((thesis, index) => {
     if (studentFilter !== 'ALL' && thesis.thesisId !== studentFilter) return [];
@@ -440,6 +446,12 @@ export function ThesisDocuments({ canManage }: { canManage: boolean }) {
           onClose={() => {
             setCreating(false);
             setEditing(null);
+            if (searchParams.get('addOwn') === '1' || searchParams.get('source')) {
+              const next = new URLSearchParams(searchParams);
+              next.delete('addOwn');
+              next.delete('source');
+              setSearchParams(next, { replace: true });
+            }
           }}
         />
       ) : null}

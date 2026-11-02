@@ -24,4 +24,10 @@ export type ObjectStorage = {
     ttlSeconds: number;
     inline?: boolean;
   }): Promise<{ url: string; expiresAt: Date }>;
+  /** Stream object bytes for same-origin preview (avoids S3 iframe download quirks). */
+  getObjectStream(key: string): Promise<{
+    body: Readable;
+    contentType: string | undefined;
+    contentLength: number | undefined;
+  }>;
 };

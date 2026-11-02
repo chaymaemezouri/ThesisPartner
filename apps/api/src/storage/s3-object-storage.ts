@@ -171,6 +171,24 @@ export class S3ObjectStorage implements ObjectStorage, OnModuleInit {
     };
   }
 
+  async getObjectStream(key: string): Promise<{
+    body: import('node:stream').Readable;
+    contentType: string | undefined;
+    contentLength: number | undefined;
+  }> {
+    const result = await this.client.send(
+      new GetObjectCommand({ Bucket: this.env.S3_BUCKET, Key: key }),
+    );
+    if (!result.Body) {
+      throw new AppException(404, 'NOT_FOUND', 'Object missing from storage.');
+    }
+    return {
+      body: result.Body as import('node:stream').Readable,
+      contentType: result.ContentType,
+      contentLength: result.ContentLength,
+    };
+  }
+
   private async removePublicPolicy(): Promise<void> {
     try {
       const current = await this.client.send(

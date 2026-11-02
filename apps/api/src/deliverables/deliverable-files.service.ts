@@ -193,6 +193,50 @@ export class DeliverableFilesService {
     versionId: string,
     inline = false,
   ) {
+    const file = await this.resolveDownloadableFile(actorId, thesisId, deliverableId, versionId);
+    await this.storage.ensureReady();
+    try {
+      return await this.objects.createSignedDownloadUrl({
+        key: file.storageKey,
+        downloadName: file.originalName,
+        contentType: file.mimeType,
+        ttlSeconds: this.env.SIGNED_URL_TTL_SECONDS,
+        inline,
+      });
+    } catch {
+      throw new AppException(503, 'STORAGE_UNAVAILABLE', 'Le stockage est indisponible.');
+    }
+  }
+
+  /** Same-origin stream for in-app PDF preview (iframe cannot embed cross-origin S3). */
+  async openContent(
+    actorId: string,
+    thesisId: string,
+    deliverableId: string,
+    versionId: string,
+  ) {
+    const file = await this.resolveDownloadableFile(actorId, thesisId, deliverableId, versionId);
+    await this.storage.ensureReady();
+    try {
+      const object = await this.objects.getObjectStream(file.storageKey);
+      return {
+        body: object.body,
+        contentType: file.mimeType || object.contentType || 'application/octet-stream',
+        contentLength: object.contentLength,
+        downloadName: file.originalName,
+      };
+    } catch (error) {
+      if (error instanceof AppException) throw error;
+      throw new AppException(503, 'STORAGE_UNAVAILABLE', 'Le stockage est indisponible.');
+    }
+  }
+
+  private async resolveDownloadableFile(
+    actorId: string,
+    thesisId: string,
+    deliverableId: string,
+    versionId: string,
+  ) {
     const loaded = await this.loadVersion(actorId, thesisId, deliverableId, versionId);
     if (!canDownloadFile(loaded.role))
       throw new AppException(404, 'NOT_FOUND', 'Resource not found');
@@ -219,18 +263,7 @@ export class DeliverableFilesService {
         );
       }
     }
-    await this.storage.ensureReady();
-    try {
-      return await this.objects.createSignedDownloadUrl({
-        key: file.storageKey,
-        downloadName: file.originalName,
-        contentType: file.mimeType,
-        ttlSeconds: this.env.SIGNED_URL_TTL_SECONDS,
-        inline,
-      });
-    } catch {
-      throw new AppException(503, 'STORAGE_UNAVAILABLE', 'Le stockage est indisponible.');
-    }
+    return file;
   }
 
   private async consumeUploadBudget(actorId: string): Promise<void> {

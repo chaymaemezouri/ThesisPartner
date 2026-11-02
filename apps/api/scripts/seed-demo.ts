@@ -1,6 +1,6 @@
 /* eslint-disable no-console */
 /**
- * Opt-in demo seed for a doctoral dashboard (~52% work progress).
+ * Opt-in demo seed for a doctoral dashboard (~53% work progress).
  * Usage from repo root: npm run db:seed:demo
  *
  * DEMO_STUDENT_EMAIL (default demo.doctorant@example.test)
@@ -31,13 +31,13 @@ const ARGON2 = {
   parallelism: 1,
 } as const;
 
-/** Tasks marked DONE per template; ANALYSE=1 → overall workProgress ≈ 52%. */
+/** Tasks marked DONE per template; ANALYSE=1 → overall workProgress ≈ 53%. */
 const DONE_BY_CODE: Record<string, number> = {
   PROBLEMATIQUE: 99,
   ETAT_ART: 99,
   METHODOLOGIE: 99,
   EXPERIMENTATION: 99,
-  ANALYSE: 1,
+  ANALYSE: 2,
   PUBLICATION: 0,
   REDACTION: 0,
   SOUTENANCE: 0,
@@ -674,6 +674,9 @@ async function main() {
     }
   }
 
+  // Reset the doctoral path so progress stays deterministic (~53%).
+  await prisma.task.deleteMany({ where: { objective: { thesisId } } });
+  await prisma.objective.deleteMany({ where: { thesisId } });
   await applyStandardPath(thesisId, studentId, studentId);
   await enrichProgress(thesisId);
   await seedDeliverablesAndRemarks(thesisId, studentId, supervisorId);

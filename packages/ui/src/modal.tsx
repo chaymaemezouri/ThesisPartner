@@ -8,6 +8,8 @@ type ModalProps = {
   children: ReactNode;
   /** `center` = desktop modal / mobile bottom sheet. `start` = side drawer (nav). */
   placement?: 'center' | 'start';
+  /** Desktop width hint for centered modals. */
+  size?: 'md' | 'lg' | 'xl';
   closeLabel?: string;
 };
 
@@ -17,6 +19,7 @@ export function Modal({
   onClose,
   children,
   placement = 'center',
+  size = 'md',
   closeLabel = 'Close',
 }: ModalProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
@@ -38,7 +41,11 @@ export function Modal({
     <dialog
       ref={dialogRef}
       aria-labelledby={titleId}
-      className={cn(placement === 'start' ? 'drawer-dialog' : 'modal-dialog')}
+      className={cn(
+        placement === 'start' ? 'drawer-dialog' : 'modal-dialog',
+        placement === 'center' && size === 'lg' && 'modal-dialog--lg',
+        placement === 'center' && size === 'xl' && 'modal-dialog--xl',
+      )}
       onCancel={(event) => {
         event.preventDefault();
         onClose();

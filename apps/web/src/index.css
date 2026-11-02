@@ -135,9 +135,19 @@ dialog.modal-dialog {
   box-shadow: none;
 }
 
+dialog.modal-dialog.modal-dialog--lg {
+  width: min(56rem, calc(100vw - 2rem));
+  max-height: min(92vh, 52rem);
+}
+
+dialog.modal-dialog.modal-dialog--xl {
+  width: min(96rem, calc(100vw - 1rem));
+  max-height: min(96vh, 72rem);
+}
+
 dialog.modal-dialog .modal-dialog__panel {
   display: flex;
-  max-height: min(90vh, 44rem);
+  max-height: inherit;
   flex-direction: column;
   overflow: hidden;
   border-radius: 20px;
@@ -158,10 +168,14 @@ dialog.modal-dialog .modal-dialog__body {
   padding: 1rem;
 }
 
+dialog.modal-dialog.modal-dialog--xl .modal-dialog__body {
+  padding: 0.75rem;
+}
+
 dialog::backdrop {
-  background: rgb(20 20 30 / 0.38);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
+  background: rgb(15 23 42 / 0.45);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
 }
 
 @media (max-width: 639px) {

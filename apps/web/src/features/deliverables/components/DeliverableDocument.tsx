@@ -98,19 +98,22 @@ export function DeliverableDocument({
               {t('common.download')}
             </Button>
           </div>
-          {preview.isLoading ? (
-            <p role="status" className="mt-3 text-xs text-muted">
-              {t('common.loading')}
-            </p>
-          ) : null}
-          {previewable && preview.data?.url && file.mimeType === 'application/pdf' ? (
-            <PdfPreview key={preview.data.url} url={preview.data.url} />
+          {previewable && file.mimeType === 'application/pdf' && current ? (
+            <PdfPreview
+              key={current.id}
+              contentPath={`/api/v1/theses/${thesisId}/deliverables/${deliverableId}/versions/${current.id}/file/content`}
+              openUrl={preview.data?.url}
+            />
           ) : previewable && preview.data?.url ? (
             <iframe
               title={t('deliverables.documentPreview')}
               src={preview.data.url}
               className="mt-3 h-[32rem] w-full rounded-md border border-line bg-canvas"
             />
+          ) : preview.isLoading ? (
+            <p role="status" className="mt-3 text-xs text-muted">
+              {t('common.loading')}
+            </p>
           ) : null}
           {!previewable ? (
             <p className="mt-3 text-xs text-muted">{t('deliverables.documentNoPreview')}</p>

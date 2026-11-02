@@ -1,5 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query';
-import { Button, Input, Textarea } from '@thesispartner/ui';
+import { Button, Input, Modal, Textarea } from '@thesispartner/ui';
 import { Icon } from '../../../components/Icon';
 import type { IconName } from '../../../routes/nav';
 import {
@@ -12,6 +12,7 @@ import { useRef, useState } from 'react';
 import { apiGet, apiSend, apiUpload } from '../../../api/client';
 import { useT } from '../../../i18n/LocaleContext';
 import type { MessageKey } from '../../../i18n/translate';
+import { PdfPreview } from '../../deliverables/components/PdfPreview';
 import { useDeliverableVersions, useDeliverables } from '../../deliverables/hooks/use-deliverables';
 import { fileErrorMessage } from '../../deliverables/components/VersionFile';
 import { RemarkForm } from '../../remarks/components/RemarkForm';
@@ -191,22 +192,18 @@ function TaskList({
       {tasks.map((task) => {
         const editable = canEdit && EDITABLE.has(task.status);
         const section = opened?.id === task.id ? opened.section : null;
+        const reviewable =
+          canReview && (task.status === 'SUBMITTED' || task.status === 'IN_REVIEW');
         return (
           <article key={task.id} className="mt-2 rounded-xl border border-line bg-canvas px-3 py-2">
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <button
                 type="button"
                 className="min-w-0 max-w-full truncate text-left text-xs font-medium text-ink"
-                onClick={() => setOpened({ id: task.id, section: 'files' })}
+                onClick={() => setOpened({ id: task.id, section: 'remarks' })}
               >
                 {task.title}
               </button>
-              <WorkIcon
-                label={t('objectives.work.taskDeliverable')}
-                icon="deliverables"
-                pressed={section === 'files'}
-                onClick={() => setOpened({ id: task.id, section: 'files' })}
-              />
               <WorkIcon
                 label={t('objectives.work.viewRemarks')}
                 icon="remarks"
@@ -219,9 +216,27 @@ function TaskList({
                 pressed={section === 'remarks'}
                 onClick={() => setOpened({ id: task.id, section: 'remarks' })}
               />
+              <WorkIcon
+                label={t('objectives.work.taskDeliverable')}
+                icon="deliverables"
+                pressed={section === 'files'}
+                onClick={() => setOpened({ id: task.id, section: 'files' })}
+              />
               <span className="ml-auto shrink-0 text-[11px] font-medium text-brand">
                 {t(`objectives.work.status.${task.status}` as MessageKey)}
               </span>
+              {reviewable ? (
+                <Button
+                  className="shrink-0"
+                  disabled={mutations.review.isPending}
+                  onClick={() => {
+                    setOpened({ id: task.id, section: 'remarks' });
+                    mutations.review.mutate({ id: task.id, decision: 'VALIDATED' });
+                  }}
+                >
+                  {t('objectives.work.validate')}
+                </Button>
+              ) : null}
               {editable ? (
                 <>
                   <button
@@ -292,7 +307,7 @@ function TaskList({
                       {t('objectives.work.submit')}
                     </Button>
                   ) : null}
-                  {canReview && (task.status === 'SUBMITTED' || task.status === 'IN_REVIEW') ? (
+                  {reviewable ? (
                     <ReviewActions
                       pending={mutations.review.isPending || mutations.remark.isPending}
                       error={mutations.review.error ?? mutations.remark.error}
@@ -301,6 +316,13 @@ function TaskList({
                       }
                       onRemark={(message) => mutations.remark.mutate({ id: task.id, message })}
                       canExamine={task.status === 'SUBMITTED'}
+                    />
+                  ) : null}
+                  {canReview && !reviewable ? (
+                    <ReviewRemarkOnly
+                      pending={mutations.remark.isPending}
+                      error={mutations.remark.error}
+                      onRemark={(message) => mutations.remark.mutate({ id: task.id, message })}
                     />
                   ) : null}
                 </div>
@@ -380,6 +402,46 @@ function TaskEditor({
         </Button>
       </div>
     </form>
+  );
+}
+
+function ReviewRemarkOnly({
+  pending,
+  error,
+  onRemark,
+}: {
+  pending: boolean;
+  error: unknown;
+  onRemark: (message: string) => void;
+}) {
+  const t = useT();
+  const [message, setMessage] = useState('');
+  return (
+    <div className="grid w-full gap-2">
+      <Textarea
+        id="work-remark-only"
+        label={t('objectives.work.addRemark')}
+        value={message}
+        placeholder={t('objectives.work.remarkPlaceholder')}
+        onChange={(event) => setMessage(event.target.value)}
+      />
+      <div className="flex flex-wrap gap-2">
+        <Button
+          disabled={pending || message.trim().length === 0}
+          onClick={() => {
+            onRemark(message.trim());
+            setMessage('');
+          }}
+        >
+          {t('objectives.work.addRemark')}
+        </Button>
+      </div>
+      {error ? (
+        <p className="text-sm text-danger" role="alert">
+          {queryErrorMessage(error, t)}
+        </p>
+      ) : null}
+    </div>
   );
 }
 
@@ -529,6 +591,56 @@ function FileList({
   const t = useT();
   const [file, setFile] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [busyVersionId, setBusyVersionId] = useState<string | null>(null);
+  const [preview, setPreview] = useState<{
+    contentPath: string;
+    openUrl?: string;
+    title: string;
+    mimeType: string;
+  } | null>(null);
+
+  async function handlePreview(item: {
+    versionId: string;
+    originalName: string;
+    mimeType: string;
+  }) {
+    if (!deliverableId) return;
+    setError(null);
+    setBusyVersionId(item.versionId);
+    try {
+      const contentPath = `/api/v1/theses/${thesisId}/deliverables/${deliverableId}/versions/${item.versionId}/file/content`;
+      let openUrl: string | undefined;
+      try {
+        const download = await fetchFileUrl(thesisId, deliverableId, item.versionId, true);
+        openUrl = download.url;
+      } catch {
+        openUrl = undefined;
+      }
+      setPreview({
+        contentPath,
+        openUrl,
+        title: item.originalName,
+        mimeType: item.mimeType,
+      });
+    } catch (caught: unknown) {
+      setError(fileErrorMessage(caught, t));
+    } finally {
+      setBusyVersionId(null);
+    }
+  }
+
+  async function handleDownload(versionId: string) {
+    setError(null);
+    setBusyVersionId(versionId);
+    try {
+      await openFile(thesisId, deliverableId, versionId, false);
+    } catch (caught: unknown) {
+      setError(fileErrorMessage(caught, t));
+    } finally {
+      setBusyVersionId(null);
+    }
+  }
+
   return (
     <div className="mt-2">
       <ul className="grid gap-1">
@@ -542,32 +654,70 @@ function FileList({
                 <FileAction
                   label={t('objectives.work.open')}
                   icon="eye"
-                  onClick={() => void openFile(thesisId, deliverableId, item.versionId, true)}
+                  disabled={busyVersionId === item.versionId}
+                  onClick={() => void handlePreview(item)}
                 />
               ) : null}
               <FileAction
                 label={t('objectives.work.download')}
                 icon="download"
-                onClick={() => void openFile(thesisId, deliverableId, item.versionId, false)}
+                disabled={busyVersionId === item.versionId}
+                onClick={() => void handleDownload(item.versionId)}
               />
               {canEdit ? (
                 <FileAction
                   label={t('objectives.work.removeFile')}
                   icon="trash"
                   tone="danger"
-                  onClick={() => onRemove(item.versionId)}
+                  disabled={busyVersionId === item.versionId}
+                  onClick={() => {
+                    setError(null);
+                    try {
+                      onRemove(item.versionId);
+                    } catch (caught: unknown) {
+                      setError(fileErrorMessage(caught, t));
+                    }
+                  }}
                 />
               ) : null}
             </span>
           </li>
         ))}
       </ul>
+      <Modal
+        open={Boolean(preview)}
+        title={preview?.title ?? t('objectives.work.open')}
+        onClose={() => setPreview(null)}
+        closeLabel={t('common.close')}
+        size="xl"
+      >
+        {preview ? (
+          <div className="min-h-[min(78vh,48rem)]">
+            {preview.mimeType === 'application/pdf' ? (
+              <PdfPreview
+                key={preview.contentPath}
+                contentPath={preview.contentPath}
+                openUrl={preview.openUrl}
+              />
+            ) : preview.mimeType.startsWith('image/') && preview.openUrl ? (
+              <img
+                src={preview.openUrl}
+                alt={preview.title}
+                className="mx-auto max-h-[85vh] w-auto max-w-full rounded-md object-contain"
+              />
+            ) : (
+              <p className="text-sm text-muted">{t('deliverables.previewError')}</p>
+            )}
+          </div>
+        ) : null}
+      </Modal>
       {canEdit ? (
         <div className="mt-2 flex flex-wrap items-center gap-2">
           <FilePicker file={file} onFile={setFile} />
           <Button
             variant="secondary"
             disabled={!file}
+            title={!file ? t('objectives.work.pickFileFirst') : undefined}
             onClick={() => {
               if (!file) return;
               setError(null);
@@ -593,11 +743,13 @@ function FileAction({
   label,
   icon,
   tone = 'brand',
+  disabled = false,
   onClick,
 }: {
   label: string;
   icon: IconName;
   tone?: 'brand' | 'danger';
+  disabled?: boolean;
   onClick: () => void;
 }) {
   return (
@@ -605,8 +757,9 @@ function FileAction({
       type="button"
       aria-label={label}
       title={label}
+      disabled={disabled}
       onClick={onClick}
-      className={`grid h-8 w-8 shrink-0 place-items-center rounded-md ${
+      className={`grid h-8 w-8 shrink-0 place-items-center rounded-md disabled:opacity-50 ${
         tone === 'danger' ? 'text-danger hover:bg-danger-soft' : 'text-brand hover:bg-brand-soft'
       }`}
     >
@@ -712,18 +865,42 @@ function canPreview(mimeType: string): boolean {
   return mimeType === 'application/pdf' || mimeType.startsWith('image/');
 }
 
+async function fetchFileUrl(
+  thesisId: string,
+  deliverableId: string | null,
+  versionId: string,
+  inline: boolean,
+) {
+  if (!deliverableId) {
+    throw new Error('Deliverable missing for this step file');
+  }
+  return apiGet(
+    `/api/v1/theses/${thesisId}/deliverables/${deliverableId}/versions/${versionId}/file/download${inline ? '?inline=1' : ''}`,
+    fileDownloadSchema,
+  );
+}
+
 async function openFile(
   thesisId: string,
   deliverableId: string | null,
   versionId: string,
   inline: boolean,
 ) {
-  if (!deliverableId) return;
-  const download = await apiGet(
-    `/api/v1/theses/${thesisId}/deliverables/${deliverableId}/versions/${versionId}/file/download${inline ? '?inline=1' : ''}`,
-    fileDownloadSchema,
-  );
-  window.open(download.url, '_blank', 'noopener');
+  // Must open synchronously on click — after await, browsers block downloads/popups.
+  const transferTab = window.open('about:blank', '_blank');
+  try {
+    const download = await fetchFileUrl(thesisId, deliverableId, versionId, inline);
+    if (transferTab) {
+      transferTab.opener = null;
+      transferTab.location.href = download.url;
+      return;
+    }
+    // Popup blocked: same-tab navigation still triggers Content-Disposition attachment.
+    window.location.assign(download.url);
+  } catch (error) {
+    transferTab?.close();
+    throw error;
+  }
 }
 
 async function createStepDeliverable(thesisId: string, objectiveId: string, step: Task) {
