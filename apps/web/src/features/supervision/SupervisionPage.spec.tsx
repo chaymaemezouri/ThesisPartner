@@ -92,9 +92,14 @@ describe('supervised theses', () => {
     expect(screen.getByText('Bea Test')).toBeInTheDocument();
     expect(screen.getByText('These Alpha')).toBeInTheDocument();
     expect(screen.queryByText('Doctoral students')).not.toBeInTheDocument();
-    const links = screen.getAllByRole('link', { name: 'Open workspace' });
-    expect(links[0]).toHaveAttribute('href', `/encadrement/${theses.theses[0]?.thesisId}`);
-    expect(links[1]).toHaveAttribute('href', `/encadrement/${theses.theses[1]?.thesisId}`);
+    expect(screen.getByRole('link', { name: /Ada Test/ })).toHaveAttribute(
+      'href',
+      `/encadrement/${theses.theses[0]?.thesisId}`,
+    );
+    expect(screen.getByRole('link', { name: /Bea Test/ })).toHaveAttribute(
+      'href',
+      `/encadrement/${theses.theses[1]?.thesisId}`,
+    );
   });
 });
 

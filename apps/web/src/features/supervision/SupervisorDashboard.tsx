@@ -12,7 +12,6 @@ import { useSupervisedTheses } from './hooks/use-supervised-theses';
 import { portraitUrl } from './temporary-portraits';
 import {
   matchesRoster,
-  rosterStats,
   sortRoster,
   studentName,
   type RosterFilter,
@@ -36,7 +35,6 @@ export function SupervisorDashboard({
   const activeFilterCount = (filter !== 'all' ? 1 : 0) + (sort !== 'name' ? 1 : 0);
 
   const theses = useMemo(() => supervised.data?.theses ?? [], [supervised.data?.theses]);
-  const stats = view === 'cards' || view === 'gallery' ? rosterStats(theses) : null;
   const visible = useMemo(
     () =>
       sortRoster(
@@ -60,37 +58,6 @@ export function SupervisorDashboard({
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-5">
       <h1 className="sr-only">{t('supervision.dashboardTitle')}</h1>
-      {stats ? (
-        <section className="hidden shrink-0 gap-2.5 md:grid md:grid-cols-2 xl:grid-cols-4">
-          <Stat
-            icon="supervision"
-            label={t('supervision.statsStudents')}
-            value={String(stats.students)}
-          />
-          <Stat
-            icon="dashboard"
-            label={t('supervision.statsProgress')}
-            value={`${stats.averageProgress} %`}
-          />
-          <Stat
-            icon="objectives"
-            tone={stats.overdue > 0 ? 'danger' : 'brand'}
-            label={t('supervision.statsObjectives')}
-            value={t('supervision.statsInProgress', { count: stats.inProgress })}
-            detail={
-              stats.overdue > 0
-                ? t('supervision.statsOverdue', { count: stats.overdue })
-                : undefined
-            }
-          />
-          <Stat
-            icon="deliverables"
-            tone={stats.pending > 0 ? 'warn' : 'brand'}
-            label={t('supervision.statsPending')}
-            value={String(stats.pending)}
-          />
-        </section>
-      ) : null}
 
       <section className="flex min-h-0 flex-1 flex-col gap-3.5">
         <div className="flex shrink-0 flex-wrap items-center justify-between gap-3">
@@ -290,19 +257,22 @@ export function SupervisorDashboard({
 /** Portrait gallery: circle photo + name + thesis subject, whole card opens the dossier. */
 function PortraitCard({ thesis, name }: { thesis: SupervisedThesis; name: string }) {
   const subject = thesis.title?.trim() || thesis.description?.trim() || '';
+  const photo = portraitUrl(name, thesis.doctoralStudent?.avatarUrl);
   return (
     <li className="min-w-0">
       <Link
         to={`/encadrement/${thesis.thesisId}`}
-        className="flex h-full flex-col items-center rounded-2xl border border-line bg-surface px-4 py-5 text-center shadow-[0_2px_12px_rgba(15,23,42,0.04)] transition-[border-color,box-shadow,transform] duration-150 hover:-translate-y-0.5 hover:border-brand/40 hover:shadow-[0_10px_24px_rgba(15,23,42,0.08)]"
+        className="flex h-full flex-col items-center rounded-2xl border border-line bg-gradient-to-b from-brand-soft/35 via-surface to-surface px-4 pb-5 pt-6 text-center shadow-[0_2px_12px_rgba(15,23,42,0.04)] transition-[border-color,box-shadow,transform] duration-150 hover:-translate-y-0.5 hover:border-brand/40 hover:shadow-[0_10px_24px_rgba(15,23,42,0.08)]"
       >
-        <Avatar
-          label={name}
-          imageUrl={portraitUrl(name, thesis.doctoralStudent?.avatarUrl)}
-          size="xl"
-          decorative
-          className="h-28 w-28 text-2xl ring-0"
-        />
+        <span className="rounded-full bg-gradient-to-br from-brand/25 to-brand/5 p-1 shadow-[0_8px_20px_rgba(36,87,167,0.18)]">
+          <Avatar
+            label={name}
+            imageUrl={photo}
+            size="xl"
+            decorative
+            className="h-32 w-32 text-2xl ring-2 ring-white"
+          />
+        </span>
         <p className="mt-4 line-clamp-2 text-sm font-semibold leading-snug text-[#1e3a5f]">
           {name}
         </p>
@@ -522,38 +492,5 @@ function StudentPriorities({ thesis }: { thesis: SupervisedThesis }) {
         )}
       </div>
     </div>
-  );
-}
-
-function Stat({
-  icon,
-  label,
-  value,
-  detail,
-  tone = 'brand',
-}: {
-  icon: 'supervision' | 'dashboard' | 'objectives' | 'deliverables';
-  label: string;
-  value: string;
-  detail?: string;
-  tone?: 'brand' | 'danger' | 'warn';
-}) {
-  const bubble =
-    tone === 'danger'
-      ? 'bg-danger-soft text-danger'
-      : tone === 'warn'
-        ? 'bg-warn-soft text-warn'
-        : 'bg-brand-soft text-brand';
-  return (
-    <article className="flex items-center gap-3 rounded-[14px] border border-line bg-surface px-3.5 py-3 shadow-[0_3px_18px_rgba(15,23,42,0.03)]">
-      <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-[10px] ${bubble}`}>
-        <Icon name={icon} className="h-5 w-5" />
-      </span>
-      <div className="min-w-0">
-        <p className="text-[11px] font-medium uppercase tracking-[0.04em] text-muted">{label}</p>
-        <p className="mt-0.5 text-lg font-semibold leading-tight tabular-nums text-ink">{value}</p>
-        {detail ? <p className="mt-0.5 text-xs font-medium text-danger">{detail}</p> : null}
-      </div>
-    </article>
   );
 }

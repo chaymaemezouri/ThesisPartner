@@ -174,9 +174,12 @@ function Topbar({
     return () => media.removeEventListener('change', update);
   }, []);
   const isSupervisor = isSupervisorWorkspace(supervised.data);
+  const secondaryNav = isSupervisor
+    ? SECONDARY_NAV.filter((item) => item.to !== '/encadrant' && item.to !== '/abonnement')
+    : SECONDARY_NAV;
   const navigation = isSupervisor
-    ? [...SUPERVISOR_NAV, ...SECONDARY_NAV]
-    : [...PRIMARY_NAV, ...SECONDARY_NAV];
+    ? [...SUPERVISOR_NAV, ...secondaryNav]
+    : [...PRIMARY_NAV, ...secondaryNav];
   const current = navItemForPath(location.pathname, navigation);
   const accountLabel = me.data?.user.displayName ?? t('common.account');
   const currentLabel = current ? t(current.labelKey) : t('common.appName');
@@ -310,7 +313,7 @@ function Sidebar({
   const isSupervisor = isSupervisorWorkspace(supervised.data);
   const primary = isSupervisor ? SUPERVISOR_NAV : PRIMARY_NAV;
   const secondary = isSupervisor
-    ? SECONDARY_NAV.filter((item) => item.to !== '/encadrant')
+    ? SECONDARY_NAV.filter((item) => item.to !== '/encadrant' && item.to !== '/abonnement')
     : SECONDARY_NAV;
 
   return (
