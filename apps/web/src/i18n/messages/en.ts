@@ -56,7 +56,8 @@ export const en = {
     doctoralTitle: 'Doctoral student — first steps',
     supervisorTitle: 'Supervisor — first steps via invitation',
     download: 'Download this guide',
-    onceHint: 'This guide appears once at first sign-in. You can download it anytime from this view.',
+    onceHint:
+      'This guide appears once at first sign-in. You can download it anytime from this view.',
   },
   nav: {
     groupThesis: 'My thesis',

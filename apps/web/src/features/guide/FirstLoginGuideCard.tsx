@@ -57,14 +57,7 @@ export function FirstLoginGuideCard() {
     // Supervisor first path: invitation pending or already in supervisor workspace.
     if (supervisorMode || pendingInvite) return 'supervisor';
     return 'doctoral';
-  }, [
-    userId,
-    emailVerified,
-    supervised.isLoading,
-    inbox.isLoading,
-    supervisorMode,
-    pendingInvite,
-  ]);
+  }, [userId, emailVerified, supervised.isLoading, inbox.isLoading, supervisorMode, pendingInvite]);
 
   useEffect(() => {
     if (!userId || !resolvedRole) {

@@ -249,11 +249,7 @@ export function SupervisorDashboard({
                   {t('supervision.resetFilters')}
                 </Button>
               ) : null}
-              <Button
-                type="button"
-                className="flex-1"
-                onClick={() => setFiltersOpen(false)}
-              >
+              <Button type="button" className="flex-1" onClick={() => setFiltersOpen(false)}>
                 {t('common.close')}
               </Button>
             </div>

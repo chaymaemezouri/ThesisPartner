@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { markFirstLoginGuideSeen } from './current-ui';
 
 const widths = [1920, 1440, 1366, 1024, 768, 375];
 
@@ -15,11 +16,26 @@ const session = {
 };
 
 async function stubWorkspace(page: Page) {
+  await markFirstLoginGuideSeen(page, session.user.id);
   await page.route('**/api/v1/auth/me', (route) =>
     route.fulfill({
       status: 200,
       contentType: 'application/json',
       body: JSON.stringify(session),
+    }),
+  );
+  await page.route('**/api/v1/supervision/theses', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ theses: [] }),
+    }),
+  );
+  await page.route('**/api/v1/invitations/inbox', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ invitations: [] }),
     }),
   );
   await page.route('**/api/v1/dashboard', (route) =>

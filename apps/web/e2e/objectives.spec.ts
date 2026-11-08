@@ -1,5 +1,5 @@
 import { expect, test, type APIRequestContext, type Page } from '@playwright/test';
-import { createObjectiveOnPage } from './current-ui';
+import { createObjectiveOnPage, dismissFirstLoginGuideIfPresent } from './current-ui';
 
 const password = 'phrase-secrete-12';
 
@@ -112,6 +112,7 @@ async function login(page: Page, email: string) {
   try {
     await expect(page).not.toHaveURL(/connexion/);
     await expect(page.getByRole('navigation', { name: 'Main navigation' })).toBeVisible();
+    await dismissFirstLoginGuideIfPresent(page);
   } catch (error) {
     const diagnostic = [
       `E2E current URL: ${page.url()}`,
