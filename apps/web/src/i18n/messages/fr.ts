@@ -54,6 +54,13 @@ export const fr: Messages = {
     uploadingProgress: 'Envoi en cours… {percent} %',
     fileLabel: 'Fichier',
   },
+  guideCard: {
+    doctoralTitle: 'Doctorant — premiers pas',
+    supervisorTitle: 'Encadrant — premiers pas via invitation',
+    download: 'Télécharger ce guide',
+    onceHint:
+      'Ce guide s’affiche une seule fois à la première connexion. Vous pouvez le télécharger depuis cette vue.',
+  },
   nav: {
     groupThesis: 'Ma thèse',
     groupSupervision: 'Encadrement',
@@ -925,6 +932,8 @@ export const fr: Messages = {
     statsPending: 'En attente de validation',
     search: 'Recherche',
     searchPlaceholder: 'Nom ou thèse',
+    filters: 'Filtres',
+    resetFilters: 'Réinitialiser',
     filter: 'Statut',
     filterAll: 'Tous',
     filterOnTrack: 'Dans les temps',
@@ -939,6 +948,10 @@ export const fr: Messages = {
     cardProgress: 'Avancement',
     cardObjectives: 'Objectifs',
     seeAll: 'Voir tout',
+    gallerySubtitle: 'Portraits et sujets de thèse — ouvrez une carte pour entrer dans le dossier',
+    viewMode: 'Mode d’affichage',
+    viewGallery: 'Galerie',
+    viewList: 'Liste',
     reviewQueue: 'Livrables à traiter',
     reviewQueueHelp: 'Valider ou refuser.',
     statusActive: 'En cours',

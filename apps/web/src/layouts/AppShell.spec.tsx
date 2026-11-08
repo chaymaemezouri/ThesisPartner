@@ -23,6 +23,10 @@ function renderShell(path = '/') {
 
 describe('application shell', () => {
   beforeEach(() => {
+    localStorage.setItem(
+      'tp_guide_card_seen_v1:11111111-1111-4111-8111-111111111111:doctoral',
+      '1',
+    );
     vi.stubGlobal(
       'fetch',
       vi.fn(async (input: RequestInfo | URL) => {
@@ -42,6 +46,12 @@ describe('application shell', () => {
             }),
             { status: 200, headers: { 'content-type': 'application/json' } },
           );
+        }
+        if (url.includes('/invitations/inbox')) {
+          return new Response(JSON.stringify({ invitations: [] }), {
+            status: 200,
+            headers: { 'content-type': 'application/json' },
+          });
         }
         if (url.includes('/dashboard')) {
           return new Response(

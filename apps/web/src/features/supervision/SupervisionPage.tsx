@@ -10,5 +10,5 @@ export function SupervisionPage() {
     return <Navigate to="/" replace />;
   }
 
-  return <SupervisorDashboard layout="list" />;
+  return <SupervisorDashboard layout="gallery" />;
 }

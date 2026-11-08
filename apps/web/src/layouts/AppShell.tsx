@@ -4,6 +4,7 @@ import { Avatar, Button, Dropdown, Modal } from '@thesispartner/ui';
 import { Icon } from '../components/Icon';
 import { BrandLogo } from '../components/BrandLogo';
 import { StudentNotificationsBell } from '../features/resources/StudentNotificationsBell';
+import { FirstLoginGuideCard } from '../features/guide/FirstLoginGuideCard';
 import { useLogout, useMeQuery } from '../hooks/use-session';
 import { useSupervisedTheses } from '../features/supervision/hooks/use-supervised-theses';
 import { portraitUrl } from '../features/supervision/temporary-portraits';
@@ -144,6 +145,7 @@ export function AppShell() {
       >
         <Sidebar variant="full" onNavigate={() => setMenuOpen(false)} />
       </Modal>
+      <FirstLoginGuideCard />
     </div>
   );
 }
