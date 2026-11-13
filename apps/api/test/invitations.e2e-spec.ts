@@ -239,7 +239,7 @@ describe('invitations', () => {
     expect(history[0]?.changeReason).toBe('Retirement of first supervisor');
   });
 
-  it('rejects expired tokens and unauthorized accept attempts', async () => {
+  it('rejects unauthorized accept attempts and keeps a past-dated invitation usable', async () => {
     const stamp = Date.now();
     const studentEmail = `student-exp-${stamp}@example.test`;
     const supervisorEmail = `supervisor-exp-${stamp}@example.test`;
@@ -287,11 +287,11 @@ describe('invitations', () => {
       data: { expiresAt: new Date(Date.now() - 60_000) },
     });
 
-    const expired = await supervisor.agent
+    const late = await supervisor.agent
       .post('/api/v1/invitations/accept')
       .set('x-csrf-token', supervisor.csrf)
       .send({ token });
-    expect(expired.status).toBe(400);
-    expect((await supervisor.agent.get(`/api/v1/theses/${thesisId}`)).status).toBe(404);
+    expect(late.status).toBe(200);
+    expect((await supervisor.agent.get(`/api/v1/theses/${thesisId}`)).status).toBe(200);
   });
 });

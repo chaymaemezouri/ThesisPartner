@@ -714,7 +714,7 @@ function Thread({
                             controls
                             preload="metadata"
                             src={message.audioUrl}
-                            className="h-10 w-full min-w-[12rem] max-w-xs"
+                            className="h-10 w-full min-w-0 max-w-full"
                           >
                             {t('messages.voice')}
                           </audio>
@@ -781,7 +781,7 @@ function Thread({
             </p>
           ) : null}
           <form
-            className="flex items-end gap-2 rounded-[26px] border border-line bg-surface px-3 py-1.5 focus-within:border-brand/40 focus-within:ring-2 focus-within:ring-brand/10"
+            className="flex min-w-0 items-end gap-1 rounded-[26px] border border-line bg-surface px-2 py-1.5 focus-within:border-brand/40 focus-within:ring-2 focus-within:ring-brand/10 sm:gap-2 sm:px-3"
             onSubmit={async (event) => {
               event.preventDefault();
               const text = body.trim();
@@ -851,10 +851,14 @@ function Thread({
                   maxLength={4000}
                   placeholder={t('messages.placeholder')}
                   disabled={send.isPending || sendVoice.isPending}
-                  className="max-h-32 min-h-10 min-w-0 flex-1 resize-none bg-transparent px-2 py-2.5 text-sm text-ink outline-none placeholder:text-muted focus-visible:outline-none! disabled:opacity-60"
+                  className="max-h-32 min-h-10 w-0 min-w-0 flex-1 resize-none bg-transparent px-2 py-2.5 text-sm text-ink outline-none placeholder:text-muted focus-visible:outline-none! disabled:opacity-60"
                   onChange={(event) => onBodyChange(event.target.value)}
                   onKeyDown={(event) => {
-                    if (event.key === 'Enter' && !event.shiftKey && !event.nativeEvent.isComposing) {
+                    if (
+                      event.key === 'Enter' &&
+                      !event.shiftKey &&
+                      !event.nativeEvent.isComposing
+                    ) {
                       event.preventDefault();
                       event.currentTarget.form?.requestSubmit();
                     }
@@ -864,7 +868,7 @@ function Thread({
                   type="button"
                   aria-label={t('messages.recordVoice')}
                   disabled={send.isPending || sendVoice.isPending}
-                  className="grid h-10 w-10 shrink-0 place-items-center rounded-full text-brand hover:bg-brand-soft focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand disabled:opacity-40"
+                  className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-brand hover:bg-brand-soft focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand disabled:opacity-40 sm:h-10 sm:w-10"
                   onClick={() => void startVoice()}
                 >
                   <MessageIcon name="mic" className="h-5 w-5" />
@@ -873,7 +877,7 @@ function Thread({
                   type="submit"
                   aria-label={t('messages.send')}
                   disabled={send.isPending || sendVoice.isPending || body.trim().length === 0}
-                  className="inline-flex h-10 shrink-0 items-center justify-center rounded-full px-2 text-xs font-semibold text-brand transition-colors hover:bg-brand-soft focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand disabled:cursor-not-allowed disabled:opacity-40"
+                  className="inline-flex h-9 shrink-0 items-center justify-center rounded-full px-2 text-xs font-semibold text-brand transition-colors hover:bg-brand-soft focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand disabled:cursor-not-allowed disabled:opacity-40 sm:h-10"
                 >
                   {t('messages.send')}
                 </button>
@@ -1271,7 +1275,12 @@ function avatarFor(
 
 function pickVoiceMime(): string | undefined {
   if (typeof MediaRecorder === 'undefined') return undefined;
-  for (const type of ['audio/webm;codecs=opus', 'audio/webm', 'audio/ogg;codecs=opus', 'audio/mp4']) {
+  for (const type of [
+    'audio/webm;codecs=opus',
+    'audio/webm',
+    'audio/ogg;codecs=opus',
+    'audio/mp4',
+  ]) {
     if (MediaRecorder.isTypeSupported(type)) return type;
   }
   return undefined;

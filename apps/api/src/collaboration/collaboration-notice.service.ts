@@ -132,11 +132,7 @@ export class CollaborationNotice {
           ? 'New reply on a remark'
           : 'New remark on Thesis Flow';
     const preview = input.preview.trim().slice(0, 280) || 'Open Thesis Flow to read it.';
-    const paragraphs = [
-      `${input.actor} just wrote on Thesis Flow.`,
-      input.title,
-      preview,
-    ];
+    const paragraphs = [`${input.actor} just wrote on Thesis Flow.`, input.title, preview];
     try {
       await this.mailer.send({
         to: input.to,
