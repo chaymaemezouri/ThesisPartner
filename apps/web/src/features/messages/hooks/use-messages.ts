@@ -5,7 +5,7 @@ import {
   type createMessageGroupSchema,
 } from '@thesispartner/validation';
 import { z } from 'zod';
-import { apiGet, apiSend } from '../../../api/client';
+import { apiGet, apiSend, apiUpload } from '../../../api/client';
 
 export type ConversationList = z.infer<typeof conversationListSchema>;
 export type ConversationDetail = z.infer<typeof conversationDetailSchema>;
@@ -51,6 +51,24 @@ export function useSendMessage(conversationId: string) {
         `/api/v1/messages/conversations/${conversationId}/messages`,
         conversationDetailSchema,
         { body },
+      ),
+    onSuccess: (detail) => {
+      queryClient.setQueryData(messageDetailKey(detail.id), detail);
+      void queryClient.invalidateQueries({ queryKey: listKey });
+    },
+  });
+}
+
+export function useSendVoiceMessage(conversationId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: { file: File; durationMs: number }) =>
+      apiUpload(
+        `/api/v1/messages/conversations/${conversationId}/messages/voice`,
+        conversationDetailSchema,
+        input.file,
+        undefined,
+        { durationMs: String(Math.round(input.durationMs)) },
       ),
     onSuccess: (detail) => {
       queryClient.setQueryData(messageDetailKey(detail.id), detail);

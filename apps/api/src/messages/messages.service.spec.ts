@@ -45,7 +45,12 @@ describe('MessagesService profile photos', () => {
         },
         message: { findMany: jest.fn().mockResolvedValue([]) },
       };
-      const service = new MessagesService(prisma as never, {} as never);
+      const service = new MessagesService(
+        prisma as never,
+        {} as never,
+        { notifyConversation: jest.fn() } as never,
+        {} as never,
+      );
       const list = conversationListSchema.parse(await service.list(actorId));
       const detail = conversationDetailSchema.parse(await service.get(actorId, conversationId));
       const expectedParticipant = {
@@ -106,7 +111,12 @@ describe('MessagesService edit, delete and conversation management', () => {
   }
 
   function serviceWith(prisma: object) {
-    return new MessagesService(prisma as never, { record: jest.fn() } as never);
+    return new MessagesService(
+      prisma as never,
+      { record: jest.fn() } as never,
+      { notifyConversation: jest.fn() } as never,
+      {} as never,
+    );
   }
 
   it('edits a message the caller authored', async () => {

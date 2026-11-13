@@ -54,13 +54,6 @@ export const fr: Messages = {
     uploadingProgress: 'Envoi en cours… {percent} %',
     fileLabel: 'Fichier',
   },
-  guideCard: {
-    doctoralTitle: 'Doctorant — premiers pas',
-    supervisorTitle: 'Encadrant — premiers pas via invitation',
-    download: 'Télécharger ce guide',
-    onceHint:
-      'Ce guide s’affiche une seule fois à la première connexion. Vous pouvez le télécharger depuis cette vue.',
-  },
   nav: {
     groupThesis: 'Ma thèse',
     groupSupervision: 'Encadrement',
@@ -1154,6 +1147,13 @@ export const fr: Messages = {
     body: 'Message',
     placeholder: 'Écrire un message',
     send: 'Envoyer',
+    voice: 'Message vocal',
+    recordVoice: 'Enregistrer un message vocal',
+    stopRecording: 'Arrêter l’enregistrement',
+    cancelRecording: 'Annuler l’enregistrement',
+    recording: 'Enregistrement…',
+    voiceUnsupported: 'L’enregistrement vocal n’est pas disponible dans ce navigateur.',
+    voicePermission: 'Autorisez le micro pour envoyer un message vocal.',
     search: 'Rechercher une conversation',
     filter: 'Filtrer les conversations',
     all: 'Tous',
@@ -1434,6 +1434,7 @@ export const fr: Messages = {
     contactsHidden: 'Les coordonnées n’apparaissent qu’après acceptation par l’encadrant.',
     historyTitle: 'Historique des invitations',
     expires: 'Expire le {date}',
+    staysOpen: 'Reste valable jusqu’à acceptation, refus ou annulation',
     replacesBadge: 'remplacement',
     replacesNotice:
       'L’acceptation remplacera l’encadrant actuel. L’historique d’encadrement est conservé.',

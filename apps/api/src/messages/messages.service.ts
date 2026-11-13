@@ -1,4 +1,7 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
+import { createReadStream } from 'node:fs';
+import { stat } from 'node:fs/promises';
+import { randomUUID } from 'node:crypto';
 import { Prisma } from '@prisma/client';
 import type {
   createMessageGroupSchema,
@@ -7,10 +10,25 @@ import type {
 } from '@thesispartner/validation';
 import type { z } from 'zod';
 import { AuditService } from '../audit/audit.service';
+import { CollaborationNotice } from '../collaboration/collaboration-notice.service';
 import { AppException } from '../common/errors/app.exception';
 import { PrismaService } from '../infrastructure/prisma/prisma.service';
 import { resolveAvatarUrl } from '../profile/profile.service';
+import { commitAfterUpload } from '../storage/commit-upload';
+import { OBJECT_STORAGE, type ObjectStorage } from '../storage/object-storage';
 import { isUnread, oneThreadPerCounterpart, singleSupervisorThread } from './messages-rules';
+
+const VOICE_MAX_BYTES = 10 * 1024 * 1024;
+const VOICE_MIMES = new Set([
+  'audio/webm',
+  'audio/ogg',
+  'audio/mpeg',
+  'audio/mp4',
+  'audio/mp3',
+  'audio/wav',
+  'audio/x-wav',
+  'audio/x-m4a',
+]);
 
 type GroupDraft = z.infer<typeof createMessageGroupSchema>;
 type MessageDraft = z.infer<typeof createMessageSchema>;
@@ -29,6 +47,8 @@ export class MessagesService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly audit: AuditService,
+    private readonly notice: CollaborationNotice,
+    @Inject(OBJECT_STORAGE) private readonly objects: ObjectStorage,
   ) {}
 
   async list(actorId: string) {
@@ -73,6 +93,7 @@ export class MessagesService {
                 body: last.body,
                 authorId: last.authorId,
                 createdAt: last.createdAt.toISOString(),
+                hasAudio: Boolean(last.audioStorageKey),
               }
             : null,
           unread: isUnread(
@@ -182,7 +203,7 @@ export class MessagesService {
   }
 
   async post(actorId: string, conversationId: string, body: MessageDraft, requestId?: string) {
-    await this.visibleConversation(actorId, conversationId);
+    const conversation = await this.visibleConversation(actorId, conversationId);
     await this.prisma.$transaction(async (tx) => {
       const message = await tx.message.create({
         data: {
@@ -207,7 +228,109 @@ export class MessagesService {
         requestId,
       });
     });
+    void this.notice.notifyConversation({
+      conversationId,
+      actorId,
+      thesisId: conversation.thesisId,
+      preview: body.body.trim(),
+    });
     return this.get(actorId, conversationId);
+  }
+
+  async postVoice(
+    actorId: string,
+    conversationId: string,
+    file:
+      | {
+          path: string;
+          originalName: string;
+          declaredMime: string;
+        }
+      | undefined,
+    durationMs: number | undefined,
+    requestId?: string,
+  ) {
+    if (!file) {
+      throw new AppException(400, 'FILE_TYPE_NOT_ALLOWED', 'Aucun fichier audio n’a été envoyé.');
+    }
+    const conversation = await this.visibleConversation(actorId, conversationId);
+    const info = await stat(file.path);
+    if (info.size <= 0 || info.size > VOICE_MAX_BYTES) {
+      throw new AppException(413, 'FILE_TOO_LARGE', 'L’enregistrement dépasse 10 Mo.');
+    }
+    const mime = (file.declaredMime || '').split(';')[0]?.trim().toLowerCase() ?? '';
+    if (!VOICE_MIMES.has(mime)) {
+      throw new AppException(400, 'FILE_TYPE_NOT_ALLOWED', 'Format audio non accepté.');
+    }
+    const duration = Number.isFinite(durationMs) ? Math.max(0, Math.round(durationMs ?? 0)) : 0;
+    const objectId = randomUUID();
+    const storageKey = `messages/${conversationId}/${objectId}`;
+    await this.objects.ensureReady();
+    await commitAfterUpload({
+      put: () =>
+        this.objects.putObject({
+          key: storageKey,
+          body: createReadStream(file.path),
+          contentType: mime,
+          contentLength: info.size,
+          downloadName: file.originalName || 'voice.webm',
+        }),
+      insert: async () => {
+        await this.prisma.$transaction(async (tx) => {
+          const message = await tx.message.create({
+            data: {
+              conversationId,
+              authorId: actorId,
+              body: '',
+              audioStorageKey: storageKey,
+              audioMimeType: mime,
+              audioDurationMs: duration || null,
+              audioSizeBytes: BigInt(info.size),
+            },
+          });
+          await tx.conversation.update({
+            where: { id: conversationId },
+            data: { updatedAt: new Date() },
+          });
+          await tx.conversationMember.update({
+            where: { conversationId_userId: { conversationId, userId: actorId } },
+            data: { lastReadAt: message.createdAt },
+          });
+          await this.audit.record(tx, {
+            actorId,
+            action: 'message.voice_sent',
+            entityType: 'message',
+            entityId: message.id,
+            requestId,
+          });
+        });
+      },
+      remove: () => this.objects.deleteObject(storageKey),
+    });
+    void this.notice.notifyConversation({
+      conversationId,
+      actorId,
+      thesisId: conversation.thesisId,
+      preview: 'Message vocal',
+    });
+    return this.get(actorId, conversationId);
+  }
+
+  async openAudio(actorId: string, conversationId: string, messageId: string) {
+    await this.visibleConversation(actorId, conversationId);
+    const message = await this.prisma.message.findFirst({
+      where: { id: messageId, conversationId, deletedAt: null },
+    });
+    if (!message?.audioStorageKey) {
+      throw new AppException(404, 'NOT_FOUND', 'Resource not found');
+    }
+    await this.objects.ensureReady();
+    const object = await this.objects.getObjectStream(message.audioStorageKey);
+    return {
+      body: object.body,
+      contentType: message.audioMimeType || object.contentType || 'audio/webm',
+      contentLength: object.contentLength,
+    };
   }
 
   async edit(
@@ -536,6 +659,11 @@ export class MessagesService {
         authorId: message.authorId,
         authorName: personName(message.author),
         body: message.deletedAt ? '' : message.body,
+        audioUrl:
+          !message.deletedAt && message.audioStorageKey
+            ? `/api/v1/messages/conversations/${conversation.id}/messages/${message.id}/audio`
+            : null,
+        audioDurationMs: message.deletedAt ? null : (message.audioDurationMs ?? null),
         createdAt: message.createdAt.toISOString(),
         editedAt: message.editedAt?.toISOString() ?? null,
         deleted: Boolean(message.deletedAt),

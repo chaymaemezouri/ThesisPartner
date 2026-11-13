@@ -7,6 +7,7 @@ import type {
 } from '@thesispartner/validation';
 import type { z } from 'zod';
 import { AuditService } from '../audit/audit.service';
+import { CollaborationNotice } from '../collaboration/collaboration-notice.service';
 import { AppException } from '../common/errors/app.exception';
 import { ThesisAccessService } from '../common/thesis-access/thesis-access.service';
 import { PrismaService } from '../infrastructure/prisma/prisma.service';
@@ -72,6 +73,7 @@ export class RemarksService {
     private readonly prisma: PrismaService,
     private readonly access: ThesisAccessService,
     private readonly audit: AuditService,
+    private readonly notice: CollaborationNotice,
   ) {}
 
   async list(actorId: string, thesisId: string, query: ListQuery) {
@@ -129,6 +131,13 @@ export class RemarksService {
       });
       return remark;
     });
+    void this.notice.notifyThesis({
+      thesisId,
+      actorId,
+      kind: 'remark',
+      title: created.title,
+      preview: created.message,
+    });
     return this.toDetail(created);
   }
 
@@ -172,6 +181,13 @@ export class RemarksService {
         requestId,
       });
       return remark;
+    });
+    void this.notice.notifyThesis({
+      thesisId,
+      actorId,
+      kind: 'remark_reply',
+      title: updated.title,
+      preview: body.message.trim(),
     });
     return this.toDetail(updated);
   }

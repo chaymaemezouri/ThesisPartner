@@ -9,7 +9,12 @@ import {
   Patch,
   Post,
   Req,
+  Res,
+  UseInterceptors,
 } from '@nestjs/common';
+import { unlink } from 'node:fs/promises';
+import type { Response } from 'express';
+import { SingleFileUploadInterceptor } from '../storage/upload.interceptor';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import {
   createMessageGroupSchema,
@@ -66,6 +71,59 @@ export class MessagesController {
       createMessageSchema.parse(body),
       request.requestId,
     );
+  }
+
+  @Post(':conversationId/messages/voice')
+  @HttpCode(201)
+  @UseInterceptors(SingleFileUploadInterceptor)
+  @ApiOperation({ summary: 'Send a voice message in a conversation' })
+  async postVoice(
+    @Param('conversationId', ParseUUIDPipe) conversationId: string,
+    @Req() request: Request,
+  ) {
+    const uploaded = request.file;
+    const rawDuration =
+      typeof request.body === 'object' && request.body && 'durationMs' in request.body
+        ? Number((request.body as { durationMs?: string }).durationMs)
+        : undefined;
+    try {
+      return await this.messages.postVoice(
+        actorId(request),
+        conversationId,
+        uploaded
+          ? {
+              path: uploaded.path,
+              originalName: uploaded.originalname,
+              declaredMime: uploaded.mimetype,
+            }
+          : undefined,
+        Number.isFinite(rawDuration) ? rawDuration : undefined,
+        request.requestId,
+      );
+    } finally {
+      if (uploaded?.path) await unlink(uploaded.path).catch(() => undefined);
+    }
+  }
+
+  @Get(':conversationId/messages/:messageId/audio')
+  @ApiOperation({ summary: 'Stream a voice message' })
+  async audio(
+    @Param('conversationId', ParseUUIDPipe) conversationId: string,
+    @Param('messageId', ParseUUIDPipe) messageId: string,
+    @Req() request: Request,
+    @Res() response: Response,
+  ) {
+    const file = await this.messages.openAudio(actorId(request), conversationId, messageId);
+    response.setHeader('Content-Type', file.contentType);
+    response.setHeader('Cache-Control', 'private, no-store');
+    if (file.contentLength != null) {
+      response.setHeader('Content-Length', String(file.contentLength));
+    }
+    file.body.on('error', () => {
+      if (!response.headersSent) response.status(503).end();
+      else response.destroy();
+    });
+    file.body.pipe(response);
   }
 
   @Patch(':conversationId/messages/:messageId')

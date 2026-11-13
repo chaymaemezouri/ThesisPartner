@@ -52,13 +52,6 @@ export const en = {
     uploadingProgress: 'Uploading… {percent} %',
     fileLabel: 'File',
   },
-  guideCard: {
-    doctoralTitle: 'Doctoral student — first steps',
-    supervisorTitle: 'Supervisor — first steps via invitation',
-    download: 'Download this guide',
-    onceHint:
-      'This guide appears once at first sign-in. You can download it anytime from this view.',
-  },
   nav: {
     groupThesis: 'My thesis',
     groupSupervision: 'Supervision',
@@ -1142,6 +1135,13 @@ export const en = {
     body: 'Message',
     placeholder: 'Write a message',
     send: 'Send',
+    voice: 'Voice message',
+    recordVoice: 'Record a voice message',
+    stopRecording: 'Stop recording',
+    cancelRecording: 'Cancel recording',
+    recording: 'Recording…',
+    voiceUnsupported: 'Voice recording is not available in this browser.',
+    voicePermission: 'Allow the microphone to send a voice message.',
     search: 'Search conversations',
     filter: 'Filter conversations',
     all: 'All',
@@ -1421,6 +1421,7 @@ export const en = {
     contactsHidden: 'Contact details will appear only after the supervisor accepts.',
     historyTitle: 'Invitation history',
     expires: 'Expires {date}',
+    staysOpen: 'Stays valid until accepted, declined or cancelled',
     replacesBadge: 'replacement',
     replacesNotice:
       'Accepting will replace the current supervisor. Past supervision stays in history.',

@@ -1,5 +1,4 @@
 import { expect, test, type Page } from '@playwright/test';
-import { markFirstLoginGuideSeen } from './current-ui';
 
 const thesisId = '22222222-2222-4222-8222-222222222222';
 const author = {
@@ -118,7 +117,6 @@ async function mockDocuments(page: Page) {
       overdue: 0,
     },
   });
-  await markFirstLoginGuideSeen(page, author.id);
   await page.route('**/api/v1/**', async (route) => {
     const path = new URL(route.request().url()).pathname;
     if (route.request().method() !== 'GET') mutations.push(path);

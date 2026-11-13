@@ -1445,6 +1445,7 @@ export const messagePreviewSchema = z
     body: z.string().max(4000),
     authorId: z.string().uuid(),
     createdAt: z.string().datetime(),
+    hasAudio: z.boolean().optional(),
   })
   .strict();
 
@@ -1483,6 +1484,8 @@ export const conversationMessageSchema = z
     authorId: z.string().uuid(),
     authorName: z.string().max(160),
     body: z.string().max(4000),
+    audioUrl: z.string().max(500).nullable().optional(),
+    audioDurationMs: z.number().int().nonnegative().nullable().optional(),
     createdAt: z.string().datetime(),
     editedAt: z.string().datetime().nullable().optional(),
     deleted: z.boolean().optional(),

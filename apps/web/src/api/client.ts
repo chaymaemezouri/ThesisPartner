@@ -76,6 +76,7 @@ export function apiUpload<S extends z.ZodTypeAny>(
   schema: S,
   file: File,
   onProgress?: (loaded: number, total: number) => void,
+  fields?: Record<string, string>,
 ): Promise<z.output<S>> {
   return new Promise<z.output<S>>((resolve, reject) => {
     const xhr = new XMLHttpRequest();
@@ -134,6 +135,9 @@ export function apiUpload<S extends z.ZodTypeAny>(
     };
     const body = new FormData();
     body.append('file', file);
+    if (fields) {
+      for (const [key, value] of Object.entries(fields)) body.append(key, value);
+    }
     xhr.send(body);
   });
 }

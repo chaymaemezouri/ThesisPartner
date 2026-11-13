@@ -170,9 +170,7 @@ export function ThesisInvitationsPanel({
                       ? t('invitations.emailFailed')
                       : t('invitations.emailQueued')
                 }
-                expiresLabel={t('invitations.expires', {
-                  date: new Date(item.expiresAt).toLocaleDateString(),
-                })}
+                expiresLabel={t('invitations.staysOpen')}
                 replaces={item.replacesSupervisor}
                 onResend={() => {
                   setTargetId(item.id);

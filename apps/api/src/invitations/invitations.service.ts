@@ -20,7 +20,8 @@ import { assertCanInvite } from '../theses/invite.policy';
 import { resolveAvatarUrl } from '../profile/profile.service';
 import { buildInviteMail, buildInviteReminderMail } from './invite-mail';
 
-const INVITATION_TTL_MS = 14 * 24 * 60 * 60 * 1000;
+/** Kept on the row for compatibility; invitations no longer auto-expire. */
+const INVITATION_OPEN_UNTIL = new Date('9999-12-31T00:00:00.000Z');
 const RESEND_COOLDOWN_MS = 60 * 1000;
 const REMINDER_7_MS = 7 * 24 * 60 * 60 * 1000;
 const REMINDER_12_MS = 12 * 24 * 60 * 60 * 1000;
@@ -461,7 +462,7 @@ export class InvitationsService {
         where: { id: invitationId },
         data: {
           tokenHash: hashOpaqueToken(token),
-          expiresAt: new Date(Date.now() + INVITATION_TTL_MS),
+          expiresAt: INVITATION_OPEN_UNTIL,
         },
       });
       await this.audit.record(tx, {
@@ -526,7 +527,6 @@ export class InvitationsService {
     const pending = await this.prisma.invitation.findMany({
       where: {
         status: 'PENDING',
-        expiresAt: { gt: now },
         OR: [{ reminder7SentAt: null }, { reminder12SentAt: null }],
       },
       include: {
@@ -739,7 +739,7 @@ export class InvitationsService {
           invitedById: actorId,
           replacesSupervisor: input.replacesSupervisor,
           changeReason: input.changeReason,
-          expiresAt: new Date(Date.now() + INVITATION_TTL_MS),
+          expiresAt: INVITATION_OPEN_UNTIL,
         },
       });
       await this.audit.record(tx, {
@@ -799,19 +799,14 @@ export class InvitationsService {
   }
 
   private assertPending(invitation: { status: InvitationStatus; expiresAt: Date }) {
-    if (invitation.status === 'EXPIRED' || invitation.expiresAt.getTime() <= Date.now()) {
-      throw new AppException(400, 'BAD_REQUEST', 'This invitation has expired');
-    }
     if (invitation.status !== 'PENDING') {
       throw new AppException(409, 'CONFLICT', 'This invitation is no longer pending');
     }
   }
 
+  /** Invitations stay pending until accept, reject or cancel — never auto-expire. */
   private async expirePending(): Promise<void> {
-    await this.prisma.invitation.updateMany({
-      where: { status: 'PENDING', expiresAt: { lte: new Date() } },
-      data: { status: 'EXPIRED', respondedAt: new Date() },
-    });
+    return;
   }
 
   private async requireUser(userId: string) {

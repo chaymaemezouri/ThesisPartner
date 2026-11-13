@@ -217,8 +217,8 @@ describe('InvitationsService', () => {
     expect(prisma.thesisMembership.create).not.toHaveBeenCalled();
   });
 
-  it('refuses accept when the invitation token is expired', async () => {
-    const { service, prisma } = build();
+  it('accepts a pending invitation even after the former expiry date', async () => {
+    const { service, prisma, audit } = build();
     const { hashOpaqueToken } = await import('../common/security/opaque-token');
     prisma.user.findUnique = jest.fn().mockResolvedValue({
       id: inviteeId,
@@ -239,11 +239,38 @@ describe('InvitationsService', () => {
       thesis: { id: thesisId, title: 'Coastal ecosystems' },
       invitedBy: { profile: { displayName: 'Ada' } },
     });
-
-    await expect(service.accept(inviteeId, token)).rejects.toMatchObject({
-      appCode: 'BAD_REQUEST',
+    prisma.invitation.findUniqueOrThrow = jest.fn().mockResolvedValue({
+      id: invitationId,
+      thesisId,
+      email: 'supervisor@example.test',
+      role: 'SUPERVISOR',
+      status: 'ACCEPTED',
+      emailStatus: 'SENT',
+      replacesSupervisor: false,
+      changeReason: null,
+      expiresAt: new Date(Date.now() - 60_000),
+      createdAt: new Date(),
+      respondedAt: new Date(),
+      thesis: {
+        id: thesisId,
+        title: 'Coastal ecosystems',
+        institution: null,
+        doctoralYear: 1,
+        memberships: [],
+      },
+      invitedBy: { profile: { displayName: 'Ada' } },
     });
-    expect(prisma.thesisMembership.create).not.toHaveBeenCalled();
+    prisma.thesisMembership.findUnique = jest.fn().mockResolvedValue(null);
+
+    await service.accept(inviteeId, token, 'req-open');
+
+    expect(prisma.thesisMembership.create).toHaveBeenCalledWith({
+      data: { thesisId, userId: inviteeId, role: 'SUPERVISOR' },
+    });
+    expect(audit.record).toHaveBeenCalledWith(
+      prisma,
+      expect.objectContaining({ action: 'invitation.accepted' }),
+    );
   });
 
   it('refuses accept when the invitation was already accepted', async () => {

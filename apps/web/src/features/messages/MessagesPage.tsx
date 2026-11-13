@@ -16,6 +16,7 @@ import {
   useEditMessage,
   useLeaveConversation,
   useSendMessage,
+  useSendVoiceMessage,
   useUpdateGroup,
   type ConversationSummary,
   type GroupDraft,
@@ -100,7 +101,10 @@ function ConversationList({
   const needle = search.trim().toLocaleLowerCase(dateLocale);
   const unreadCount = conversations.filter((item) => item.unread).length;
   const visible = conversations.filter((item, index) => {
-    const matches = `${names[index]} ${item.thesisTitle ?? ''} ${item.lastMessage?.body ?? ''}`
+    const lastPreview = item.lastMessage?.hasAudio
+      ? `${item.lastMessage.body} ${t('messages.voice')}`
+      : (item.lastMessage?.body ?? '');
+    const matches = `${names[index]} ${item.thesisTitle ?? ''} ${lastPreview}`
       .toLocaleLowerCase(dateLocale)
       .includes(needle);
     return matches && (!unreadOnly || item.unread || item.id === selectedId);
@@ -199,7 +203,9 @@ function ConversationList({
             const active = item.id === selectedId;
             const name = labelFor(item, actorId, t('messages.conversation'));
             const shared = names.filter((value) => value === name).length > 1;
-            const preview = item.lastMessage?.body ?? (shared ? item.thesisTitle : null);
+            const preview = item.lastMessage?.hasAudio
+              ? item.lastMessage.body.trim() || t('messages.voice')
+              : (item.lastMessage?.body ?? (shared ? item.thesisTitle : null));
             return (
               <li key={item.id}>
                 <Link
@@ -288,6 +294,7 @@ function Thread({
   const navigate = useNavigate();
   const conversation = useConversation(conversationId);
   const send = useSendMessage(conversationId ?? '');
+  const sendVoice = useSendVoiceMessage(conversationId ?? '');
   const editMessage = useEditMessage(conversationId ?? '');
   const deleteMessage = useDeleteMessage(conversationId ?? '');
   const clearConversation = useClearConversation(conversationId ?? '');
@@ -304,6 +311,13 @@ function Thread({
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const nearBottom = useRef(true);
   const sending = useRef(false);
+  const recorderRef = useRef<MediaRecorder | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
+  const startedAtRef = useRef(0);
+  const timerRef = useRef<number>(undefined);
+  const [recording, setRecording] = useState(false);
+  const [recordMs, setRecordMs] = useState(0);
+  const [voiceHint, setVoiceHint] = useState<'unsupported' | 'permission' | null>(null);
   const latestMessageId = conversation.data?.messages.at(-1)?.id;
 
   useEffect(() => {
@@ -317,6 +331,79 @@ function Thread({
     field.style.height = 'auto';
     field.style.height = `${Math.min(field.scrollHeight, 128)}px`;
   }, [body, conversation.isSuccess]);
+
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) window.clearInterval(timerRef.current);
+      const recorder = recorderRef.current;
+      if (recorder && recorder.state !== 'inactive') recorder.stop();
+      recorder?.stream.getTracks().forEach((track) => track.stop());
+    };
+  }, []);
+
+  async function startVoice() {
+    setVoiceHint(null);
+    if (typeof MediaRecorder === 'undefined' || !navigator.mediaDevices?.getUserMedia) {
+      setVoiceHint('unsupported');
+      return;
+    }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mimeType = pickVoiceMime();
+      const recorder = mimeType
+        ? new MediaRecorder(stream, { mimeType })
+        : new MediaRecorder(stream);
+      chunksRef.current = [];
+      recorder.addEventListener('dataavailable', (event) => {
+        if (event.data.size > 0) chunksRef.current.push(event.data);
+      });
+      recorderRef.current = recorder;
+      startedAtRef.current = Date.now();
+      setRecordMs(0);
+      setRecording(true);
+      recorder.start();
+      timerRef.current = window.setInterval(() => {
+        setRecordMs(Date.now() - startedAtRef.current);
+      }, 200);
+    } catch {
+      setVoiceHint('permission');
+    }
+  }
+
+  async function stopVoice(send: boolean) {
+    const recorder = recorderRef.current;
+    if (timerRef.current) window.clearInterval(timerRef.current);
+    timerRef.current = undefined;
+    setRecording(false);
+    const duration = Date.now() - startedAtRef.current;
+    if (!recorder) return;
+    const blob = await new Promise<Blob>((resolve) => {
+      const finish = () => {
+        recorder.stream.getTracks().forEach((track) => track.stop());
+        resolve(new Blob(chunksRef.current, { type: recorder.mimeType || 'audio/webm' }));
+      };
+      recorder.addEventListener('stop', finish, { once: true });
+      if (recorder.state === 'inactive') {
+        finish();
+        return;
+      }
+      recorder.stop();
+    });
+    recorderRef.current = null;
+    chunksRef.current = [];
+    if (!send || blob.size < 200) return;
+    const type = (blob.type.split(';')[0] || 'audio/webm').trim();
+    const ext = type.includes('ogg') ? 'ogg' : type.includes('mp4') ? 'm4a' : 'webm';
+    const file = new File([blob], `voice.${ext}`, { type });
+    try {
+      await sendVoice.mutateAsync({ file, durationMs: duration });
+      nearBottom.current = true;
+      bottomRef.current?.scrollIntoView?.({ block: 'end' });
+      setShowLatest(false);
+    } catch {
+      // The mutation error is shown above the composer.
+    }
+  }
 
   if (!conversationId)
     return (
@@ -531,18 +618,20 @@ function Thread({
                 <div className="min-w-0 max-w-[min(36rem,82%)] sm:max-w-[72%]">
                   {own && !message.deleted && editingId !== message.id ? (
                     <div className="mb-1 flex justify-end gap-0.5">
-                      <button
-                        type="button"
-                        aria-label={t('messages.editMessage')}
-                        title={t('messages.editMessage')}
-                        className="grid h-7 w-7 place-items-center rounded-full text-muted hover:bg-canvas hover:text-ink"
-                        onClick={() => {
-                          setEditingId(message.id);
-                          setEditDraft(message.body);
-                        }}
-                      >
-                        <Icon name="pencil" className="h-3.5 w-3.5" />
-                      </button>
+                      {message.audioUrl ? null : (
+                        <button
+                          type="button"
+                          aria-label={t('messages.editMessage')}
+                          title={t('messages.editMessage')}
+                          className="grid h-7 w-7 place-items-center rounded-full text-muted hover:bg-canvas hover:text-ink"
+                          onClick={() => {
+                            setEditingId(message.id);
+                            setEditDraft(message.body);
+                          }}
+                        >
+                          <Icon name="pencil" className="h-3.5 w-3.5" />
+                        </button>
+                      )}
                       <button
                         type="button"
                         aria-label={t('messages.deleteMessage')}
@@ -619,9 +708,23 @@ function Thread({
                         </div>
                       </form>
                     ) : (
-                      <p className="whitespace-pre-wrap text-sm leading-relaxed [overflow-wrap:anywhere]">
-                        {message.body}
-                      </p>
+                      <div className="space-y-2">
+                        {message.audioUrl ? (
+                          <audio
+                            controls
+                            preload="metadata"
+                            src={message.audioUrl}
+                            className="h-10 w-full min-w-[12rem] max-w-xs"
+                          >
+                            {t('messages.voice')}
+                          </audio>
+                        ) : null}
+                        {message.body ? (
+                          <p className="whitespace-pre-wrap text-sm leading-relaxed [overflow-wrap:anywhere]">
+                            {message.body}
+                          </p>
+                        ) : null}
+                      </div>
                     )}
                   </div>
                   {!continuesNext ? (
@@ -662,12 +765,27 @@ function Thread({
               {queryErrorMessage(send.error, t)}
             </p>
           ) : null}
+          {sendVoice.isError ? (
+            <p className="mb-2 text-xs text-danger" role="alert">
+              {queryErrorMessage(sendVoice.error, t)}
+            </p>
+          ) : null}
+          {voiceHint === 'unsupported' ? (
+            <p className="mb-2 text-xs text-danger" role="alert">
+              {t('messages.voiceUnsupported')}
+            </p>
+          ) : null}
+          {voiceHint === 'permission' ? (
+            <p className="mb-2 text-xs text-danger" role="alert">
+              {t('messages.voicePermission')}
+            </p>
+          ) : null}
           <form
             className="flex items-end gap-2 rounded-[26px] border border-line bg-surface px-3 py-1.5 focus-within:border-brand/40 focus-within:ring-2 focus-within:ring-brand/10"
             onSubmit={async (event) => {
               event.preventDefault();
               const text = body.trim();
-              if (!text || sending.current || send.isPending) return;
+              if (!text || sending.current || send.isPending || recording) return;
               sending.current = true;
               try {
                 await send.mutateAsync(text);
@@ -682,49 +800,85 @@ function Thread({
               }
             }}
           >
-            <EmojiPicker
-              disabled={send.isPending}
-              onChoose={(emoji) => {
-                const field = textareaRef.current;
-                const start = field?.selectionStart ?? body.length;
-                const end = field?.selectionEnd ?? body.length;
-                const next = body.slice(0, start) + emoji + body.slice(end);
-                if (next.length > 4000) return;
-                onBodyChange(next);
-                setTimeout(() => {
-                  field?.focus();
-                  field?.setSelectionRange(start + emoji.length, start + emoji.length);
-                }, 0);
-              }}
-            />
-            <label className="sr-only" htmlFor="message-body">
-              {t('messages.body')}
-            </label>
-            <textarea
-              id="message-body"
-              ref={textareaRef}
-              value={body}
-              rows={1}
-              maxLength={4000}
-              placeholder={t('messages.placeholder')}
-              disabled={send.isPending}
-              className="max-h-32 min-h-10 min-w-0 flex-1 resize-none bg-transparent px-2 py-2.5 text-sm text-ink outline-none placeholder:text-muted focus-visible:outline-none! disabled:opacity-60"
-              onChange={(event) => onBodyChange(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === 'Enter' && !event.shiftKey && !event.nativeEvent.isComposing) {
-                  event.preventDefault();
-                  event.currentTarget.form?.requestSubmit();
-                }
-              }}
-            />
-            <button
-              type="submit"
-              aria-label={t('messages.send')}
-              disabled={send.isPending || body.trim().length === 0}
-              className="inline-flex h-10 shrink-0 items-center justify-center rounded-full px-2 text-xs font-semibold text-brand transition-colors hover:bg-brand-soft focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand disabled:cursor-not-allowed disabled:opacity-40"
-            >
-              {t('messages.send')}
-            </button>
+            {recording ? (
+              <>
+                <button
+                  type="button"
+                  aria-label={t('messages.cancelRecording')}
+                  className="grid h-10 w-10 shrink-0 place-items-center rounded-full text-danger hover:bg-danger-soft"
+                  onClick={() => void stopVoice(false)}
+                >
+                  <Icon name="close" className="h-4 w-4" />
+                </button>
+                <p className="min-w-0 flex-1 px-2 py-2.5 text-sm text-danger">
+                  {t('messages.recording')} {formatVoiceClock(recordMs)}
+                </p>
+                <button
+                  type="button"
+                  aria-label={t('messages.stopRecording')}
+                  disabled={sendVoice.isPending}
+                  className="inline-flex h-10 shrink-0 items-center justify-center rounded-full bg-danger px-3 text-xs font-semibold text-white"
+                  onClick={() => void stopVoice(true)}
+                >
+                  {t('messages.stopRecording')}
+                </button>
+              </>
+            ) : (
+              <>
+                <EmojiPicker
+                  disabled={send.isPending || sendVoice.isPending}
+                  onChoose={(emoji) => {
+                    const field = textareaRef.current;
+                    const start = field?.selectionStart ?? body.length;
+                    const end = field?.selectionEnd ?? body.length;
+                    const next = body.slice(0, start) + emoji + body.slice(end);
+                    if (next.length > 4000) return;
+                    onBodyChange(next);
+                    setTimeout(() => {
+                      field?.focus();
+                      field?.setSelectionRange(start + emoji.length, start + emoji.length);
+                    }, 0);
+                  }}
+                />
+                <label className="sr-only" htmlFor="message-body">
+                  {t('messages.body')}
+                </label>
+                <textarea
+                  id="message-body"
+                  ref={textareaRef}
+                  value={body}
+                  rows={1}
+                  maxLength={4000}
+                  placeholder={t('messages.placeholder')}
+                  disabled={send.isPending || sendVoice.isPending}
+                  className="max-h-32 min-h-10 min-w-0 flex-1 resize-none bg-transparent px-2 py-2.5 text-sm text-ink outline-none placeholder:text-muted focus-visible:outline-none! disabled:opacity-60"
+                  onChange={(event) => onBodyChange(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter' && !event.shiftKey && !event.nativeEvent.isComposing) {
+                      event.preventDefault();
+                      event.currentTarget.form?.requestSubmit();
+                    }
+                  }}
+                />
+                <button
+                  type="button"
+                  aria-label={t('messages.recordVoice')}
+                  disabled={send.isPending || sendVoice.isPending}
+                  className="grid h-10 w-10 shrink-0 place-items-center rounded-full text-brand hover:bg-brand-soft focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand disabled:opacity-40"
+                  onClick={() => void startVoice()}
+                >
+                  <MessageIcon name="mic" className="h-5 w-5" />
+                </button>
+                <button
+                  type="submit"
+                  aria-label={t('messages.send')}
+                  disabled={send.isPending || sendVoice.isPending || body.trim().length === 0}
+                  className="inline-flex h-10 shrink-0 items-center justify-center rounded-full px-2 text-xs font-semibold text-brand transition-colors hover:bg-brand-soft focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  {t('messages.send')}
+                </button>
+              </>
+            )}
           </form>
           <p className="mt-2 hidden text-[10px] text-muted sm:block">
             {t('messages.keyboardHint')}
@@ -1115,6 +1269,21 @@ function avatarFor(
   return item.participants.find((person) => person.userId !== actorId)?.avatarUrl ?? null;
 }
 
+function pickVoiceMime(): string | undefined {
+  if (typeof MediaRecorder === 'undefined') return undefined;
+  for (const type of ['audio/webm;codecs=opus', 'audio/webm', 'audio/ogg;codecs=opus', 'audio/mp4']) {
+    if (MediaRecorder.isTypeSupported(type)) return type;
+  }
+  return undefined;
+}
+
+function formatVoiceClock(ms: number): string {
+  const total = Math.max(0, Math.floor(ms / 1000));
+  const minutes = Math.floor(total / 60);
+  const seconds = total % 60;
+  return `${minutes}:${String(seconds).padStart(2, '0')}`;
+}
+
 function formatClock(value: string, locale: string): string {
   return new Date(value).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
 }
@@ -1163,7 +1332,7 @@ function ChatAvatar({
   );
 }
 
-function MessageIcon({ name, className }: { name: 'info' | 'smile'; className: string }) {
+function MessageIcon({ name, className }: { name: 'info' | 'smile' | 'mic'; className: string }) {
   return (
     <svg
       viewBox="0 0 24 24"
@@ -1175,11 +1344,20 @@ function MessageIcon({ name, className }: { name: 'info' | 'smile'; className: s
       aria-hidden="true"
       className={className}
     >
-      <circle cx="12" cy="12" r="9" />
-      {name === 'info' ? (
-        <path d="M12 11v6M12 7h.01" />
+      {name === 'mic' ? (
+        <>
+          <rect x="9" y="3" width="6" height="11" rx="3" />
+          <path d="M6 11a6 6 0 0 0 12 0M12 17v4M9 21h6" />
+        </>
       ) : (
-        <path d="M8 14s1.5 3 4 3 4-3 4-3M8.5 8.5h.01M15.5 8.5h.01" />
+        <>
+          <circle cx="12" cy="12" r="9" />
+          {name === 'info' ? (
+            <path d="M12 11v6M12 7h.01" />
+          ) : (
+            <path d="M8 14s1.5 3 4 3 4-3 4-3M8.5 8.5h.01M15.5 8.5h.01" />
+          )}
+        </>
       )}
     </svg>
   );

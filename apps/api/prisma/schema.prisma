@@ -793,13 +793,17 @@ model ConversationMember {
 }
 
 model Message {
-  id             String    @id @default(uuid()) @db.Uuid
-  conversationId String    @map("conversation_id") @db.Uuid
-  authorId       String    @map("author_id") @db.Uuid
-  body           String    @db.VarChar(4000)
-  createdAt      DateTime  @default(now()) @map("created_at")
-  editedAt       DateTime? @map("edited_at")
-  deletedAt      DateTime? @map("deleted_at")
+  id               String    @id @default(uuid()) @db.Uuid
+  conversationId   String    @map("conversation_id") @db.Uuid
+  authorId         String    @map("author_id") @db.Uuid
+  body             String    @db.VarChar(4000)
+  audioStorageKey  String?   @map("audio_storage_key") @db.VarChar(500)
+  audioMimeType    String?   @map("audio_mime_type") @db.VarChar(160)
+  audioDurationMs  Int?      @map("audio_duration_ms")
+  audioSizeBytes   BigInt?   @map("audio_size_bytes")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  editedAt         DateTime? @map("edited_at")
+  deletedAt        DateTime? @map("deleted_at")
 
   conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
   author       User         @relation("MessageAuthor", fields: [authorId], references: [id], onDelete: Restrict)

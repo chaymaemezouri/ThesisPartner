@@ -251,6 +251,9 @@ describe('messages page', () => {
     mockMailbox();
     renderPage();
     await user.click(await screen.findByRole('link', { name: /Youssef/ }));
+    expect(
+      await screen.findByRole('button', { name: 'Record a voice message' }),
+    ).toBeInTheDocument();
     const composer = await screen.findByRole('textbox', { name: 'Message' });
     expect(screen.getAllByLabelText('Message date')).toHaveLength(2);
     await user.type(composer, 'Draft for Youssef');

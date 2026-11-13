@@ -1,5 +1,4 @@
 import { expect, test, type Page } from '@playwright/test';
-import { markFirstLoginGuideSeen } from './current-ui';
 
 const thesisId = '22222222-2222-4222-8222-222222222222';
 const deliverableId = '55555555-5555-4555-8555-555555555555';
@@ -82,7 +81,6 @@ const detail = {
 };
 
 async function workspace(page: Page, supervisor = false, withFile = true) {
-  await markFirstLoginGuideSeen(page, author.id);
   await page.route('**/api/v1/**', async (route) => {
     const path = new URL(route.request().url()).pathname;
     let body: unknown = {};

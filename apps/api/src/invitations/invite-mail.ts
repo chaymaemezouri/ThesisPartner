@@ -22,7 +22,7 @@ export function buildInviteMail(input: {
       ? 'This invitation replaces the current supervisor only after you explicitly accept it.'
       : 'No thesis access is created until you explicitly accept.',
     'If you do not have a Thesis Flow account yet, create one with this same email address, sign in, then open the link below.',
-    'The link expires in 14 days. You can accept or decline from the secure page.',
+    'This invitation stays valid until you accept, decline, or the sender cancels it.',
   ];
   const text = `${paragraphs.join('\n\n')}\n\nTo accept or decline:\n${input.acceptUrl}\n`;
   const html = thesisPartnerMailHtml({
@@ -46,7 +46,6 @@ export function buildInviteReminderMail(input: {
   day: 7 | 12;
   replacesSupervisor: boolean;
 }): { subject: string; text: string; html: string } {
-  const daysLeft = input.day === 7 ? 7 : 2;
   const roleLabel =
     input.role === 'SUPERVISOR'
       ? 'supervisor'
@@ -59,7 +58,7 @@ export function buildInviteReminderMail(input: {
     input.replacesSupervisor
       ? 'Accepting will replace the current supervisor. Past supervision stays in history.'
       : 'No thesis access is created until you explicitly accept.',
-    `About ${daysLeft} days remain before this invitation expires.`,
+    'This invitation is still waiting for your response. It stays valid until you accept, decline, or the sender cancels it.',
   ];
   const text = `${paragraphs.join('\n\n')}\n\nTo accept or decline:\n${input.acceptUrl}\n`;
   const html = thesisPartnerMailHtml({

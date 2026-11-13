@@ -1,5 +1,4 @@
 import { expect, test } from '@playwright/test';
-import { markFirstLoginGuideSeen } from './current-ui';
 
 test('messaging stays readable for both participants on desktop and mobile', async ({ page }) => {
   test.setTimeout(90_000);
@@ -30,8 +29,6 @@ test('messaging stays readable for both participants on desktop and mobile', asy
           : 'Bonjour, voici mes questions concernant la prochaine étape du travail de recherche.',
     createdAt: `2026-10-${index < 12 ? '20' : '21'}T${String(9 + (index % 8)).padStart(2, '0')}:00:00.000Z`,
   }));
-  await markFirstLoginGuideSeen(page, participants[0]!.userId);
-  await markFirstLoginGuideSeen(page, participants[1]!.userId);
   await page.route('**/api/v1/**', async (route) => {
     const path = new URL(route.request().url()).pathname;
     if (path === participants[1]!.avatarUrl) {

@@ -80,9 +80,7 @@ export function InvitationsInboxPage() {
                                 ? t('invitations.doctoralYear', { year: item.thesisDoctoralYear })
                                 : null}
                             {' · '}
-                            {t('invitations.expires', {
-                              date: new Date(item.expiresAt).toLocaleDateString(),
-                            })}
+                            {t('invitations.staysOpen')}
                             {item.replacesSupervisor ? ` · ${t('invitations.replacesBadge')}` : ''}
                           </p>
                         </div>
