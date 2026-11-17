@@ -1,6 +1,8 @@
 import { Button, Select, Skeleton, Textarea } from '@thesispartner/ui';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { VoiceNotePlayer } from '../../../components/VoiceNotePlayer';
+import { VoiceRecorder } from '../../../components/VoiceRecorder';
 import { useLocale, useT } from '../../../i18n/LocaleContext';
 import { useDeliverableVersions } from '../../deliverables/hooks/use-deliverables';
 import { QueryError, queryErrorMessage } from '../../objectives/components/QueryError';
@@ -9,6 +11,7 @@ import {
   useRemark,
   useReopenRemark,
   useReplyRemark,
+  useReplyVoiceRemark,
   useResolveRemark,
 } from '../hooks/use-remarks';
 import { RemarkStatusBadge } from './RemarkStatusBadge';
@@ -30,10 +33,13 @@ export function RemarkDetailView({
   const { dateLocale } = useLocale();
   const remark = useRemark(thesisId, remarkId);
   const reply = useReplyRemark(thesisId, remarkId);
+  const replyVoice = useReplyVoiceRemark(thesisId, remarkId);
   const resolve = useResolveRemark(thesisId, remarkId);
   const close = useCloseRemark(thesisId, remarkId);
   const reopen = useReopenRemark(thesisId, remarkId);
   const [message, setMessage] = useState('');
+  const [voice, setVoice] = useState<{ file: File; durationMs: number } | null>(null);
+  const [voiceKey, setVoiceKey] = useState(0);
   const [correctionVersionId, setCorrectionVersionId] = useState('');
   const versions = useDeliverableVersions(thesisId, remark.data?.deliverableId ?? null);
 
@@ -102,9 +108,23 @@ export function RemarkDetailView({
           <h2 id="remark-message" className="sr-only">
             {t('remarks.remark')}
           </h2>
-          <p className="whitespace-pre-wrap break-words text-sm leading-relaxed text-ink">
-            {data.message}
-          </p>
+          {data.audioUrl ? (
+            <div className="mb-2 w-fit max-w-full rounded-full bg-gradient-to-br from-[#7a5cf4] via-[#6a57ea] to-[#4f74ea] px-2 py-1.5">
+              <VoiceNotePlayer
+                src={data.audioUrl}
+                durationMs={data.audioDurationMs}
+                tone="own"
+                label={t('remarks.voice')}
+                playLabel={t('remarks.playVoice')}
+                pauseLabel={t('remarks.pauseVoice')}
+              />
+            </div>
+          ) : null}
+          {data.message.trim() ? (
+            <p className="whitespace-pre-wrap break-words text-sm leading-relaxed text-ink">
+              {data.message}
+            </p>
+          ) : null}
           {data.correctionVersion ? (
             <p className="mt-3 text-xs text-muted" aria-label={t('remarks.correctionAria')}>
               {t('remarks.correctionLinked')}
@@ -138,9 +158,23 @@ export function RemarkDetailView({
                       {new Date(item.createdAt).toLocaleDateString(dateLocale, { timeZone: 'UTC' })}
                     </time>
                   </p>
-                  <p className="mt-0.5 whitespace-pre-wrap break-words text-sm leading-relaxed text-ink">
-                    {item.message}
-                  </p>
+                  {item.audioUrl ? (
+                    <div className="mt-1 w-fit max-w-full rounded-full bg-[#eef0f4] px-2 py-1.5">
+                      <VoiceNotePlayer
+                        src={item.audioUrl}
+                        durationMs={item.audioDurationMs}
+                        tone="peer"
+                        label={t('remarks.voice')}
+                        playLabel={t('remarks.playVoice')}
+                        pauseLabel={t('remarks.pauseVoice')}
+                      />
+                    </div>
+                  ) : null}
+                  {item.message.trim() ? (
+                    <p className="mt-0.5 whitespace-pre-wrap break-words text-sm leading-relaxed text-ink">
+                      {item.message}
+                    </p>
+                  ) : null}
                 </li>
               ))}
             </ol>
@@ -153,8 +187,18 @@ export function RemarkDetailView({
             aria-labelledby="remark-reply"
             onSubmit={async (event) => {
               event.preventDefault();
-              await reply.mutateAsync({ message });
+              if (voice) {
+                await replyVoice.mutateAsync({
+                  message: message.trim(),
+                  file: voice.file,
+                  durationMs: voice.durationMs,
+                });
+              } else {
+                await reply.mutateAsync({ message });
+              }
               setMessage('');
+              setVoice(null);
+              setVoiceKey((value) => value + 1);
             }}
           >
             <h2 id="remark-reply" className="sr-only">
@@ -166,17 +210,28 @@ export function RemarkDetailView({
               value={message}
               rows={3}
               maxLength={4000}
-              required
+              required={!voice}
               className="!min-h-16 text-sm"
               onChange={(event) => setMessage(event.target.value)}
             />
-            {reply.error ? (
+            <div className="mt-2">
+              <VoiceRecorder
+                key={voiceKey}
+                disabled={reply.isPending || replyVoice.isPending}
+                onChange={setVoice}
+              />
+            </div>
+            {reply.error || replyVoice.error ? (
               <p className="mt-2 text-xs text-danger" role="alert">
-                {queryErrorMessage(reply.error, t)}
+                {queryErrorMessage(reply.error ?? replyVoice.error, t)}
               </p>
             ) : null}
             <div className="mt-2">
-              <Button type="submit" className="h-8 px-3 text-xs" disabled={reply.isPending}>
+              <Button
+                type="submit"
+                className="h-8 px-3 text-xs"
+                disabled={reply.isPending || replyVoice.isPending || (!message.trim() && !voice)}
+              >
                 {t('remarks.sendReply')}
               </Button>
             </div>

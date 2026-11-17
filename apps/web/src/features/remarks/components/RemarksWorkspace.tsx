@@ -8,7 +8,7 @@ import { useT } from '../../../i18n/LocaleContext';
 import { useDeliverables } from '../../deliverables/hooks/use-deliverables';
 import { useObjectives } from '../../objectives/hooks/use-objectives';
 import { QueryError } from '../../objectives/components/QueryError';
-import { useCreateRemark, useRemarks } from '../hooks/use-remarks';
+import { useCreateRemark, useCreateVoiceRemark, useRemarks } from '../hooks/use-remarks';
 import { filtersFromSearch } from '../keys';
 import { REMARK_TAB_IDS, type RemarkTab } from '../labels';
 import { RemarkForm } from './RemarkForm';
@@ -47,6 +47,7 @@ export function RemarksWorkspace({
   const objectives = useObjectives(canCreate ? thesisId : null, {});
   const deliverables = useDeliverables(canCreate ? thesisId : null, {});
   const create = useCreateRemark(thesisId);
+  const createVoice = useCreateVoiceRemark(thesisId);
   const [creating, setCreating] = useState(false);
   const tab = tabFromStatus(filters.status);
   const tabs = REMARK_TAB_IDS.map((id) => ({
@@ -183,11 +184,20 @@ export function RemarksWorkspace({
           <RemarkForm
             objectives={objectives.data?.objectives ?? []}
             deliverables={deliverables.data?.deliverables ?? []}
-            pending={create.isPending}
-            error={create.error}
+            pending={create.isPending || createVoice.isPending}
+            error={create.error ?? createVoice.error}
             onCancel={() => setCreating(false)}
-            onSubmit={async (body) => {
-              await create.mutateAsync(body);
+            onSubmit={async (body, voice) => {
+              if (voice) {
+                await createVoice.mutateAsync({
+                  ...body,
+                  message: body.message.trim(),
+                  file: voice.file,
+                  durationMs: voice.durationMs,
+                });
+              } else {
+                await create.mutateAsync(body);
+              }
               setCreating(false);
             }}
           />

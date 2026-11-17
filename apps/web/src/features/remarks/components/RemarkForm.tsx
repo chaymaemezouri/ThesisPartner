@@ -1,5 +1,6 @@
 import { Button, Input, Select, Textarea } from '@thesispartner/ui';
 import { useState } from 'react';
+import { VoiceRecorder } from '../../../components/VoiceRecorder';
 import { useT } from '../../../i18n/LocaleContext';
 import { queryErrorMessage } from '../../objectives/components/QueryError';
 import type { RemarkDraft } from '../hooks/use-remarks';
@@ -26,7 +27,7 @@ export function RemarkForm({
     label?: string;
   };
   onCancel: () => void;
-  onSubmit: (body: RemarkDraft) => Promise<void>;
+  onSubmit: (body: RemarkDraft, voice?: { file: File; durationMs: number }) => Promise<void>;
 }) {
   const t = useT();
   const [title, setTitle] = useState('');
@@ -34,6 +35,7 @@ export function RemarkForm({
   const [location, setLocation] = useState('');
   const [objectiveId, setObjectiveId] = useState('');
   const [deliverableId, setDeliverableId] = useState('');
+  const [voice, setVoice] = useState<{ file: File; durationMs: number } | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
   return (
@@ -43,14 +45,17 @@ export function RemarkForm({
         event.preventDefault();
         setSubmitting(true);
         try {
-          await onSubmit({
-            title,
-            message,
-            location: location.trim() || undefined,
-            objectiveId: fixed ? (fixed.objectiveId ?? null) : objectiveId || null,
-            taskId: fixed?.taskId ?? null,
-            deliverableId: fixed ? (fixed.deliverableId ?? null) : deliverableId || null,
-          });
+          await onSubmit(
+            {
+              title,
+              message: message.trim() || (voice ? ' ' : ''),
+              location: location.trim() || undefined,
+              objectiveId: fixed ? (fixed.objectiveId ?? null) : objectiveId || null,
+              taskId: fixed?.taskId ?? null,
+              deliverableId: fixed ? (fixed.deliverableId ?? null) : deliverableId || null,
+            },
+            voice ?? undefined,
+          );
         } finally {
           setSubmitting(false);
         }
@@ -69,9 +74,10 @@ export function RemarkForm({
         label={t('remarks.form.message')}
         value={message}
         maxLength={4000}
-        required
+        required={!voice}
         onChange={(event) => setMessage(event.target.value)}
       />
+      <VoiceRecorder disabled={pending || submitting} onChange={setVoice} />
       {fixed?.label ? <p className="text-sm font-medium text-ink">{fixed.label}</p> : null}
       {fixed ? null : (
         <>
@@ -116,7 +122,10 @@ export function RemarkForm({
         </p>
       ) : null}
       <div className="flex flex-wrap gap-2">
-        <Button type="submit" disabled={pending || submitting}>
+        <Button
+          type="submit"
+          disabled={pending || submitting || !title.trim() || (!message.trim() && !voice)}
+        >
           {t('remarks.create')}
         </Button>
         <Button type="button" variant="secondary" onClick={onCancel}>

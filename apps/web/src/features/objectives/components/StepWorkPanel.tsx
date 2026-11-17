@@ -16,7 +16,7 @@ import { PdfPreview } from '../../deliverables/components/PdfPreview';
 import { useDeliverableVersions, useDeliverables } from '../../deliverables/hooks/use-deliverables';
 import { fileErrorMessage } from '../../deliverables/components/VersionFile';
 import { RemarkForm } from '../../remarks/components/RemarkForm';
-import { useCreateRemark } from '../../remarks/hooks/use-remarks';
+import { useCreateRemark, useCreateVoiceRemark } from '../../remarks/hooks/use-remarks';
 import type { Task } from '../hooks/use-tasks';
 import { useStepTaskMutations, useStepTasks, type StepTask } from '../hooks/use-step-tasks';
 import { QueryError, queryErrorMessage } from './QueryError';
@@ -809,6 +809,7 @@ function StepRemarks({
   const t = useT();
   const queryClient = useQueryClient();
   const create = useCreateRemark(thesisId);
+  const createVoice = useCreateVoiceRemark(thesisId);
   const [writing, setWriting] = useState(false);
   return (
     <div>
@@ -821,12 +822,21 @@ function StepRemarks({
         <RemarkForm
           objectives={[]}
           deliverables={[]}
-          pending={create.isPending}
-          error={create.error}
+          pending={create.isPending || createVoice.isPending}
+          error={create.error ?? createVoice.error}
           fixed={{ objectiveId, taskId: stepId, label: subject }}
           onCancel={() => setWriting(false)}
-          onSubmit={async (body) => {
-            await create.mutateAsync(body);
+          onSubmit={async (body, voice) => {
+            if (voice) {
+              await createVoice.mutateAsync({
+                ...body,
+                message: body.message.trim(),
+                file: voice.file,
+                durationMs: voice.durationMs,
+              });
+            } else {
+              await create.mutateAsync(body);
+            }
             await queryClient.invalidateQueries({
               queryKey: ['step-tasks', thesisId, objectiveId, stepId],
             });

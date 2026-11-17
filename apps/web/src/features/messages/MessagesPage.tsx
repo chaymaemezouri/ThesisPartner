@@ -3,6 +3,7 @@ import { Fragment, useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { IconAction } from '../../components/IconAction';
 import { Icon } from '../../components/Icon';
+import { formatVoiceClock, VoiceNotePlayer, VoiceWaveform } from '../../components/VoiceNotePlayer';
 import { useMeQuery } from '../../hooks/use-session';
 import { useLocale, useT } from '../../i18n/LocaleContext';
 import { QueryError, queryErrorMessage } from '../objectives/components/QueryError';
@@ -644,7 +645,9 @@ function Thread({
                     </div>
                   ) : null}
                   <div
-                    className={`rounded-[20px] px-3.5 py-2.5 ${
+                    className={`rounded-[20px] ${
+                      message.audioUrl && !message.body.trim() ? 'px-2 py-1.5' : 'px-3.5 py-2.5'
+                    } ${
                       message.deleted
                         ? 'bg-canvas text-muted'
                         : own
@@ -710,14 +713,14 @@ function Thread({
                     ) : (
                       <div className="space-y-2">
                         {message.audioUrl ? (
-                          <audio
-                            controls
-                            preload="metadata"
+                          <VoiceNotePlayer
                             src={message.audioUrl}
-                            className="h-10 w-full min-w-0 max-w-full"
-                          >
-                            {t('messages.voice')}
-                          </audio>
+                            durationMs={message.audioDurationMs}
+                            tone={own ? 'own' : 'peer'}
+                            label={t('messages.voice')}
+                            playLabel={t('messages.playVoice')}
+                            pauseLabel={t('messages.pauseVoice')}
+                          />
                         ) : null}
                         {message.body ? (
                           <p className="whitespace-pre-wrap text-sm leading-relaxed [overflow-wrap:anywhere]">
@@ -781,7 +784,11 @@ function Thread({
             </p>
           ) : null}
           <form
-            className="flex min-w-0 items-end gap-1 rounded-[26px] border border-line bg-surface px-2 py-1.5 focus-within:border-brand/40 focus-within:ring-2 focus-within:ring-brand/10 sm:gap-2 sm:px-3"
+            className={`flex min-w-0 items-center gap-1 rounded-[26px] border px-2 py-1.5 sm:gap-2 sm:px-3 ${
+              recording
+                ? 'border-[#16171d] bg-[#16171d]'
+                : 'border-line bg-surface focus-within:border-brand/40 focus-within:ring-2 focus-within:ring-brand/10'
+            }`}
             onSubmit={async (event) => {
               event.preventDefault();
               const text = body.trim();
@@ -805,22 +812,24 @@ function Thread({
                 <button
                   type="button"
                   aria-label={t('messages.cancelRecording')}
-                  className="grid h-10 w-10 shrink-0 place-items-center rounded-full text-danger hover:bg-danger-soft"
+                  className="grid h-10 w-10 shrink-0 place-items-center rounded-full text-white/80 hover:bg-white/10 hover:text-white"
                   onClick={() => void stopVoice(false)}
                 >
-                  <Icon name="close" className="h-4 w-4" />
+                  <Icon name="trash" className="h-4 w-4" />
                 </button>
-                <p className="min-w-0 flex-1 px-2 py-2.5 text-sm text-danger">
-                  {t('messages.recording')} {formatVoiceClock(recordMs)}
+                <span className="h-2 w-2 shrink-0 animate-pulse rounded-full bg-[#ff3b5c]" />
+                <VoiceWaveform live className="text-[#ff5d79]" />
+                <p className="w-10 shrink-0 text-right text-sm tabular-nums text-white/85">
+                  {formatVoiceClock(recordMs)}
                 </p>
                 <button
                   type="button"
                   aria-label={t('messages.stopRecording')}
                   disabled={sendVoice.isPending}
-                  className="inline-flex h-10 shrink-0 items-center justify-center rounded-full bg-danger px-3 text-xs font-semibold text-white"
+                  className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-[#ff3b5c] text-white disabled:opacity-40"
                   onClick={() => void stopVoice(true)}
                 >
-                  {t('messages.stopRecording')}
+                  <span className="block h-3 w-3 rounded-[3px] bg-white" />
                 </button>
               </>
             ) : (
@@ -1284,13 +1293,6 @@ function pickVoiceMime(): string | undefined {
     if (MediaRecorder.isTypeSupported(type)) return type;
   }
   return undefined;
-}
-
-function formatVoiceClock(ms: number): string {
-  const total = Math.max(0, Math.floor(ms / 1000));
-  const minutes = Math.floor(total / 60);
-  const seconds = total % 60;
-  return `${minutes}:${String(seconds).padStart(2, '0')}`;
 }
 
 function formatClock(value: string, locale: string): string {

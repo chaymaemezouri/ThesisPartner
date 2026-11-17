@@ -687,6 +687,10 @@ model Remark {
   deliverableVersionId String?        @map("deliverable_version_id") @db.Uuid
   correctionVersionId  String?        @map("correction_version_id") @db.Uuid
   location             String?        @db.VarChar(300)
+  audioStorageKey      String?        @map("audio_storage_key") @db.VarChar(500)
+  audioMimeType        String?        @map("audio_mime_type") @db.VarChar(160)
+  audioDurationMs      Int?           @map("audio_duration_ms")
+  audioSizeBytes       BigInt?        @map("audio_size_bytes")
   resolvedAt           DateTime?      @map("resolved_at")
   closedAt             DateTime?      @map("closed_at")
   createdAt            DateTime       @default(now()) @map("created_at")
@@ -715,8 +719,12 @@ model RemarkReply {
   id        String   @id @default(uuid()) @db.Uuid
   remarkId  String   @map("remark_id") @db.Uuid
   authorId  String   @map("author_id") @db.Uuid
-  message   String   @db.VarChar(4000)
-  createdAt DateTime @default(now()) @map("created_at")
+  message          String   @db.VarChar(4000)
+  audioStorageKey  String?  @map("audio_storage_key") @db.VarChar(500)
+  audioMimeType    String?  @map("audio_mime_type") @db.VarChar(160)
+  audioDurationMs  Int?     @map("audio_duration_ms")
+  audioSizeBytes   BigInt?  @map("audio_size_bytes")
+  createdAt        DateTime @default(now()) @map("created_at")
 
   remark Remark @relation(fields: [remarkId], references: [id], onDelete: Cascade)
   author User   @relation("RemarkReplyAuthor", fields: [authorId], references: [id], onDelete: Restrict)

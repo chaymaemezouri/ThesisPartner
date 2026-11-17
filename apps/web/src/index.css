@@ -217,6 +217,25 @@ dialog::backdrop {
   }
 }
 
+@keyframes voice-bar {
+  0%,
+  100% {
+    transform: scaleY(0.35);
+  }
+  50% {
+    transform: scaleY(1);
+  }
+}
+
+.voice-bar {
+  display: inline-block;
+  transform-origin: center;
+}
+
+.voice-bar--live {
+  animation: voice-bar 0.72s ease-in-out infinite;
+}
+
 a.text-brand {
   transition: color 160ms ease;
 }

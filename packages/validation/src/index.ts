@@ -1194,9 +1194,11 @@ const remarkTargetSchema = z
 export const remarkReplySchema = z
   .object({
     id: uuidSchema,
-    message: z.string().min(1).max(4000),
+    message: z.string().max(4000),
     author: remarkAuthorSchema,
     createdAt: z.string().datetime(),
+    audioUrl: z.string().max(500).nullable().optional(),
+    audioDurationMs: z.number().int().nonnegative().nullable().optional(),
   })
   .strict();
 
@@ -1220,6 +1222,7 @@ export const remarkListItemSchema = z
     location: z.string().max(300).nullable(),
     author: remarkAuthorSchema,
     replyCount: z.number().int().min(0),
+    hasAudio: z.boolean().optional(),
     lastActivityAt: z.string().datetime(),
     createdAt: z.string().datetime(),
     updatedAt: z.string().datetime(),
@@ -1228,7 +1231,9 @@ export const remarkListItemSchema = z
 
 export const remarkSchema = remarkListItemSchema
   .extend({
-    message: z.string().min(1).max(4000),
+    message: z.string().max(4000),
+    audioUrl: z.string().max(500).nullable().optional(),
+    audioDurationMs: z.number().int().nonnegative().nullable().optional(),
     objectiveId: uuidSchema.nullable(),
     taskId: uuidSchema.nullable(),
     deliverableId: uuidSchema.nullable(),

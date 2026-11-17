@@ -7,7 +7,7 @@ import {
   type resolveRemarkSchema,
 } from '@thesispartner/validation';
 import type { z } from 'zod';
-import { apiGet, apiSend } from '../../../api/client';
+import { apiGet, apiSend, apiUpload } from '../../../api/client';
 import { remarkKeys, toQuery, type RemarkFilters } from '../keys';
 
 export type Remark = z.infer<typeof remarkSchema>;
@@ -61,11 +61,41 @@ export function useCreateRemark(thesisId: string) {
   });
 }
 
+export function useCreateVoiceRemark(thesisId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: RemarkDraft & { file: File; durationMs: number }) =>
+      apiUpload(`${base(thesisId)}/voice`, remarkSchema, input.file, undefined, {
+        title: input.title,
+        message: input.message,
+        location: input.location ?? '',
+        objectiveId: input.objectiveId ?? '',
+        taskId: input.taskId ?? '',
+        deliverableId: input.deliverableId ?? '',
+        deliverableVersionId: input.deliverableVersionId ?? '',
+        durationMs: String(Math.round(input.durationMs)),
+      }),
+    onSuccess: () => refresh(queryClient, thesisId),
+  });
+}
+
 export function useReplyRemark(thesisId: string, remarkId: string) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (body: RemarkReplyDraft) =>
       apiSend(`${base(thesisId, remarkId)}/replies`, remarkSchema, body),
+    onSuccess: () => refresh(queryClient, thesisId, remarkId),
+  });
+}
+
+export function useReplyVoiceRemark(thesisId: string, remarkId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: { message?: string; file: File; durationMs: number }) =>
+      apiUpload(`${base(thesisId, remarkId)}/replies/voice`, remarkSchema, input.file, undefined, {
+        message: input.message ?? '',
+        durationMs: String(Math.round(input.durationMs)),
+      }),
     onSuccess: () => refresh(queryClient, thesisId, remarkId),
   });
 }

@@ -2,7 +2,7 @@ import { Modal } from '@thesispartner/ui';
 import { useState } from 'react';
 import { Icon } from '../../../components/Icon';
 import { useT } from '../../../i18n/LocaleContext';
-import { useCreateRemark } from '../hooks/use-remarks';
+import { useCreateRemark, useCreateVoiceRemark } from '../hooks/use-remarks';
 import { RemarkForm } from './RemarkForm';
 
 export function LinkedRemarkButton({
@@ -18,6 +18,7 @@ export function LinkedRemarkButton({
 }) {
   const t = useT();
   const create = useCreateRemark(thesisId);
+  const createVoice = useCreateVoiceRemark(thesisId);
   const [open, setOpen] = useState(false);
   const label = `${t('remarks.new')} ${subject}`;
 
@@ -41,12 +42,21 @@ export function LinkedRemarkButton({
         <RemarkForm
           objectives={[]}
           deliverables={[]}
-          pending={create.isPending}
-          error={create.error}
+          pending={create.isPending || createVoice.isPending}
+          error={create.error ?? createVoice.error}
           fixed={{ objectiveId, deliverableId, label: subject }}
           onCancel={() => setOpen(false)}
-          onSubmit={async (body) => {
-            await create.mutateAsync(body);
+          onSubmit={async (body, voice) => {
+            if (voice) {
+              await createVoice.mutateAsync({
+                ...body,
+                message: body.message.trim(),
+                file: voice.file,
+                durationMs: voice.durationMs,
+              });
+            } else {
+              await create.mutateAsync(body);
+            }
             setOpen(false);
           }}
         />

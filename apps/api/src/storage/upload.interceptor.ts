@@ -26,7 +26,7 @@ export class SingleFileUploadInterceptor implements NestInterceptor {
         destination: tmpdir(),
         filename: (_req, _file, callback) => callback(null, `tp-${randomUUID()}`),
       }),
-      limits: { fileSize: maxBytes, files: 1, fields: 2 },
+      limits: { fileSize: maxBytes, files: 1, fields: 16 },
     }).single('file');
 
     return new Observable((subscriber) => {

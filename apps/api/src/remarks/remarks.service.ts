@@ -1,4 +1,7 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
+import { createReadStream } from 'node:fs';
+import { stat } from 'node:fs/promises';
+import { randomUUID } from 'node:crypto';
 import type { MembershipRole, Prisma } from '@prisma/client';
 import type {
   createRemarkReplySchema,
@@ -11,6 +14,8 @@ import { CollaborationNotice } from '../collaboration/collaboration-notice.servi
 import { AppException } from '../common/errors/app.exception';
 import { ThesisAccessService } from '../common/thesis-access/thesis-access.service';
 import { PrismaService } from '../infrastructure/prisma/prisma.service';
+import { commitAfterUpload } from '../storage/commit-upload';
+import { OBJECT_STORAGE, type ObjectStorage } from '../storage/object-storage';
 import { lockRemark } from './remark-lock';
 import {
   canClose,
@@ -23,6 +28,19 @@ import {
 import { sortRemarks, type RemarkPriority, type RemarkStatus } from './remark-rules';
 
 const READ_ROLES = ['DOCTORAL_STUDENT', 'SUPERVISOR', 'ADMIN'] as const;
+const VOICE_MAX_BYTES = 10 * 1024 * 1024;
+const VOICE_MIMES = new Set([
+  'audio/webm',
+  'audio/ogg',
+  'audio/mpeg',
+  'audio/mp4',
+  'audio/mp3',
+  'audio/wav',
+  'audio/x-wav',
+  'audio/x-m4a',
+]);
+
+type UploadedAudio = { path: string; originalName: string; declaredMime: string };
 
 type CreateBody = z.infer<typeof createRemarkSchema>;
 type ReplyBody = z.infer<typeof createRemarkReplySchema>;
@@ -74,6 +92,7 @@ export class RemarksService {
     private readonly access: ThesisAccessService,
     private readonly audit: AuditService,
     private readonly notice: CollaborationNotice,
+    @Inject(OBJECT_STORAGE) private readonly objects: ObjectStorage,
   ) {}
 
   async list(actorId: string, thesisId: string, query: ListQuery) {
@@ -141,6 +160,89 @@ export class RemarksService {
     return this.toDetail(created);
   }
 
+  async createVoice(
+    actorId: string,
+    thesisId: string,
+    file: UploadedAudio | undefined,
+    fields: CreateBody & { durationMs?: number },
+    requestId?: string,
+  ) {
+    const audio = await this.prepareAudio(file, fields.durationMs);
+    const role = await this.memberRole(actorId, thesisId);
+    if (!canCreateRemark(role)) {
+      throw new AppException(403, 'FORBIDDEN', 'Seul un encadrant peut créer une remarque');
+    }
+    const title = fields.title.trim();
+    if (!title) {
+      throw new AppException(400, 'VALIDATION_ERROR', 'Invalid request', [
+        { field: 'title', message: 'Champ requis' },
+      ]);
+    }
+    const message = fields.message?.trim() ?? '';
+    const targets = await this.resolveTargets(thesisId, {
+      ...fields,
+      title,
+      message: message || ' ',
+    });
+    const objectId = randomUUID();
+    const storageKey = `remarks/${thesisId}/${objectId}`;
+    await this.objects.ensureReady();
+    let createdId = '';
+    await commitAfterUpload({
+      put: () =>
+        this.objects.putObject({
+          key: storageKey,
+          body: createReadStream(audio.path),
+          contentType: audio.mime,
+          contentLength: audio.size,
+          downloadName: audio.originalName || 'voice.webm',
+        }),
+      insert: async () => {
+        const created = await this.prisma.$transaction(async (tx) => {
+          const remark = await tx.remark.create({
+            data: {
+              thesisId,
+              authorId: actorId,
+              title,
+              message,
+              priority: fields.priority ?? 'MEDIUM',
+              status: 'OPEN',
+              objectiveId: targets.objectiveId,
+              taskId: targets.taskId,
+              deliverableId: targets.deliverableId,
+              deliverableVersionId: targets.deliverableVersionId,
+              location: blankToNull(fields.location),
+              audioStorageKey: storageKey,
+              audioMimeType: audio.mime,
+              audioDurationMs: audio.durationMs || null,
+              audioSizeBytes: BigInt(audio.size),
+            },
+            include: remarkInclude,
+          });
+          await this.audit.record(tx, {
+            actorId,
+            thesisId,
+            action: 'remark.voice_created',
+            entityType: 'remark',
+            entityId: remark.id,
+            requestId,
+          });
+          return remark;
+        });
+        createdId = created.id;
+        void this.notice.notifyThesis({
+          thesisId,
+          actorId,
+          kind: 'remark',
+          title: created.title,
+          preview: message || 'Message vocal',
+        });
+      },
+      remove: () => this.objects.deleteObject(storageKey),
+    });
+    return this.get(actorId, thesisId, createdId);
+  }
+
   async reply(
     actorId: string,
     thesisId: string,
@@ -190,6 +292,97 @@ export class RemarksService {
       preview: body.message.trim(),
     });
     return this.toDetail(updated);
+  }
+
+  async replyVoice(
+    actorId: string,
+    thesisId: string,
+    remarkId: string,
+    file: UploadedAudio | undefined,
+    fields: { message?: string; durationMs?: number },
+    requestId?: string,
+  ) {
+    const audio = await this.prepareAudio(file, fields.durationMs);
+    const role = await this.memberRole(actorId, thesisId);
+    const message = fields.message?.trim() ?? '';
+    const objectId = randomUUID();
+    const storageKey = `remarks/${thesisId}/replies/${objectId}`;
+    await this.objects.ensureReady();
+    await commitAfterUpload({
+      put: () =>
+        this.objects.putObject({
+          key: storageKey,
+          body: createReadStream(audio.path),
+          contentType: audio.mime,
+          contentLength: audio.size,
+          downloadName: audio.originalName || 'voice.webm',
+        }),
+      insert: async () => {
+        await this.prisma.$transaction(async (tx) => {
+          const locked = await lockRemark(tx, thesisId, remarkId);
+          if (!locked) throw new AppException(404, 'NOT_FOUND', 'Resource not found');
+          if (!canReply(role, locked.status)) {
+            if (role !== 'DOCTORAL_STUDENT' && role !== 'SUPERVISOR') {
+              throw new AppException(403, 'FORBIDDEN', 'Réponse non autorisée');
+            }
+            throw new AppException(400, 'BAD_REQUEST', 'Cette remarque n’accepte plus de réponses');
+          }
+          await tx.remarkReply.create({
+            data: {
+              remarkId,
+              authorId: actorId,
+              message,
+              audioStorageKey: storageKey,
+              audioMimeType: audio.mime,
+              audioDurationMs: audio.durationMs || null,
+              audioSizeBytes: BigInt(audio.size),
+            },
+          });
+          const nextStatus =
+            locked.status === 'OPEN' && role === 'DOCTORAL_STUDENT' ? 'IN_PROGRESS' : locked.status;
+          await tx.remark.update({
+            where: { id: remarkId },
+            data: { status: nextStatus },
+          });
+          await this.audit.record(tx, {
+            actorId,
+            thesisId,
+            action: 'remark.voice_replied',
+            entityType: 'remark',
+            entityId: remarkId,
+            requestId,
+          });
+        });
+      },
+      remove: () => this.objects.deleteObject(storageKey),
+    });
+    const updated = await this.findInThesis(thesisId, remarkId);
+    void this.notice.notifyThesis({
+      thesisId,
+      actorId,
+      kind: 'remark_reply',
+      title: updated.title,
+      preview: message || 'Message vocal',
+    });
+    return this.toDetail(updated);
+  }
+
+  async openRemarkAudio(actorId: string, thesisId: string, remarkId: string) {
+    await this.access.assertCanAccess({ actorId, thesisId, allowedRoles: READ_ROLES });
+    const remark = await this.prisma.remark.findFirst({
+      where: { id: remarkId, thesisId },
+    });
+    if (!remark?.audioStorageKey) throw new AppException(404, 'NOT_FOUND', 'Resource not found');
+    return this.streamAudio(remark.audioStorageKey, remark.audioMimeType);
+  }
+
+  async openReplyAudio(actorId: string, thesisId: string, remarkId: string, replyId: string) {
+    await this.access.assertCanAccess({ actorId, thesisId, allowedRoles: READ_ROLES });
+    const reply = await this.prisma.remarkReply.findFirst({
+      where: { id: replyId, remarkId, remark: { thesisId } },
+    });
+    if (!reply?.audioStorageKey) throw new AppException(404, 'NOT_FOUND', 'Resource not found');
+    return this.streamAudio(reply.audioStorageKey, reply.audioMimeType);
   }
 
   async resolve(
@@ -314,6 +507,38 @@ export class RemarksService {
       return remark;
     });
     return this.toDetail(updated);
+  }
+
+  private async prepareAudio(file: UploadedAudio | undefined, durationMs: number | undefined) {
+    if (!file) {
+      throw new AppException(400, 'FILE_TYPE_NOT_ALLOWED', 'Aucun fichier audio n’a été envoyé.');
+    }
+    const info = await stat(file.path);
+    if (info.size <= 0 || info.size > VOICE_MAX_BYTES) {
+      throw new AppException(413, 'FILE_TOO_LARGE', 'L’enregistrement dépasse 10 Mo.');
+    }
+    const mime = (file.declaredMime || '').split(';')[0]?.trim().toLowerCase() ?? '';
+    if (!VOICE_MIMES.has(mime)) {
+      throw new AppException(400, 'FILE_TYPE_NOT_ALLOWED', 'Format audio non accepté.');
+    }
+    const duration = Number.isFinite(durationMs) ? Math.max(0, Math.round(durationMs ?? 0)) : 0;
+    return {
+      path: file.path,
+      originalName: file.originalName,
+      mime,
+      size: info.size,
+      durationMs: duration,
+    };
+  }
+
+  private async streamAudio(key: string, mimeType: string | null) {
+    await this.objects.ensureReady();
+    const object = await this.objects.getObjectStream(key);
+    return {
+      body: object.body,
+      contentType: mimeType || object.contentType || 'audio/webm',
+      contentLength: object.contentLength,
+    };
   }
 
   private async memberRole(actorId: string, thesisId: string): Promise<MembershipRole> {
@@ -458,6 +683,7 @@ export class RemarksService {
       location: row.location,
       author: toAuthor(row.author),
       replyCount: row.replies.length,
+      hasAudio: Boolean(row.audioStorageKey),
       lastActivityAt: lastActivityAt.toISOString(),
       createdAt: row.createdAt.toISOString(),
       updatedAt: row.updatedAt.toISOString(),
@@ -468,6 +694,10 @@ export class RemarksService {
     return {
       ...this.toListItem(row),
       message: row.message,
+      audioUrl: row.audioStorageKey
+        ? `/api/v1/theses/${row.thesisId}/remarks/${row.id}/audio`
+        : null,
+      audioDurationMs: row.audioDurationMs ?? null,
       objectiveId: row.objectiveId,
       taskId: row.taskId,
       deliverableId: row.deliverableId,
@@ -487,6 +717,10 @@ export class RemarksService {
         message: reply.message,
         author: toAuthor(reply.author),
         createdAt: reply.createdAt.toISOString(),
+        audioUrl: reply.audioStorageKey
+          ? `/api/v1/theses/${row.thesisId}/remarks/${row.id}/replies/${reply.id}/audio`
+          : null,
+        audioDurationMs: reply.audioDurationMs ?? null,
       })),
     };
   }
