@@ -34,7 +34,8 @@ export function VoiceNotePlayer({
   function sync() {
     const audio = audioRef.current;
     if (!audio) return;
-    const total = Number.isFinite(audio.duration) && audio.duration > 0 ? audio.duration * 1000 : knownDuration;
+    const total =
+      Number.isFinite(audio.duration) && audio.duration > 0 ? audio.duration * 1000 : knownDuration;
     if (total > 0 && total !== knownDuration) setKnownDuration(total);
     const current = audio.currentTime * 1000;
     setElapsed(current);
@@ -59,7 +60,8 @@ export function VoiceNotePlayer({
 
   function seek(ratio: number) {
     const audio = audioRef.current;
-    const total = knownDuration || (audio && Number.isFinite(audio.duration) ? audio.duration * 1000 : 0);
+    const total =
+      knownDuration || (audio && Number.isFinite(audio.duration) ? audio.duration * 1000 : 0);
     if (!audio || total <= 0) return;
     audio.currentTime = (Math.min(1, Math.max(0, ratio)) * total) / 1000;
     sync();
@@ -103,8 +105,10 @@ export function VoiceNotePlayer({
         onSeek={seek}
         className={own ? 'text-white' : 'text-brand'}
       />
-      <span className={`w-9 shrink-0 text-right font-medium tabular-nums ${own ? 'text-white/90' : 'text-muted'} text-[11px]`}>
-        {formatVoiceClock(shown || remaining)}
+      <span
+        className={`w-9 shrink-0 text-right font-medium tabular-nums ${own ? 'text-white/90' : 'text-muted'} text-[11px]`}
+      >
+        {formatVoiceClock(shown)}
       </span>
     </div>
   );
@@ -191,7 +195,12 @@ const DEFAULT_BARS = waveformFromSeed('voice');
 
 function PlayGlyph() {
   return (
-    <svg viewBox="0 0 24 24" className="h-4 w-4 translate-x-px" fill="currentColor" aria-hidden="true">
+    <svg
+      viewBox="0 0 24 24"
+      className="h-4 w-4 translate-x-px"
+      fill="currentColor"
+      aria-hidden="true"
+    >
       <path d="M8 5.2v13.6c0 .7.8 1.1 1.4.7l10-6.8c.6-.4.6-1.3 0-1.7l-10-6.8C8.8 4.1 8 4.5 8 5.2Z" />
     </svg>
   );

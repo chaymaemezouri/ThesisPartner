@@ -18,10 +18,7 @@ export function VoiceRecorder({
   const [recordMs, setRecordMs] = useState(0);
   const [preview, setPreview] = useState<{ file: File; durationMs: number } | null>(null);
   const [hint, setHint] = useState<'unsupported' | 'permission' | null>(null);
-  const previewUrl = useMemo(
-    () => (preview ? URL.createObjectURL(preview.file) : null),
-    [preview],
-  );
+  const previewUrl = useMemo(() => (preview ? URL.createObjectURL(preview.file) : null), [preview]);
 
   useEffect(() => {
     return () => {
@@ -194,7 +191,14 @@ function pickVoiceMime(): string | undefined {
 
 function MicGlyph() {
   return (
-    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+    <svg
+      viewBox="0 0 24 24"
+      className="h-5 w-5"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      aria-hidden="true"
+    >
       <rect x="9" y="3.5" width="6" height="11" rx="3" />
       <path d="M6.5 11.5a5.5 5.5 0 0 0 11 0M12 17v3.5M9.5 20.5h5" strokeLinecap="round" />
     </svg>
@@ -207,7 +211,14 @@ function StopGlyph() {
 
 function TrashGlyph() {
   return (
-    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true">
+    <svg
+      viewBox="0 0 24 24"
+      className="h-4 w-4"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.7"
+      aria-hidden="true"
+    >
       <path d="M5 7h14M9 7V5h6v2M8 7l.7 12h6.6L16 7" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
