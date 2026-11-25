@@ -35,14 +35,21 @@ export function SupervisorDashboard({
   const activeFilterCount = (filter !== 'all' ? 1 : 0) + (sort !== 'name' ? 1 : 0);
 
   const theses = useMemo(() => supervised.data?.theses ?? [], [supervised.data?.theses]);
+  const doctorateTheses = useMemo(() => theses.filter((item) => item.track !== 'MASTER'), [theses]);
+  const masterTheses = useMemo(() => theses.filter((item) => item.track === 'MASTER'), [theses]);
+  const showCohorts = masterTheses.length > 0;
+  const [cohort, setCohort] = useState<'DOCTORATE' | 'MASTER'>('DOCTORATE');
+  const activeCohort: 'DOCTORATE' | 'MASTER' =
+    showCohorts && doctorateTheses.length === 0 ? 'MASTER' : showCohorts ? cohort : 'DOCTORATE';
+  const pool = activeCohort === 'MASTER' ? masterTheses : doctorateTheses;
   const visible = useMemo(
     () =>
       sortRoster(
-        theses.filter((item) => matchesRoster(item, query, filter, t('supervision.studentUnset'))),
+        pool.filter((item) => matchesRoster(item, query, filter, t('supervision.studentUnset'))),
         sort,
         t('supervision.studentUnset'),
       ),
-    [filter, query, sort, t, theses],
+    [filter, pool, query, sort, t],
   );
 
   if (supervised.isLoading) {
@@ -64,8 +71,12 @@ export function SupervisorDashboard({
           <div className="min-w-0">
             {view === 'list' || view === 'gallery' ? (
               <p className="text-sm text-muted">
-                {view === 'gallery' ? t('supervision.gallerySubtitle') : t('supervision.subtitle')}
-                <span className="ml-1.5 tabular-nums text-ink">({theses.length})</span>
+                {view === 'gallery'
+                  ? activeCohort === 'MASTER'
+                    ? t('supervision.gallerySubtitleMaster')
+                    : t('supervision.gallerySubtitle')
+                  : t('supervision.subtitle')}
+                <span className="ml-1.5 tabular-nums text-ink">({pool.length})</span>
               </p>
             ) : null}
           </div>
@@ -109,6 +120,41 @@ export function SupervisorDashboard({
             ) : null}
           </div>
         </div>
+        {showCohorts ? (
+          <div
+            className="inline-flex w-fit rounded-lg border border-line bg-surface p-0.5"
+            role="tablist"
+            aria-label={t('supervision.cohortMaster')}
+          >
+            {doctorateTheses.length > 0 ? (
+              <button
+                type="button"
+                role="tab"
+                aria-selected={activeCohort === 'DOCTORATE'}
+                className={`h-8 rounded-md px-2.5 text-xs font-medium ${
+                  activeCohort === 'DOCTORATE' ? 'bg-brand text-white' : 'text-muted hover:text-ink'
+                }`}
+                onClick={() => setCohort('DOCTORATE')}
+              >
+                {t('supervision.cohortDoctorate')}
+                <span className="ml-1 tabular-nums">({doctorateTheses.length})</span>
+              </button>
+            ) : null}
+            <button
+              type="button"
+              role="tab"
+              aria-selected={activeCohort === 'MASTER'}
+              className={`h-8 rounded-md px-2.5 text-xs font-medium ${
+                activeCohort === 'MASTER' ? 'bg-brand text-white' : 'text-muted hover:text-ink'
+              }`}
+              onClick={() => setCohort('MASTER')}
+            >
+              {t('supervision.cohortMaster')}
+              <span className="ml-1 tabular-nums">({masterTheses.length})</span>
+            </button>
+          </div>
+        ) : null}
+
         <div className="flex shrink-0 gap-2 md:hidden">
           <label className="relative min-w-0 flex-1">
             <span className="sr-only">{t('supervision.search')}</span>
@@ -223,10 +269,17 @@ export function SupervisorDashboard({
           </div>
         </Modal>
 
-        {theses.length === 0 ? (
-          <EmptyState title={t('supervision.empty')} description={t('supervision.emptyHelp')} />
+        {pool.length === 0 ? (
+          <EmptyState
+            title={t('supervision.empty')}
+            description={
+              activeCohort === 'MASTER'
+                ? t('supervision.emptyHelpMaster')
+                : t('supervision.emptyHelp')
+            }
+          />
         ) : null}
-        {theses.length > 0 && visible.length === 0 ? (
+        {pool.length > 0 && visible.length === 0 ? (
           <EmptyState title={t('supervision.noMatch')} description={t('supervision.noMatchHelp')} />
         ) : null}
         <ul

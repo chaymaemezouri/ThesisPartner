@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { MEMBERSHIP_ROLES } from '@thesispartner/types';
 import type {
   createThesisSchema,
@@ -10,7 +10,10 @@ import { AuditService } from '../audit/audit.service';
 import { cleared, formatDay, parseDay } from '../common/dates';
 import { AppException } from '../common/errors/app.exception';
 import { ThesisAccessService } from '../common/thesis-access/thesis-access.service';
+import { ENV, type Env } from '../config/env';
 import { PrismaService } from '../infrastructure/prisma/prisma.service';
+import { isMasterSpaceEmail } from '../master/master-space';
+import { MasterProjectsService } from '../master/master-projects.service';
 import { InvitationsService } from '../invitations/invitations.service';
 import { StandardPathService } from '../objectives/standard-path.service';
 import { resolveAvatarUrl } from '../profile/profile.service';
@@ -27,6 +30,8 @@ export class ThesesService {
     private readonly audit: AuditService,
     private readonly standardPath: StandardPathService,
     private readonly invitations: InvitationsService,
+    private readonly masterProjects: MasterProjectsService,
+    @Inject(ENV) private readonly env: Env,
   ) {}
 
   async list(userId: string) {
@@ -41,6 +46,7 @@ export class ThesesService {
         id: membership.thesis.id,
         title: membership.thesis.title,
         status: membership.thesis.status,
+        track: membership.thesis.track,
         role: membership.role,
       })),
     };
@@ -61,16 +67,28 @@ export class ThesesService {
         },
       },
     });
-    const actor = thesis?.memberships.find((membership) => membership.userId === userId);
-    if (!thesis || !actor) {
+    const membership = thesis?.memberships.find((item) => item.userId === userId);
+    if (!thesis) {
       throw new AppException(404, 'NOT_FOUND', 'Resource not found');
+    }
+    let role = membership?.role;
+    if (!role) {
+      const actor = await this.prisma.user.findUnique({
+        where: { id: userId },
+        select: { email: true },
+      });
+      if (thesis.track !== 'MASTER' || !isMasterSpaceEmail(actor?.email, this.env)) {
+        throw new AppException(404, 'NOT_FOUND', 'Resource not found');
+      }
+      role = 'SUPERVISOR';
     }
     return {
       id: thesis.id,
       title: thesis.title,
       description: thesis.description,
       status: thesis.status,
-      role: actor.role,
+      track: thesis.track,
+      role,
       discipline: thesis.discipline,
       institution: thesis.institution,
       startedOn: formatDay(thesis.startedOn),
@@ -104,6 +122,27 @@ export class ThesesService {
   }
 
   async create(userId: string, body: CreateThesisBody, requestId?: string, locale?: string) {
+    if (body.masterStudent) {
+      await this.access.assertEmailVerified(userId);
+      const alreadyStudent = await this.prisma.thesisMembership.count({
+        where: { userId, role: 'DOCTORAL_STUDENT' },
+      });
+      if (alreadyStudent > 0 && process.env.NODE_ENV !== 'test') {
+        throw new AppException(409, 'CONFLICT', 'V1 covers one main thesis per doctoral student');
+      }
+      const thesis = await this.masterProjects.bootstrap({
+        userId,
+        title: body.title,
+        requestId,
+      });
+      return {
+        id: thesis.id,
+        title: thesis.title,
+        status: thesis.status,
+        track: thesis.track,
+        role: 'DOCTORAL_STUDENT' as const,
+      };
+    }
     await this.access.assertCanCreateThesis(userId);
     const thesis = await this.prisma.$transaction(async (tx) => {
       const created = await tx.thesis.create({
@@ -129,8 +168,15 @@ export class ThesesService {
       id: thesis.id,
       title: thesis.title,
       status: thesis.status,
+      track: thesis.track,
       role: 'DOCTORAL_STUDENT' as const,
     };
+  }
+
+  async convertToMaster(userId: string, thesisId: string, requestId?: string) {
+    await this.access.assertEmailVerified(userId);
+    const thesis = await this.masterProjects.convertExisting({ userId, thesisId, requestId });
+    return this.get(userId, thesis.id);
   }
 
   async update(userId: string, thesisId: string, body: UpdateThesisBody, requestId?: string) {

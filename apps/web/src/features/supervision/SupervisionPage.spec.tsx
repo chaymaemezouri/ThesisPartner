@@ -1,5 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { LocaleProvider } from '../../i18n/LocaleContext';
@@ -100,6 +101,32 @@ describe('supervised theses', () => {
       'href',
       `/encadrement/${theses.theses[1]?.thesisId}`,
     );
+  });
+
+  it('splits doctoral and Master students into tabs', async () => {
+    const user = userEvent.setup();
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () =>
+        json({
+          theses: [
+            student('11111111-1111-4111-8111-111111111111', 'Ada', 'These Alpha'),
+            {
+              ...student('22222222-2222-4222-8222-222222222222', 'Lina', 'Projet Master'),
+              track: 'MASTER',
+            },
+          ],
+        }),
+      ),
+    );
+    renderPage();
+    expect(await screen.findByRole('tab', { name: /Master students/ })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: /Doctoral students/ })).toBeInTheDocument();
+    expect(screen.getByText('Ada Test')).toBeInTheDocument();
+    expect(screen.queryByText('Lina Test')).not.toBeInTheDocument();
+    await user.click(screen.getByRole('tab', { name: /Master students/ }));
+    expect(await screen.findByText('Lina Test')).toBeInTheDocument();
+    expect(screen.queryByText('Ada Test')).not.toBeInTheDocument();
   });
 });
 

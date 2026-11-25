@@ -77,6 +77,13 @@ const schema = z.object({
     emptyToUndefined,
     z.string().trim().toLowerCase().email().max(320).optional(),
   ),
+  /** Comma-separated emails allowed to open Master student dossiers. */
+  MASTER_SPACE_EMAILS: z.preprocess(emptyToUndefined, z.string().max(2000).optional()),
+  /** Supervisor who receives the default Master project invitation. */
+  MASTER_SUPERVISOR_EMAIL: z.preprocess(
+    emptyToUndefined,
+    z.string().trim().toLowerCase().email().max(320).optional(),
+  ),
   WHATSAPP_TOKEN: z.preprocess(emptyToUndefined, z.string().min(10).max(500).optional()),
   WHATSAPP_PHONE_NUMBER_ID: z.preprocess(emptyToUndefined, z.string().min(5).max(40).optional()),
   WHATSAPP_TEMPLATE_NAME: z.preprocess(emptyToUndefined, z.string().min(1).max(80).optional()),
@@ -145,6 +152,8 @@ export function parseEnv(source: NodeJS.ProcessEnv): Env {
     OPENAI_API_KEY: source.OPENAI_API_KEY,
     OPENAI_MODEL: source.OPENAI_MODEL,
     SUPER_ADMIN_BOOTSTRAP_EMAIL: source.SUPER_ADMIN_BOOTSTRAP_EMAIL,
+    MASTER_SPACE_EMAILS: source.MASTER_SPACE_EMAILS,
+    MASTER_SUPERVISOR_EMAIL: source.MASTER_SUPERVISOR_EMAIL,
     WHATSAPP_TOKEN: source.WHATSAPP_TOKEN,
     WHATSAPP_PHONE_NUMBER_ID: source.WHATSAPP_PHONE_NUMBER_ID,
     WHATSAPP_TEMPLATE_NAME: source.WHATSAPP_TEMPLATE_NAME,

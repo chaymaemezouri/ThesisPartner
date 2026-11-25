@@ -15,6 +15,7 @@ import { ENV, type Env } from '../config/env';
 import { StructuredLogger } from '../infrastructure/logger/logger';
 import { PrismaService } from '../infrastructure/prisma/prisma.service';
 import { resolveAvatarUrl } from '../profile/profile.service';
+import { MasterProjectsService } from '../master/master-projects.service';
 import { AuthMailer } from './auth-mailer';
 import { LoginAttemptTracker } from './login-attempts';
 import { SessionService, type AuthContext, type IssuedSession } from './session.service';
@@ -71,6 +72,7 @@ export class AuthService {
     private readonly logger: StructuredLogger,
     @Inject(forwardRef(() => BillingService)) private readonly billing: BillingService,
     @Inject(ENV) private readonly env: Env,
+    private readonly masterProjects: MasterProjectsService,
   ) {}
 
   async register(
@@ -135,6 +137,13 @@ export class AuthService {
         data: { emailVerifiedAt: new Date() },
       });
       await this.billing.autoStartTrialIfEligible(created.user.id, meta.requestId);
+    }
+    if (body.masterStudent) {
+      await this.masterProjects.bootstrap({
+        userId: created.user.id,
+        title: body.projectTitle?.trim() || 'Projet de master',
+        requestId: meta.requestId,
+      });
     }
     return { user: created.user, issued: created.issued };
   }

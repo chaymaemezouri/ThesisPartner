@@ -29,6 +29,7 @@ const REMINDER_12_MS = 12 * 24 * 60 * 60 * 1000;
 const invitationThesisSelect = {
   id: true,
   title: true,
+  track: true,
   institution: true,
   doctoralYear: true,
   memberships: {
@@ -693,7 +694,7 @@ export class InvitationsService {
 
     await this.expirePending();
 
-    if (input.role === 'SUPERVISOR' && !input.replacesSupervisor) {
+    if (input.role === 'SUPERVISOR' && !input.replacesSupervisor && actor.thesis.track !== 'MASTER') {
       const supervisor = await this.prisma.thesisMembership.findFirst({
         where: { thesisId, role: 'SUPERVISOR' },
         select: { id: true },
@@ -714,7 +715,7 @@ export class InvitationsService {
       throw new AppException(409, 'CONFLICT', 'A pending invitation already exists for this email');
     }
 
-    if (input.role === 'SUPERVISOR') {
+    if (input.role === 'SUPERVISOR' && actor.thesis.track !== 'MASTER') {
       const pendingSupervisor = await this.prisma.invitation.findFirst({
         where: { thesisId, role: 'SUPERVISOR', status: 'PENDING' },
       });

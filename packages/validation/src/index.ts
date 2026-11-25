@@ -71,6 +71,8 @@ export const personNameSchema = z.string().trim().min(1, 'Champ requis').max(80)
 
 export const doctoralYearSchema = z.number().int().min(1).max(7);
 
+export const thesisTrackSchema = z.enum(['DOCTORATE', 'MASTER']);
+
 export const registerBodySchema = z
   .object({
     email: emailSchema,
@@ -79,8 +81,21 @@ export const registerBodySchema = z
     familyName: personNameSchema,
     institution: z.string().trim().max(200).optional(),
     doctoralYear: z.coerce.number().int().min(1).max(7).default(1),
+    masterStudent: z.boolean().optional().default(false),
+    projectTitle: z.string().trim().max(300).optional(),
   })
-  .strict();
+  .strict()
+  .superRefine((value, ctx) => {
+    if (!value.masterStudent) return;
+    const title = value.projectTitle?.trim() ?? '';
+    if (title.length < 3) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['projectTitle'],
+        message: '3 caractères minimum',
+      });
+    }
+  });
 
 export const loginBodySchema = z
   .object({
@@ -140,6 +155,7 @@ export const thesisSummarySchema = z
     id: uuidSchema,
     title: boundedTextSchema(300),
     status: thesisStatusSchema,
+    track: thesisTrackSchema.optional().default('DOCTORATE'),
     role: membershipRoleSchema,
   })
   .strict();
@@ -188,6 +204,7 @@ export const thesisDetailSchema = thesisSummarySchema
       .regex(/^\d{4}-\d{2}-\d{2}$/)
       .nullable(),
     doctoralYear: doctoralYearSchema.default(1),
+    track: thesisTrackSchema.optional().default('DOCTORATE'),
     members: z.array(thesisMemberSchema).max(50),
   })
   .strict();
@@ -195,6 +212,7 @@ export const thesisDetailSchema = thesisSummarySchema
 export const createThesisSchema = z
   .object({
     title: z.string().trim().min(3, '3 caractères minimum').max(300),
+    masterStudent: z.boolean().optional().default(false),
   })
   .strict();
 
@@ -431,6 +449,7 @@ export const dashboardThesisSchema = z
     startedOn: daySchema.nullable(),
     expectedDefenseOn: daySchema.nullable(),
     doctoralYear: doctoralYearSchema.default(1),
+    track: thesisTrackSchema.optional().default('DOCTORATE'),
     supervisors: z.array(z.object({ displayName: boundedTextSchema(160) }).strict()).max(20),
   })
   .strict();
@@ -884,6 +903,7 @@ export const supervisedThesisSchema = z
     startedOn: daySchema.nullable(),
     expectedDefenseOn: daySchema.nullable(),
     doctoralYear: doctoralYearSchema.default(1),
+    track: thesisTrackSchema.optional().default('DOCTORATE'),
     durationYears: z.number().int().min(0).max(20).nullable(),
     progressPercentage: z.number().int().min(0).max(100),
     deliverableCount: z.number().int().min(0),

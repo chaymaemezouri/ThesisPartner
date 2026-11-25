@@ -7,6 +7,9 @@ process.env.RATE_LIMIT_MAX = '10000';
 process.env.RATE_LIMIT_TTL_MS = '60000';
 process.env.UPLOAD_RATE_LIMIT_MAX = '10000';
 process.env.UPLOAD_RATE_LIMIT_TTL_MS = '60000';
+process.env.MASTER_SPACE_EMAILS =
+  process.env.MASTER_SPACE_EMAILS ?? 'jihaneelmouden1@gmail.com,mezziyyani@uae.ac.ma';
+process.env.MASTER_SUPERVISOR_EMAIL = process.env.MASTER_SUPERVISOR_EMAIL ?? 'mezziyyani@uae.ac.ma';
 
 const testDatabaseUrl = process.env.TEST_DATABASE_URL;
 if (!testDatabaseUrl) {

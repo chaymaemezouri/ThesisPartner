@@ -121,6 +121,10 @@ export const fr: Messages = {
     hidePassword: 'Masquer le mot de passe',
     registerTitle: 'Créer un compte',
     registerSubtitle: 'Commencez le suivi de votre thèse.',
+    masterStudent: 'Étudiant Master',
+    masterStudentHelp:
+      'Cochez si vous suivez un projet de master (pas une thèse). L’invitation partira vers l’encadrant de cet espace.',
+    projectTitle: 'Sujet du projet',
     email: 'E-mail',
     password: 'Mot de passe',
     givenName: 'Prénom',
@@ -956,6 +960,12 @@ export const fr: Messages = {
     cardObjectives: 'Objectifs',
     seeAll: 'Voir tout',
     gallerySubtitle: 'Portraits et sujets de thèse — ouvrez une carte pour entrer dans le dossier',
+    gallerySubtitleMaster:
+      'Portraits et sujets de projet — ouvrez une carte pour entrer dans le dossier',
+    cohortDoctorate: 'Doctorants',
+    cohortMaster: 'Étudiants Master',
+    emptyHelpMaster:
+      'Les étudiants Master apparaissent ici après inscription avec un sujet de projet.',
     viewMode: 'Mode d’affichage',
     viewGallery: 'Galerie',
     viewList: 'Liste',
@@ -1063,6 +1073,9 @@ export const fr: Messages = {
     loadingDossier: 'Chargement du dossier…',
     supervisorLabel: 'Encadrant',
     noSupervisor: 'Aucun encadrant',
+    convertToMaster: 'Passer en projet Master',
+    convertToMasterHelp:
+      'Si le compte a été créé avant cette option. L’invitation part vers l’encadrant de cet espace.',
     openSupervisorTab: 'Ouvrir Mon encadrant',
     editThesis: 'Modifier la thèse',
     deleteThesis: 'Supprimer la thèse',

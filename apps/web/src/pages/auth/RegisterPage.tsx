@@ -24,8 +24,11 @@ export function RegisterPage() {
       givenName: '',
       familyName: '',
       institution: '',
+      masterStudent: false,
+      projectTitle: '',
     },
   });
+  const masterStudent = form.watch('masterStudent');
 
   return (
     <AuthLayout title={t('auth.registerTitle')} intro={t('auth.registerSubtitle')}>
@@ -87,6 +90,26 @@ export function RegisterPage() {
           error={form.formState.errors.password?.message}
           {...form.register('password')}
         />
+        <label className="flex items-start gap-2.5 text-sm text-ink">
+          <input
+            type="checkbox"
+            className="mt-0.5 h-4 w-4 rounded border-line"
+            checked={Boolean(masterStudent)}
+            onChange={(event) => form.setValue('masterStudent', event.target.checked)}
+          />
+          <span>
+            <span className="font-medium">{t('auth.masterStudent')}</span>
+            <span className="mt-0.5 block text-xs text-muted">{t('auth.masterStudentHelp')}</span>
+          </span>
+        </label>
+        {masterStudent ? (
+          <Input
+            id="projectTitle"
+            label={t('auth.projectTitle')}
+            error={form.formState.errors.projectTitle?.message}
+            {...form.register('projectTitle')}
+          />
+        ) : null}
         {message ? (
           <p className="text-sm text-danger" role="alert">
             {message}

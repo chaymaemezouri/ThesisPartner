@@ -23,7 +23,7 @@ describe('InvitationsService', () => {
             email: 'student@example.test',
             profile: { displayName: 'Ada Student' },
           },
-          thesis: { title: 'Coastal ecosystems' },
+          thesis: { title: 'Coastal ecosystems', track: 'DOCTORATE' },
         }),
         findFirst: jest.fn().mockResolvedValue(null),
         create: jest.fn().mockResolvedValue({ id: 'membership-1' }),
@@ -140,6 +140,7 @@ describe('InvitationsService', () => {
       thesis: {
         id: thesisId,
         title: 'Coastal ecosystems',
+        track: 'DOCTORATE',
         institution: null,
         doctoralYear: 1,
         memberships: [],
@@ -254,6 +255,7 @@ describe('InvitationsService', () => {
       thesis: {
         id: thesisId,
         title: 'Coastal ecosystems',
+        track: 'DOCTORATE',
         institution: null,
         doctoralYear: 1,
         memberships: [],
@@ -340,6 +342,7 @@ describe('InvitationsService', () => {
       thesis: {
         id: thesisId,
         title: 'Coastal ecosystems',
+        track: 'DOCTORATE',
         institution: null,
         doctoralYear: 1,
         memberships: [],
@@ -404,5 +407,28 @@ describe('InvitationsService', () => {
     await expect(service.resend(actorId, thesisId, invitationId)).rejects.toMatchObject({
       appCode: 'RATE_LIMITED',
     });
+  });
+
+  it('allows a second supervisor invitation on a MASTER project', async () => {
+    const { service, prisma } = build();
+    prisma.thesisMembership.findUnique = jest.fn().mockResolvedValue({
+      role: 'DOCTORAL_STUDENT',
+      user: {
+        email: 'student@example.test',
+        profile: { displayName: 'Ada Student' },
+      },
+      thesis: { title: 'Projet master', track: 'MASTER' },
+    });
+    prisma.thesisMembership.findFirst = jest.fn().mockResolvedValue({ id: 'existing-sup' });
+
+    const result = await service.create(
+      actorId,
+      thesisId,
+      { email: 'second@example.test', role: 'SUPERVISOR' },
+      'req-master',
+    );
+
+    expect(result.status).toBe('PENDING');
+    expect(prisma.invitation.create).toHaveBeenCalled();
   });
 });

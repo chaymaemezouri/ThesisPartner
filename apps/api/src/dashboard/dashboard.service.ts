@@ -211,6 +211,7 @@ export class DashboardService {
             startedOn: formatDay(thesis.startedOn),
             expectedDefenseOn: formatDay(thesis.expectedDefenseOn),
             doctoralYear: thesis.doctoralYear,
+            track: thesis.track,
             supervisors: supervisors.flatMap((item) =>
               item.user.profile ? [{ displayName: item.user.profile.displayName }] : [],
             ),

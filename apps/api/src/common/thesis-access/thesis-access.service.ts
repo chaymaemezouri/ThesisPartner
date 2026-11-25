@@ -1,8 +1,10 @@
 import { Inject, Injectable } from '@nestjs/common';
 import type { MembershipRole } from '@thesispartner/types';
 import { SubscriptionAccessService } from '../../billing/subscription-access.service';
+import { ENV, type Env } from '../../config/env';
 import { AppException } from '../errors/app.exception';
 import { PrismaService } from '../../infrastructure/prisma/prisma.service';
+import { isMasterSpaceEmail } from '../../master/master-space';
 import { THESIS_MEMBERSHIP_LOOKUP, type ThesisMembershipLookup } from './thesis-membership.lookup';
 import { ThesisAccessPolicy } from './thesis-access.policy';
 
@@ -13,6 +15,7 @@ export class ThesisAccessService {
     private readonly policy: ThesisAccessPolicy,
     private readonly billingAccess: SubscriptionAccessService,
     private readonly prisma: PrismaService,
+    @Inject(ENV) private readonly env: Env,
   ) {}
 
   async assertCanAccess(input: {
@@ -23,16 +26,38 @@ export class ThesisAccessService {
     requireVerified?: boolean;
   }): Promise<void> {
     const membership = await this.memberships.findByUserAndThesis(input.actorId, input.thesisId);
-    this.policy.assert({
-      actorId: input.actorId,
-      thesisId: input.thesisId,
-      membership,
-      allowedRoles: input.allowedRoles,
+    const thesis = await this.prisma.thesis.findUnique({
+      where: { id: input.thesisId },
+      select: { track: true },
     });
+    const actor = await this.prisma.user.findUnique({
+      where: { id: input.actorId },
+      select: { email: true },
+    });
+    const masterStaff = thesis?.track === 'MASTER' && isMasterSpaceEmail(actor?.email, this.env);
+    if (masterStaff) {
+      if (
+        !input.allowedRoles.includes('SUPERVISOR') &&
+        !input.allowedRoles.includes('ADMIN') &&
+        membership?.role !== 'DOCTORAL_STUDENT'
+      ) {
+        throw new AppException(403, 'FORBIDDEN', 'Insufficient permissions');
+      }
+    } else {
+      if (thesis?.track === 'MASTER' && membership?.role !== 'DOCTORAL_STUDENT') {
+        throw new AppException(404, 'NOT_FOUND', 'Resource not found');
+      }
+      this.policy.assert({
+        actorId: input.actorId,
+        thesisId: input.thesisId,
+        membership,
+        allowedRoles: input.allowedRoles,
+      });
+    }
     if (input.write || input.requireVerified) {
       await this.assertEmailVerified(input.actorId);
     }
-    if (input.write) {
+    if (input.write && thesis?.track !== 'MASTER') {
       await this.billingAccess.assertScientificWrite(input.thesisId);
     }
   }

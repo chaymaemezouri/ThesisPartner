@@ -49,10 +49,13 @@ function CreateThesis() {
   const { locale } = useLocale();
   const queryClient = useQueryClient();
   const [message, setMessage] = useState<string | null>(null);
-  const form = useZodForm(createThesisSchema, { defaultValues: { title: '' } });
+  const form = useZodForm(createThesisSchema, {
+    defaultValues: { title: '', masterStudent: false },
+  });
+  const masterStudent = form.watch('masterStudent');
   const mutation = useMutation({
-    mutationFn: (title: string) =>
-      apiSend(`/api/v1/theses?locale=${locale}`, thesisSummarySchema, { title }),
+    mutationFn: (values: { title: string; masterStudent: boolean }) =>
+      apiSend(`/api/v1/theses?locale=${locale}`, thesisSummarySchema, values),
     onSuccess: async () => {
       form.reset();
       await queryClient.invalidateQueries({ queryKey: ['theses'] });
@@ -66,17 +69,32 @@ function CreateThesis() {
       onSubmit={form.handleSubmit(async (values) => {
         setMessage(null);
         try {
-          await mutation.mutateAsync(values.title);
+          await mutation.mutateAsync({
+            title: values.title,
+            masterStudent: Boolean(values.masterStudent),
+          });
         } catch (error) {
           applyFieldErrors(error, form.setError);
           setMessage(formErrorMessage(error, t));
         }
       })}
     >
+      <label className="flex items-start gap-2.5 text-sm text-ink sm:basis-full">
+        <input
+          type="checkbox"
+          className="mt-0.5 h-4 w-4 rounded border-line"
+          checked={Boolean(masterStudent)}
+          onChange={(event) => form.setValue('masterStudent', event.target.checked)}
+        />
+        <span>
+          <span className="font-medium">{t('auth.masterStudent')}</span>
+          <span className="mt-0.5 block text-xs text-muted">{t('auth.masterStudentHelp')}</span>
+        </span>
+      </label>
       <div className="min-w-0 flex-1">
         <Input
           id="profile-thesis-title"
-          label={t('profile.thesisTitle')}
+          label={masterStudent ? t('auth.projectTitle') : t('profile.thesisTitle')}
           error={form.formState.errors.title?.message}
           {...form.register('title')}
         />
@@ -104,6 +122,15 @@ function Dossier({ thesisId, canDelete }: { thesisId: string; canDelete: boolean
   const detail = useQuery({
     queryKey: ['theses', thesisId],
     queryFn: () => apiGet(`/api/v1/theses/${thesisId}`, thesisDetailSchema),
+  });
+  const convert = useMutation({
+    mutationFn: () =>
+      apiSend(`/api/v1/theses/${thesisId}/master-track`, thesisDetailSchema, {}, 'POST'),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['theses'] });
+      await queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      await queryClient.invalidateQueries({ queryKey: ['supervision'] });
+    },
   });
   const remove = useMutation({
     mutationFn: () => apiSend(`/api/v1/theses/${thesisId}`, deletedSchema, {}, 'DELETE'),
@@ -159,6 +186,24 @@ function Dossier({ thesisId, canDelete }: { thesisId: string; canDelete: boolean
               <span className="text-ink">{t('profile.noSupervisor')}</span>
             )}
           </p>
+          {thesis.role === 'DOCTORAL_STUDENT' && thesis.track !== 'MASTER' ? (
+            <div className="mt-3">
+              <button
+                type="button"
+                className="text-sm font-medium text-brand hover:underline"
+                disabled={convert.isPending}
+                onClick={() => void convert.mutateAsync()}
+              >
+                {t('profile.convertToMaster')}
+              </button>
+              <p className="mt-0.5 text-xs text-muted">{t('profile.convertToMasterHelp')}</p>
+              {convert.error ? (
+                <p className="mt-1 text-sm text-danger" role="alert">
+                  {formErrorMessage(convert.error, t)}
+                </p>
+              ) : null}
+            </div>
+          ) : null}
           {thesis.role === 'DOCTORAL_STUDENT' ? (
             <p className="mt-2">
               <Link to="/encadrant" className="text-sm font-medium text-brand hover:underline">

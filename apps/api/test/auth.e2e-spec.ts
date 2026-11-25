@@ -51,6 +51,9 @@ describe('authentication and thesis membership', () => {
       select: { thesisId: true },
     });
     const thesisIds = memberships.map((item) => item.thesisId);
+    await prisma.invitation.deleteMany({
+      where: { OR: [{ invitedById: { in: ids } }, { thesisId: { in: thesisIds } }] },
+    });
     await prisma.auditLog.deleteMany({
       where: { OR: [{ actorId: { in: ids } }, { thesisId: { in: thesisIds } }] },
     });
@@ -193,5 +196,110 @@ describe('authentication and thesis membership', () => {
       await prisma.auditLog.deleteMany({ where: { thesisId: thesis.id } });
       await prisma.thesis.delete({ where: { id: thesis.id } });
     }
+  });
+
+  it('registers a Master student with a project and invites the default supervisor', async () => {
+    const stamp = Date.now();
+    const ownerEmail = `master-${stamp}@example.test`;
+    emails.push(ownerEmail);
+    const owner = request.agent(app.getHttpServer());
+
+    const registered = await owner.post('/api/v1/auth/register').send({
+      email: ownerEmail,
+      password,
+      givenName: 'Lina',
+      familyName: 'Haddad',
+      masterStudent: true,
+      projectTitle: 'Analyse des reseaux sociaux',
+    });
+    expect(registered.status).toBe(201);
+    const user = currentUserResponseSchema.parse(registered.body).user;
+
+    const membership = await prisma.thesisMembership.findFirst({
+      where: { userId: user.id, role: 'DOCTORAL_STUDENT' },
+      include: { thesis: true },
+    });
+    expect(membership?.thesis.track).toBe('MASTER');
+    expect(membership?.thesis.title).toBe('Analyse des reseaux sociaux');
+
+    const invite = await prisma.invitation.findFirst({
+      where: {
+        thesisId: membership?.thesisId,
+        email: 'mezziyyani@uae.ac.ma',
+        role: 'SUPERVISOR',
+        status: 'PENDING',
+      },
+    });
+    expect(invite).toBeTruthy();
+  });
+
+  it('lets an existing account create a Master project after registration', async () => {
+    const stamp = Date.now();
+    const ownerEmail = `late-master-${stamp}@example.test`;
+    emails.push(ownerEmail);
+    const owner = request.agent(app.getHttpServer());
+    const registered = await owner.post('/api/v1/auth/register').send({
+      email: ownerEmail,
+      password,
+      givenName: 'Sara',
+      familyName: 'Benali',
+    });
+    expect(registered.status).toBe(201);
+    const csrf = csrfFrom(registered);
+
+    const created = await owner
+      .post('/api/v1/theses')
+      .set('x-csrf-token', csrf)
+      .send({ title: 'Projet existant', masterStudent: true });
+    expect(created.status).toBe(201);
+    expect(thesisSummarySchema.parse(created.body).track).toBe('MASTER');
+
+    const invite = await prisma.invitation.findFirst({
+      where: {
+        thesisId: created.body.id,
+        email: 'mezziyyani@uae.ac.ma',
+        role: 'SUPERVISOR',
+        status: 'PENDING',
+      },
+    });
+    expect(invite).toBeTruthy();
+  });
+
+  it('converts an existing doctoral dossier into a Master project', async () => {
+    const stamp = Date.now();
+    const ownerEmail = `convert-master-${stamp}@example.test`;
+    emails.push(ownerEmail);
+    const owner = request.agent(app.getHttpServer());
+    const registered = await owner.post('/api/v1/auth/register').send({
+      email: ownerEmail,
+      password,
+      givenName: 'Nour',
+      familyName: 'Amrani',
+    });
+    expect(registered.status).toBe(201);
+    const csrf = csrfFrom(registered);
+    const created = await owner
+      .post('/api/v1/theses')
+      .set('x-csrf-token', csrf)
+      .send({ title: 'Dossier deja cree' });
+    expect(created.status).toBe(201);
+    expect(thesisSummarySchema.parse(created.body).track).toBe('DOCTORATE');
+
+    const converted = await owner
+      .post(`/api/v1/theses/${created.body.id}/master-track`)
+      .set('x-csrf-token', csrf)
+      .send({});
+    expect(converted.status).toBe(200);
+    expect(converted.body.track).toBe('MASTER');
+
+    const invite = await prisma.invitation.findFirst({
+      where: {
+        thesisId: created.body.id,
+        email: 'mezziyyani@uae.ac.ma',
+        role: 'SUPERVISOR',
+        status: 'PENDING',
+      },
+    });
+    expect(invite).toBeTruthy();
   });
 });

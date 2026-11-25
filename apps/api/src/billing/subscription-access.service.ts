@@ -15,6 +15,13 @@ export class SubscriptionAccessService {
   constructor(private readonly prisma: PrismaService) {}
 
   async describeThesis(thesisId: string, now = new Date()): Promise<CoverageSnapshot> {
+    const thesis = await this.prisma.thesis.findUnique({
+      where: { id: thesisId },
+      select: { track: true },
+    });
+    if (thesis?.track === 'MASTER') {
+      return { writable: true, source: 'subscription', expiresAt: null };
+    }
     const doctoral = await this.prisma.thesisMembership.findFirst({
       where: { thesisId, role: 'DOCTORAL_STUDENT' },
       orderBy: [{ createdAt: 'asc' }, { userId: 'asc' }],

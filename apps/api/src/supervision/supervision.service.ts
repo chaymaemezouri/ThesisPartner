@@ -1,6 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { formatDay } from '../common/dates';
 import { AppException } from '../common/errors/app.exception';
+import { ENV, type Env } from '../config/env';
+import { isMasterSpaceEmail } from '../master/master-space';
 import {
   ACTIVITY_ACTIONS,
   fileActivityMessage,
@@ -29,6 +31,7 @@ export class SupervisionService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly access: ThesisAccessService,
+    @Inject(ENV) private readonly env: Env,
   ) {}
 
   async list(actorId: string) {
@@ -40,60 +43,67 @@ export class SupervisionService {
     const pendingSupervisorInvite = actor
       ? await hasPendingSupervisorInvite(this.prisma, actor.email)
       : false;
-    const memberships = await this.prisma.thesisMembership.findMany({
-      where: { userId: actorId, role: 'SUPERVISOR' },
+    const allowMaster = isMasterSpaceEmail(actor?.email, this.env);
+    const theses = await this.prisma.thesis.findMany({
+      where: allowMaster
+        ? {
+            OR: [
+              { memberships: { some: { userId: actorId, role: 'SUPERVISOR' } } },
+              { track: 'MASTER' },
+            ],
+          }
+        : {
+            track: { not: 'MASTER' },
+            memberships: { some: { userId: actorId, role: 'SUPERVISOR' } },
+          },
       include: {
-        thesis: {
-          include: {
-            memberships: {
-              include: { user: { include: { profile: true } } },
-              orderBy: [{ createdAt: 'asc' }, { userId: 'asc' }],
-            },
-            objectives: {
-              select: { id: true, title: true, status: true, dueDate: true, progress: true },
-            },
-            deliverables: {
-              select: {
-                id: true,
-                title: true,
-                status: true,
-                dueDate: true,
-                submittedAt: true,
-                _count: { select: { versions: true } },
-                versions: {
-                  orderBy: { versionNumber: 'desc' },
-                  take: 1,
-                  select: { versionNumber: true },
-                },
-              },
-            },
-            meetings: {
-              where: {
-                status: 'PLANNED',
-                scheduledOn: { gte: new Date(now.toISOString().slice(0, 10)) },
-              },
-              orderBy: { scheduledOn: 'asc' },
-              take: 20,
-            },
-            auditLogs: {
-              where: { action: { in: [...ACTIVITY_ACTIONS] } },
-              orderBy: { createdAt: 'desc' },
+        memberships: {
+          include: { user: { include: { profile: true } } },
+          orderBy: [{ createdAt: 'asc' }, { userId: 'asc' }],
+        },
+        objectives: {
+          select: { id: true, title: true, status: true, dueDate: true, progress: true },
+        },
+        deliverables: {
+          select: {
+            id: true,
+            title: true,
+            status: true,
+            dueDate: true,
+            submittedAt: true,
+            _count: { select: { versions: true } },
+            versions: {
+              orderBy: { versionNumber: 'desc' },
               take: 1,
-              select: { createdAt: true },
+              select: { versionNumber: true },
             },
           },
+        },
+        meetings: {
+          where: {
+            status: 'PLANNED',
+            scheduledOn: { gte: new Date(now.toISOString().slice(0, 10)) },
+          },
+          orderBy: { scheduledOn: 'asc' },
+          take: 20,
+        },
+        auditLogs: {
+          where: { action: { in: [...ACTIVITY_ACTIONS] } },
+          orderBy: { createdAt: 'desc' },
+          take: 1,
+          select: { createdAt: true },
         },
       },
       orderBy: { createdAt: 'asc' },
       take: 50,
     });
     const coverages = await Promise.all(
-      memberships.map((membership) => this.access.coverageForThesis(membership.thesis.id)),
+      theses.map((thesis) => this.access.coverageForThesis(thesis.id)),
     );
     return {
       pendingSupervisorInvite,
-      theses: memberships.map((membership, index) => {
-        const students = membership.thesis.memberships.flatMap((item) => {
+      theses: theses.map((thesis, index) => {
+        const students = thesis.memberships.flatMap((item) => {
           if (item.role !== 'DOCTORAL_STUDENT' || !item.user.profile) return [];
           return [
             {
@@ -106,18 +116,16 @@ export class SupervisionService {
             },
           ];
         });
-        const supervisors = membership.thesis.memberships.flatMap((item) => {
+        const supervisors = thesis.memberships.flatMap((item) => {
           if (item.role !== 'SUPERVISOR' || !item.user.profile) return [];
           return [{ displayName: item.user.profile.displayName }];
         });
         const today = formatDay(now) ?? '';
-        const counts = summarizeObjectives(membership.thesis.objectives, now);
-        const openDeliverables = membership.thesis.deliverables.filter(
-          (item) => item.status !== 'CANCELLED',
-        );
-        const defenseOn = formatDay(membership.thesis.expectedDefenseOn);
+        const counts = summarizeObjectives(thesis.objectives, now);
+        const openDeliverables = thesis.deliverables.filter((item) => item.status !== 'CANCELLED');
+        const defenseOn = formatDay(thesis.expectedDefenseOn);
         const datedWork = [
-          ...membership.thesis.objectives.flatMap((item) => {
+          ...thesis.objectives.flatMap((item) => {
             const occursOn = formatDay(item.dueDate);
             return occursOn && item.status !== 'COMPLETED' && item.status !== 'CANCELLED'
               ? [{ id: item.id, title: item.title, occursOn, kind: 'OBJECTIVE' as const }]
@@ -129,7 +137,7 @@ export class SupervisionService {
               ? [{ id: item.id, title: item.title, occursOn, kind: 'DELIVERABLE' as const }]
               : [];
           }),
-          ...membership.thesis.meetings.flatMap((item) => {
+          ...thesis.meetings.flatMap((item) => {
             const occursOn = formatDay(item.scheduledOn);
             return occursOn && occursOn >= today && item.status === 'PLANNED'
               ? [{ id: item.id, title: item.title, occursOn, kind: 'MEETING' as const }]
@@ -138,7 +146,7 @@ export class SupervisionService {
           ...(defenseOn
             ? [
                 {
-                  id: membership.thesis.id,
+                  id: thesis.id,
                   title: 'Soutenance prévue',
                   occursOn: defenseOn,
                   kind: 'EXPECTED_DEFENSE' as const,
@@ -147,22 +155,20 @@ export class SupervisionService {
             : []),
         ].sort((left, right) => left.occursOn.localeCompare(right.occursOn));
         return {
-          thesisId: membership.thesis.id,
-          title: membership.thesis.title,
-          description: membership.thesis.description,
-          status: membership.thesis.status,
-          discipline: membership.thesis.discipline,
-          institution: membership.thesis.institution,
-          startedOn: formatDay(membership.thesis.startedOn),
-          expectedDefenseOn: formatDay(membership.thesis.expectedDefenseOn),
-          doctoralYear: membership.thesis.doctoralYear,
-          durationYears: durationYears(
-            membership.thesis.startedOn,
-            membership.thesis.expectedDefenseOn,
-          ),
-          progressPercentage: workProgressPercentage(membership.thesis.objectives),
+          thesisId: thesis.id,
+          title: thesis.title,
+          description: thesis.description,
+          status: thesis.status,
+          track: thesis.track,
+          discipline: thesis.discipline,
+          institution: thesis.institution,
+          startedOn: formatDay(thesis.startedOn),
+          expectedDefenseOn: formatDay(thesis.expectedDefenseOn),
+          doctoralYear: thesis.doctoralYear,
+          durationYears: durationYears(thesis.startedOn, thesis.expectedDefenseOn),
+          progressPercentage: workProgressPercentage(thesis.objectives),
           nextDeadline: datedWork[0] ?? null,
-          lastActivityAt: membership.thesis.auditLogs[0]?.createdAt.toISOString() ?? null,
+          lastActivityAt: thesis.auditLogs[0]?.createdAt.toISOString() ?? null,
           deliverableCount: openDeliverables.length,
           pendingValidationCount: openDeliverables.filter((item) => item.status === 'SUBMITTED')
             .length,
@@ -177,7 +183,7 @@ export class SupervisionService {
               submittedAt: item.submittedAt?.toISOString() ?? null,
             })),
           supervisors,
-          meetings: membership.thesis.meetings
+          meetings: thesis.meetings
             .flatMap((meeting) => {
               const scheduledOn = formatDay(meeting.scheduledOn);
               if (!scheduledOn || scheduledOn < today || meeting.status !== 'PLANNED') return [];
@@ -198,10 +204,18 @@ export class SupervisionService {
   }
 
   async space(actorId: string, thesisId: string) {
+    const actor = await this.prisma.user.findUnique({
+      where: { id: actorId },
+      select: { email: true },
+    });
+    const allowMaster = isMasterSpaceEmail(actor?.email, this.env);
     const thesis = await this.prisma.thesis.findFirst({
       where: {
         id: thesisId,
-        memberships: { some: { userId: actorId, role: 'SUPERVISOR' } },
+        OR: [
+          { memberships: { some: { userId: actorId, role: 'SUPERVISOR' } } },
+          ...(allowMaster ? [{ track: 'MASTER' as const }] : []),
+        ],
       },
       include: {
         memberships: {
@@ -215,6 +229,9 @@ export class SupervisionService {
       },
     });
     if (!thesis) throw new AppException(404, 'NOT_FOUND', 'Resource not found');
+    if (thesis.track === 'MASTER' && !allowMaster) {
+      throw new AppException(404, 'NOT_FOUND', 'Resource not found');
+    }
 
     const student = thesis.memberships.find(
       (item) => item.role === 'DOCTORAL_STUDENT' && item.user.profile && !item.user.disabledAt,

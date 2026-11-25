@@ -65,6 +65,14 @@ export class ThesesController {
     return this.theses.remove(actorId(request), thesisId, request.requestId);
   }
 
+  @Post(':thesisId/master-track')
+  @HttpCode(200)
+  @ValidateBody(emptyBodySchema)
+  @ApiOperation({ summary: 'Convert an existing doctoral dossier into a Master project' })
+  convertToMaster(@Param('thesisId', ParseUUIDPipe) thesisId: string, @Req() request: Request) {
+    return this.theses.convertToMaster(actorId(request), thesisId, request.requestId);
+  }
+
   @Patch(':thesisId')
   @ValidateBody(updateThesisSchema)
   @ApiOperation({ summary: 'Update thesis description fields' })
