@@ -1,11 +1,12 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { Prisma, type MembershipRole } from '@prisma/client';
-import type {
-  AdminCreateUserBody,
-  AdminDeleteUserBody,
-  AdminReactivateBody,
-  AdminSuspendBody,
-  AdminUpdateUserBody,
+import {
+  displayedAdminMembershipRole,
+  type AdminCreateUserBody,
+  type AdminDeleteUserBody,
+  type AdminReactivateBody,
+  type AdminSuspendBody,
+  type AdminUpdateUserBody,
 } from '@thesispartner/validation';
 import { AuditService } from '../audit/audit.service';
 import { SessionService } from '../auth/session.service';
@@ -309,7 +310,7 @@ export class AdminService {
         where,
         include: {
           profile: true,
-          memberships: { select: { role: true } },
+          memberships: { select: { role: true, thesis: { select: { track: true } } } },
         },
         orderBy: [{ createdAt: 'desc' }, { id: 'asc' }],
         skip: (query.page - 1) * query.pageSize,
@@ -322,7 +323,13 @@ export class AdminService {
         if (!user.profile) {
           throw new AppException(500, 'INTERNAL_ERROR', 'Internal server error');
         }
-        const membershipRoles = [...new Set(user.memberships.map((item) => item.role))];
+        const membershipRoles = [
+          ...new Set(
+            user.memberships.map((item) =>
+              displayedAdminMembershipRole(item.role, item.thesis.track),
+            ),
+          ),
+        ];
         return {
           id: user.id,
           email: user.email,
@@ -349,7 +356,7 @@ export class AdminService {
       include: {
         profile: true,
         memberships: {
-          include: { thesis: { select: { id: true, title: true, status: true } } },
+          include: { thesis: { select: { id: true, title: true, status: true, track: true } } },
           orderBy: { createdAt: 'desc' },
         },
       },
@@ -375,7 +382,8 @@ export class AdminService {
         thesisId: item.thesis.id,
         thesisTitle: item.thesis.title,
         thesisStatus: item.thesis.status,
-        role: item.role,
+        role: displayedAdminMembershipRole(item.role, item.thesis.track),
+        track: item.thesis.track,
       })),
     };
   }

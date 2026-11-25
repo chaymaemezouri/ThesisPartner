@@ -1517,6 +1517,7 @@ export const en = {
     },
     roles: {
       doctoral: 'Doctoral student',
+      masterStudent: 'Master student',
       supervisor: 'Supervisor',
       thesisAdmin: 'Thesis admin',
       user: 'User',

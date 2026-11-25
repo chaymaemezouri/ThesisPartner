@@ -5,6 +5,7 @@ import { ApiClientError } from '../../api/client';
 import { useMeQuery } from '../../hooks/use-session';
 import { useT } from '../../i18n/LocaleContext';
 import { AdminBadge, AdminEmpty, AdminPageHeader, AdminPanel, AdminState } from './AdminUi';
+import { adminMembershipRoleLabel, adminMembershipRoleTone } from './role-label';
 import {
   useAdminUsers,
   useCreateAdminUser,
@@ -232,21 +233,8 @@ export function AdminUsersPage() {
                               {user.membershipRoles.length === 0
                                 ? t('common.none')
                                 : user.membershipRoles.map((role) => (
-                                    <AdminBadge
-                                      key={role}
-                                      tone={
-                                        role === 'DOCTORAL_STUDENT'
-                                          ? 'teal'
-                                          : role === 'SUPERVISOR'
-                                            ? 'brand'
-                                            : 'muted'
-                                      }
-                                    >
-                                      {role === 'DOCTORAL_STUDENT'
-                                        ? t('admin.roles.doctoral')
-                                        : role === 'SUPERVISOR'
-                                          ? t('admin.roles.supervisor')
-                                          : t('admin.roles.thesisAdmin')}
+                                    <AdminBadge key={role} tone={adminMembershipRoleTone(role)}>
+                                      {adminMembershipRoleLabel(t, role)}
                                     </AdminBadge>
                                   ))}
                             </div>

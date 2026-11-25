@@ -5,6 +5,7 @@ import { ApiClientError } from '../../api/client';
 import { useMeQuery } from '../../hooks/use-session';
 import { useT } from '../../i18n/LocaleContext';
 import { AdminBadge, AdminPanel } from './AdminUi';
+import { adminMembershipRoleLabel } from './role-label';
 import {
   useAdminUser,
   useDeleteAdminUser,
@@ -197,11 +198,7 @@ export function AdminUserDetailPage() {
                   <li key={`${item.thesisId}-${item.role}`} className="py-3 text-sm">
                     <p className="font-medium text-ink">{item.thesisTitle}</p>
                     <p className="mt-1 text-muted">
-                      {item.role === 'DOCTORAL_STUDENT'
-                        ? t('admin.roles.doctoral')
-                        : item.role === 'SUPERVISOR'
-                          ? t('admin.roles.supervisor')
-                          : t('admin.roles.thesisAdmin')}
+                      {adminMembershipRoleLabel(t, item.role, item.track)}
                       {' · '}
                       {item.thesisStatus}
                     </p>

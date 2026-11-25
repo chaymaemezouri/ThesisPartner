@@ -1533,6 +1533,7 @@ export const fr: Messages = {
     },
     roles: {
       doctoral: 'Doctorant',
+      masterStudent: 'Étudiant Master',
       supervisor: 'Encadrant',
       thesisAdmin: 'Admin thèse',
       user: 'Utilisateur',

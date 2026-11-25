@@ -431,4 +431,30 @@ describe('AdminService', () => {
       }),
     );
   });
+
+  it('lists MASTER-track doctoral memberships as MASTER_STUDENT', async () => {
+    const { service, prisma } = buildService({});
+    prisma.user.count = jest.fn().mockResolvedValue(1);
+    prisma.user.findMany = jest.fn().mockResolvedValue([
+      {
+        id: targetId,
+        email: 'master@example.test',
+        emailVerifiedAt: new Date('2026-01-01T00:00:00.000Z'),
+        createdAt: new Date('2026-01-01T00:00:00.000Z'),
+        platformRole: 'USER',
+        disabledAt: null,
+        deletedAt: null,
+        profile: {
+          displayName: 'Lina Master',
+          givenName: 'Lina',
+          familyName: 'Master',
+        },
+        memberships: [{ role: 'DOCTORAL_STUDENT', thesis: { track: 'MASTER' } }],
+      },
+    ]);
+
+    const result = await service.listUsers({ page: 1, pageSize: 20 });
+
+    expect(result.users[0]?.membershipRoles).toEqual(['MASTER_STUDENT']);
+  });
 });

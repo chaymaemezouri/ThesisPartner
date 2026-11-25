@@ -1960,12 +1960,28 @@ export const adminSystemSchema = z
   })
   .strict();
 
+export const adminDisplayedMembershipRoleSchema = z.enum([
+  'DOCTORAL_STUDENT',
+  'MASTER_STUDENT',
+  'SUPERVISOR',
+  'ADMIN',
+]);
+
+export function displayedAdminMembershipRole(
+  role: z.infer<typeof membershipRoleSchema>,
+  track: z.infer<typeof thesisTrackSchema> = 'DOCTORATE',
+): z.infer<typeof adminDisplayedMembershipRoleSchema> {
+  if (role === 'DOCTORAL_STUDENT' && track === 'MASTER') return 'MASTER_STUDENT';
+  return role;
+}
+
 export const adminMembershipSummarySchema = z
   .object({
     thesisId: uuidSchema,
     thesisTitle: boundedTextSchema(300),
     thesisStatus: thesisStatusSchema,
-    role: membershipRoleSchema,
+    role: adminDisplayedMembershipRoleSchema,
+    track: thesisTrackSchema.optional().default('DOCTORATE'),
   })
   .strict();
 
@@ -1981,7 +1997,7 @@ export const adminUserSummarySchema = z
     disabledAt: z.string().datetime().nullable(),
     deletedAt: z.string().datetime().nullable(),
     createdAt: z.string().datetime(),
-    membershipRoles: z.array(membershipRoleSchema).max(3),
+    membershipRoles: z.array(adminDisplayedMembershipRoleSchema).max(4),
   })
   .strict();
 
