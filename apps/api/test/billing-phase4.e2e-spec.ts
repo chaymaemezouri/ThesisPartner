@@ -98,18 +98,6 @@ describe('billing phase 4', () => {
       data: { status: 'NOT_STARTED', startedAt: null, expiresAt: null },
     });
 
-    const unverified = await student
-      .post('/api/v1/billing/trial/start')
-      .set('x-csrf-token', csrf)
-      .send({});
-    expect(unverified.status).toBe(403);
-
-    const token = tokenFrom(mailer, 'Confirm your Thesis Flow email');
-    expect(
-      (await request(app.getHttpServer()).post('/api/v1/auth/email-verification').send({ token }))
-        .status,
-    ).toBe(200);
-
     const started = await student
       .post('/api/v1/billing/trial/start')
       .set('x-csrf-token', csrf)

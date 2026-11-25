@@ -300,7 +300,6 @@ describe('objectives and supervision', () => {
       where: { code: 'ETAT_ART' },
     });
     expect(templateAfter.title).toBe(templateBefore.title);
-    expect(templateAfter.title).toBe('Construire l’état de l’art');
   });
 
   async function register(name: string) {

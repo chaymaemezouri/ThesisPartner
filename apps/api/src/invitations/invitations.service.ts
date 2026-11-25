@@ -694,7 +694,11 @@ export class InvitationsService {
 
     await this.expirePending();
 
-    if (input.role === 'SUPERVISOR' && !input.replacesSupervisor && actor.thesis.track !== 'MASTER') {
+    if (
+      input.role === 'SUPERVISOR' &&
+      !input.replacesSupervisor &&
+      actor.thesis.track !== 'MASTER'
+    ) {
       const supervisor = await this.prisma.thesisMembership.findFirst({
         where: { thesisId, role: 'SUPERVISOR' },
         select: { id: true },
