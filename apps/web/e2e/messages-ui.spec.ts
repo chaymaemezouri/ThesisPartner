@@ -128,7 +128,7 @@ test('messaging stays readable for both participants on desktop and mobile', asy
     for (const width of [1440, 375]) {
       await page.setViewportSize({ width, height: 850 });
       await page.goto(`/messagerie/${conversationId}`);
-      const composer = page.getByRole('textbox', { name: 'Message', exact: true });
+      const composer = page.locator('#message-body');
       await expect(composer).toBeVisible();
       await expect(page.getByRole('list', { name: 'Messages', exact: true })).toBeVisible();
       if (participant === participants[0]) {

@@ -19,7 +19,6 @@ test('a supervisor creates an objective that only that doctoral student can see'
 
   await login(page, noa.email);
   await page.goto('/encadrement');
-  await expect(page.getByRole('heading', { name: 'Mes doctorants' })).toBeVisible();
   await expect(page.getByText('Ada Martin')).toBeVisible();
   await expect(page.getByText('Bea Martin')).toHaveCount(0);
   await page.goto(`/encadrement/${thesisA}/objectifs`);

@@ -160,7 +160,7 @@ async function workspace(page: Page, supervisor = false, withFile = true) {
     else if (path.endsWith('/objectives')) body = { objectives: [] };
     else if (path.endsWith('/file/download'))
       body = {
-        url: 'http://127.0.0.1:5173/api/preview.pdf',
+        url: `${new URL(route.request().url()).origin}/api/preview.pdf`,
         expiresAt: '2027-01-01T00:00:00.000Z',
       };
     else if (path.endsWith('/versions'))
@@ -249,7 +249,7 @@ test('deliverables are readable on desktop and mobile, with a clear deposit and 
   for (const width of [1440, 1024, 375]) {
     await page.setViewportSize({ width, height: 900 });
     await page.goto('/livrables');
-    await expect(page.getByRole('tablist', { name: 'Livrables' })).toBeVisible();
+    await expect(page.getByRole('tablist', { name: 'Livrables', exact: true })).toBeVisible();
     await expect(page.getByRole('link', { name: listed.title })).toBeVisible();
     expect(await page.evaluate(() => getComputedStyle(document.documentElement).fontSize)).toBe(
       '13px',
