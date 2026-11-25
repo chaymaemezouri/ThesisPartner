@@ -50,6 +50,7 @@ describe('AuthService email verification', () => {
       { write: jest.fn() } as never,
       { autoStartTrialIfEligible: jest.fn().mockResolvedValue(false) } as never,
       { NODE_ENV: 'development', APP_URL: 'http://localhost:5173' } as never,
+      { bootstrap: jest.fn() } as never,
     );
     return { service, prisma, mailer };
   }
