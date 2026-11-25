@@ -94,6 +94,13 @@ export const PRIMARY_NAV: NavItem[] = [
   },
 ];
 
+export const MASTER_STUDENTS_NAV: NavItem = {
+  to: '/encadrement',
+  labelKey: 'nav.masterStudents',
+  descriptionKey: 'nav.masterStudentsDesc',
+  icon: 'supervision',
+};
+
 export const SUPERVISOR_NAV: NavItem[] = [
   {
     to: '/',
@@ -176,9 +183,13 @@ export const SECONDARY_NAV: NavItem[] = [
 export const NAV_ITEMS = [...PRIMARY_NAV, ...SECONDARY_NAV];
 
 export function navigationGroups(items: NavItem[]): { labelKey?: MessageKey; items: NavItem[] }[] {
-  const supervisor = items.some((item) => item.to === '/encadrement');
+  const supervisor = items.some((item) => item.to === '/invitations');
   const groups: { labelKey?: MessageKey; paths: string[] }[] = [
     { paths: ['/'] },
+    {
+      labelKey: 'nav.groupMaster',
+      paths: supervisor ? [] : ['/encadrement'],
+    },
     {
       labelKey: supervisor ? 'nav.groupSupervision' : 'nav.groupThesis',
       paths: supervisor

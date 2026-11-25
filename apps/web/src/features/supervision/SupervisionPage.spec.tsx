@@ -83,6 +83,16 @@ describe('supervised theses', () => {
     expect(await screen.findByText('Home')).toBeInTheDocument();
   });
 
+  it('keeps the Master gallery open for allowlisted staff without students yet', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => json({ theses: [], masterSpace: true })),
+    );
+    renderPage();
+    expect(await screen.findByRole('tab', { name: /Master students/ })).toBeInTheDocument();
+    expect(screen.getByText(/appear here after they register/i)).toBeInTheDocument();
+  });
+
   it('lists every supervised thesis and links to that thesis', async () => {
     vi.stubGlobal(
       'fetch',

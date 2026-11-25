@@ -12,7 +12,11 @@ vi.mock('../features/supervision/SupervisorDashboard', () => ({
 }));
 
 function renderDashboard(
-  cached?: { theses: { thesisId: string }[]; pendingSupervisorInvite?: boolean },
+  cached?: {
+    theses: { thesisId: string; track?: string }[];
+    pendingSupervisorInvite?: boolean;
+    masterSpace?: boolean;
+  },
   staleTime = Infinity,
 ) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false, staleTime } } });
@@ -62,10 +66,15 @@ describe('dashboard selection', () => {
       pendingSupervisorInvite: true,
       expected: 'Supervisor dashboard',
     },
+    {
+      theses: [{ thesisId: 'master-project', track: 'MASTER' }],
+      masterSpace: true,
+      expected: 'Doctoral dashboard',
+    },
   ])(
     'shows $expected after supervision is known',
-    ({ theses, pendingSupervisorInvite, expected }) => {
-      renderDashboard({ theses, pendingSupervisorInvite });
+    ({ expected, ...cached }) => {
+      renderDashboard(cached);
       expect(screen.getByText(expected)).toBeInTheDocument();
     },
   );

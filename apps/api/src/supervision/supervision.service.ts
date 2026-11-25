@@ -102,6 +102,7 @@ export class SupervisionService {
     );
     return {
       pendingSupervisorInvite,
+      masterSpace: allowMaster,
       theses: theses.map((thesis, index) => {
         const students = thesis.memberships.flatMap((item) => {
           if (item.role !== 'DOCTORAL_STUDENT' || !item.user.profile) return [];

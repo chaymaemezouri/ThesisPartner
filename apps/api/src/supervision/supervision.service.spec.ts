@@ -30,6 +30,7 @@ describe('SupervisionService access', () => {
     await expect(service.list(actorId)).resolves.toEqual({
       theses: [],
       pendingSupervisorInvite: false,
+      masterSpace: false,
     });
     expect(findMany).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -53,7 +54,11 @@ describe('SupervisionService access', () => {
       env as never,
     );
 
-    await service.list(actorId);
+    await expect(service.list(actorId)).resolves.toEqual({
+      theses: [],
+      pendingSupervisorInvite: false,
+      masterSpace: true,
+    });
     expect(findMany).toHaveBeenCalledWith(
       expect.objectContaining({
         where: {
@@ -80,6 +85,7 @@ describe('SupervisionService access', () => {
     await expect(service.list(actorId)).resolves.toEqual({
       theses: [],
       pendingSupervisorInvite: true,
+      masterSpace: false,
     });
   });
 

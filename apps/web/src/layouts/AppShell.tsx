@@ -7,10 +7,11 @@ import { StudentNotificationsBell } from '../features/resources/StudentNotificat
 import { useLogout, useMeQuery } from '../hooks/use-session';
 import { useSupervisedTheses } from '../features/supervision/hooks/use-supervised-theses';
 import { portraitUrl } from '../features/supervision/temporary-portraits';
-import { isSupervisorWorkspace } from '../features/supervision/workspace-mode';
+import { isMasterSpace, isSupervisorWorkspace } from '../features/supervision/workspace-mode';
 import { useT } from '../i18n/LocaleContext';
 import {
   navItemForPath,
+  MASTER_STUDENTS_NAV,
   PRIMARY_NAV,
   SECONDARY_NAV,
   SUPERVISOR_NAV,
@@ -172,12 +173,16 @@ function Topbar({
     return () => media.removeEventListener('change', update);
   }, []);
   const isSupervisor = isSupervisorWorkspace(supervised.data);
+  const masterSpace = isMasterSpace(supervised.data);
   const secondaryNav = isSupervisor
     ? SECONDARY_NAV.filter((item) => item.to !== '/encadrant' && item.to !== '/abonnement')
     : SECONDARY_NAV;
-  const navigation = isSupervisor
-    ? [...SUPERVISOR_NAV, ...secondaryNav]
-    : [...PRIMARY_NAV, ...secondaryNav];
+  const primaryNav = isSupervisor
+    ? SUPERVISOR_NAV
+    : masterSpace
+      ? [PRIMARY_NAV[0]!, MASTER_STUDENTS_NAV, ...PRIMARY_NAV.slice(1)]
+      : PRIMARY_NAV;
+  const navigation = [...primaryNav, ...secondaryNav];
   const current = navItemForPath(location.pathname, navigation);
   const accountLabel = me.data?.user.displayName ?? t('common.account');
   const currentLabel = current ? t(current.labelKey) : t('common.appName');
@@ -309,7 +314,12 @@ function Sidebar({
   const supervised = useSupervisedTheses();
   const t = useT();
   const isSupervisor = isSupervisorWorkspace(supervised.data);
-  const primary = isSupervisor ? SUPERVISOR_NAV : PRIMARY_NAV;
+  const masterSpace = isMasterSpace(supervised.data);
+  const primary = isSupervisor
+    ? SUPERVISOR_NAV
+    : masterSpace
+      ? [PRIMARY_NAV[0]!, MASTER_STUDENTS_NAV, ...PRIMARY_NAV.slice(1)]
+      : PRIMARY_NAV;
   const secondary = isSupervisor
     ? SECONDARY_NAV.filter((item) => item.to !== '/encadrant' && item.to !== '/abonnement')
     : SECONDARY_NAV;

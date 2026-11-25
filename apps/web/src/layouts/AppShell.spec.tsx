@@ -22,7 +22,10 @@ function renderShell(path = '/') {
 }
 
 describe('application shell', () => {
+  let supervision: { theses: unknown[]; masterSpace?: boolean } = { theses: [] };
+
   beforeEach(() => {
+    supervision = { theses: [] };
     vi.stubGlobal(
       'fetch',
       vi.fn(async (input: RequestInfo | URL) => {
@@ -94,7 +97,7 @@ describe('application shell', () => {
           );
         }
         if (url.includes('/supervision/theses')) {
-          return new Response(JSON.stringify({ theses: [] }), {
+          return new Response(JSON.stringify(supervision), {
             status: 200,
             headers: { 'content-type': 'application/json' },
           });
@@ -128,6 +131,20 @@ describe('application shell', () => {
     expect(screen.getByRole('heading', { name: 'Objectives' })).toBeInTheDocument();
     expect(screen.getByText('No associated thesis')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'New objective' })).not.toBeInTheDocument();
+  });
+
+  it('keeps the doctoral menu and adds Master students for allowlisted staff', async () => {
+    supervision = { theses: [], masterSpace: true };
+    renderShell();
+
+    expect(await screen.findByRole('heading', { name: 'Hello, Camille' })).toBeInTheDocument();
+    const navigation = screen.getByRole('navigation', { name: 'Main navigation' });
+    expect(within(navigation).getByRole('link', { name: 'Master students' })).toHaveAttribute(
+      'href',
+      '/encadrement',
+    );
+    expect(within(navigation).getByRole('link', { name: 'Objectives' })).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'My students' })).not.toBeInTheDocument();
   });
 
   it('opens the mobile menu and reaches Portfolio', async () => {

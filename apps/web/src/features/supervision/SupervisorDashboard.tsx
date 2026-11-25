@@ -37,7 +37,7 @@ export function SupervisorDashboard({
   const theses = useMemo(() => supervised.data?.theses ?? [], [supervised.data?.theses]);
   const doctorateTheses = useMemo(() => theses.filter((item) => item.track !== 'MASTER'), [theses]);
   const masterTheses = useMemo(() => theses.filter((item) => item.track === 'MASTER'), [theses]);
-  const showCohorts = masterTheses.length > 0;
+  const showCohorts = Boolean(supervised.data?.masterSpace) || masterTheses.length > 0;
   const [cohort, setCohort] = useState<'DOCTORATE' | 'MASTER'>('DOCTORATE');
   const activeCohort: 'DOCTORATE' | 'MASTER' =
     showCohorts && doctorateTheses.length === 0 ? 'MASTER' : showCohorts ? cohort : 'DOCTORATE';

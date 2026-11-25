@@ -963,6 +963,8 @@ export const supervisedThesisListSchema = z
     theses: z.array(supervisedThesisSchema).max(50),
     /** Invitee has a pending SUPERVISOR invitation (no membership yet). */
     pendingSupervisorInvite: z.boolean().default(false),
+    /** Allowlisted staff (Jihane / Ezziyyani) may open the Master gallery. */
+    masterSpace: z.boolean().default(false),
   })
   .strict();
 
