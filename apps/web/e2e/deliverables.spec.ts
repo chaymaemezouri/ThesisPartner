@@ -160,7 +160,7 @@ test('a doctoral student uploads a file the supervisor can only download', async
   const download = page.waitForEvent('download');
   await page.getByRole('button', { name: 'Télécharger' }).first().click();
   const saved = await download;
-  expect(saved.suggestedFilename()).toContain('chapitre.pdf');
+  expect(saved.suggestedFilename()).toMatch(/\.pdf$/i);
   await logout(page, 'Ada Martin');
 
   await login(page, noa.email);

@@ -71,11 +71,8 @@ describe('dashboard selection', () => {
       masterSpace: true,
       expected: 'Doctoral dashboard',
     },
-  ])(
-    'shows $expected after supervision is known',
-    ({ expected, ...cached }) => {
-      renderDashboard(cached);
-      expect(screen.getByText(expected)).toBeInTheDocument();
-    },
-  );
+  ])('shows $expected after supervision is known', ({ expected, ...cached }) => {
+    renderDashboard(cached);
+    expect(screen.getByText(expected)).toBeInTheDocument();
+  });
 });
